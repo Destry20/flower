@@ -57,10 +57,13 @@ app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
 app.use(attachUser);
 
-// Считаем "просмотр страницы" только для GET без расширения файла и вне /api —
-// иначе один визит раздувался бы в десятки записей за счёт JS/CSS/шрифтов.
+// Считаем "просмотр страницы" только для настоящих страниц сайта (/ и
+// /c/<id>) — раньше засчитывался вообще любой GET без расширения файла,
+// из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
+// статистику и "Recent activity" в админке вперемешку с реальными визитами.
+const REAL_PAGE_RE = /^\/(c\/[A-Za-z0-9]+)?$/;
 app.use((req, res, next) => {
-  if(req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/admin') && !path.extname(req.path)){
+  if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path);
   }
   next();
