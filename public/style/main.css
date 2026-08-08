@@ -155,6 +155,78 @@ a{color:var(--plum);}
 .vase-chip svg{display:block; margin:0 auto 6px;}
 .vase-chip span{font-size:11.5px; color:var(--ink); opacity:.8;}
 
+.flower-summary{display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-bottom:18px;}
+.flower-summary-dot{width:22px; height:22px; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(47,59,42,0.15), 0 1px 2px rgba(0,0,0,0.08);}
+.flower-summary-empty{font-size:13px; color:var(--ink); opacity:.55; font-style:italic;}
+
+/* Кнопка "Добавить/Изменить цветы" — намеренно заметнее обычных ghost-кнопок
+   (пунктирная рамка + цветной кружок-иконка), чтобы читалось как явное
+   действие "добавить", а не как ещё один нейтральный чип-переключатель. */
+.flower-pick-btn{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:7px 16px 7px 7px; border-radius:999px;
+  border:1.5px dashed var(--sage-dark); background:rgba(140,160,135,0.1);
+  font-family:inherit; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer;
+  transition:border-color .15s ease, background-color .15s ease, transform .1s ease;
+}
+.flower-pick-btn:hover{border-color:var(--plum); background:rgba(75,46,61,0.06); transform:translateY(-1px);}
+.flower-pick-btn:active{transform:scale(.97);}
+.flower-pick-btn-icon{
+  flex:none; width:24px; height:24px; border-radius:50%;
+  background:var(--sage-dark); color:var(--paper);
+  display:flex; align-items:center; justify-content:center;
+  transition:background-color .15s ease;
+}
+.flower-pick-btn:hover .flower-pick-btn-icon{background:var(--plum);}
+
+/* Прижимаем к левому краю (а не по центру экрана), чтобы букет в правой
+   колонке предпросмотра оставался виден, пока открыт выбор цветов. Фон
+   у оверлея прозрачный (не затемняет страницу) — сам сдвиг влево уже
+   достаточно обособляет окошко, а клик вне карточки всё ещё закрывает её. */
+.flower-modal-backdrop{
+  display:none; position:fixed; inset:0; z-index:60;
+  background:transparent;
+  align-items:center; justify-content:flex-start;
+  padding:20px 20px 20px clamp(20px, 4vw, 56px);
+  animation:flowerBackdropIn .18s ease both;
+}
+.flower-modal-backdrop.show{display:flex;}
+@keyframes flowerBackdropIn{from{opacity:0;} to{opacity:1;}}
+.flower-modal{
+  background:var(--paper); border:1px solid var(--line); border-radius:18px; padding:0;
+  width:100%; max-width:420px; max-height:85vh;
+  display:flex; flex-direction:column;
+  box-shadow:0 28px 70px -14px rgba(47,59,42,0.35);
+  animation:flowerModalIn .22s cubic-bezier(.2,.9,.3,1.2) both;
+}
+@keyframes flowerModalIn{from{opacity:0; transform:translateX(-10px) scale(.97);} to{opacity:1; transform:none;}}
+@media (max-width:880px){
+  /* Ниже брейкпоинта колонки и так складываются в одну — букет всё равно
+     не виден рядом, так что окошко по центру удобнее для узкого экрана. */
+  .flower-modal-backdrop{justify-content:center; padding:20px; background:rgba(47,59,42,0.5);}
+}
+.flower-modal-head{
+  display:flex; align-items:flex-start; gap:12px;
+  padding:20px 22px 16px; border-bottom:1px solid var(--line);
+  background:var(--paper-deep); border-radius:18px 18px 0 0;
+}
+.flower-modal-head-icon{
+  flex:none; width:32px; height:32px; border-radius:50%; margin-top:1px;
+  background:var(--plum); color:var(--paper);
+  display:flex; align-items:center; justify-content:center;
+}
+.flower-modal-head-text{flex:1; min-width:0; display:flex; flex-direction:column;}
+.flower-modal-head-text .field-label{margin-bottom:0;}
+.flower-modal-close{
+  flex:none; width:28px; height:28px; border-radius:50%; border:1px solid var(--line);
+  background:var(--paper); color:var(--ink); cursor:pointer; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  transition:border-color .15s ease, color .15s ease;
+}
+.flower-modal-close:hover{border-color:var(--plum); color:var(--plum);}
+.flower-modal .flower-row{padding:18px 22px; margin-top:0; overflow-y:auto;}
+.flower-modal > button.btn-primary{margin:0 22px 22px;}
+
 .flower-row{display:flex; flex-direction:column; gap:10px; margin-top:6px;}
 .flower-item{
   display:flex; align-items:center; gap:14px;

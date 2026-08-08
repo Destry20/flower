@@ -57,6 +57,12 @@ function t(ru){
 const EN_STRINGS = {
   'Мои открытки': 'My cards',
   'Достигнут лимит открыток': 'You\'ve reached the card limit',
+  'Цветы ещё не добавлены': 'No flowers added yet',
+  'Изменить цветы': 'Edit flowers',
+  'Добавить цветы': 'Add flowers',
+  'Добавьте цветы в букет': 'Add flowers to the bouquet',
+  'Готово': 'Done',
+  'Закрыть': 'Close',
   'Войти': 'Log in',
   'Выйти из аккаунта': 'Log out',
   'Собрать открытку': 'Create a card',
@@ -323,6 +329,11 @@ const state = {
 };
 state.flowers.rose = {color:FLOWER_TYPES[0].colors[0], count:3};
 state.flowers.carnation = {color:FLOWER_TYPES[4].colors[0], count:2};
+
+// Выбор цветов раньше всегда был развёрнут на странице и занимал много места —
+// теперь прячем его за кнопку и всплывающее окошко, открытое/закрытое
+// состояние которого просто гоняем через renderCreator(), как и всё остальное.
+let flowerPickerOpen = false;
 
 /* ====================== SESSION / ACCOUNT ====================== */
 // session.user — текущий пользователь (или null для гостя), заполняется при
@@ -818,8 +829,22 @@ function renderCreator(){
           </div>
           <span class="field-label" id="vaseLabel">${t('Ваза')}</span>
           <div class="vase-row" id="vaseChips" role="group" aria-labelledby="vaseLabel" style="margin-bottom:20px;"></div>
-          <span class="field-label" id="flowersLabel">${t('Цветы')} <span class="hint">${t('отметьте нужные, выберите цвет и количество')}</span></span>
-          <div class="flower-row" id="flowerRows" role="group" aria-labelledby="flowersLabel"></div>
+          <span class="field-label" id="flowersLabel">${t('Цветы')}</span>
+          <div class="flower-summary" id="flowerSummaryBox">${flowerSummaryHtml()}</div>
+          <div class="flower-modal-backdrop ${flowerPickerOpen?'show':''}" id="flowerModalBackdrop" onclick="if(event.target===this) closeFlowerPicker()">
+            <div class="flower-modal" role="dialog" aria-modal="true" aria-labelledby="flowerModalTitle">
+              <div class="flower-modal-head">
+                <div class="flower-modal-head-icon">${plusIconSvg()}</div>
+                <div class="flower-modal-head-text">
+                  <span class="field-label" id="flowerModalTitle" style="margin-bottom:2px;">${t('Добавьте цветы в букет')}</span>
+                  <span class="hint">${t('отметьте нужные, выберите цвет и количество')}</span>
+                </div>
+                <button type="button" class="flower-modal-close" onclick="closeFlowerPicker()" aria-label="${t('Закрыть')}">✕</button>
+              </div>
+              <div class="flower-row" id="flowerRows" role="group" aria-labelledby="flowersLabel"></div>
+              <button type="button" class="btn btn-primary" onclick="closeFlowerPicker()">${t('Готово')}</button>
+            </div>
+          </div>
           <span class="field-label" id="ribbonLabel" style="margin-top:18px;">${t('Лента')}</span>
           <div class="swatches" id="ribbonSwatches" role="group" aria-labelledby="ribbonLabel"></div>
         </div>
@@ -920,28 +945,7 @@ function renderCreator(){
     </div>`
   ).join('');
 
-  document.getElementById('flowerRows').innerHTML = FLOWER_TYPES.map(f=>{
-    const sel = state.flowers[f.id];
-    const on = !!sel;
-    const color = sel ? sel.color : f.colors[0];
-    const count = sel ? sel.count : 3;
-    const label = tr(f.label);
-    return `<div class="flower-item ${on?'on':''}" id="fi-${f.id}">
-      <div class="fi-thumb" tabindex="0" role="button" aria-pressed="${on}" aria-label="${(on?t('Убрать'):t('Добавить'))+' '+label.toLowerCase()}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">
-        ${flowerThumbSvg(f.id, color)}
-        ${on?'<div class="fi-badge">✓</div>':''}
-      </div>
-      <div class="fi-body">
-        <div class="fi-name" tabindex="0" role="button" aria-pressed="${on}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">${label}</div>
-        <div class="swatches">${f.colors.map((c,i)=>`<div class="swatch ${on&&color===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${label.toLowerCase()} №${i+1}" aria-pressed="${on&&color===c}" onclick="setFlowerColor('${f.id}','${c}')" onkeydown="activateOnKey(event)"></div>`).join('')}</div>
-      </div>
-      <div class="stepper">
-        <button aria-label="${t('Меньше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',-1)">−</button>
-        <span aria-live="polite">${count}</span>
-        <button aria-label="${t('Больше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',1)">+</button>
-      </div>
-    </div>`;
-  }).join('');
+  document.getElementById('flowerRows').innerHTML = flowerRowsHtml();
 
   document.getElementById('ribbonSwatches').innerHTML = RIBBONS.map((c,i)=>
     `<div class="swatch ${state.ribbon===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${t('Лента').toLowerCase()} №${i+1}" aria-pressed="${state.ribbon===c}" onclick="setRibbon('${c}')" onkeydown="activateOnKey(event)"></div>`
@@ -1032,6 +1036,12 @@ function occasionIconSvg(id, color){
   };
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${paths[name]}</svg>`;
 }
+function plusIconSvg(){
+  return `<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2V14M2 8H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+}
+function editIconSvg(){
+  return `<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M11.5 2.5L13.5 4.5L5 13L2 14L3 11L11.5 2.5Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>`;
+}
 function diceIconSvg(){
   return `<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="5" r="1.1" fill="currentColor"/><circle cx="11" cy="5" r="1.1" fill="currentColor"/><circle cx="8" cy="8" r="1.1" fill="currentColor"/><circle cx="5" cy="11" r="1.1" fill="currentColor"/><circle cx="11" cy="11" r="1.1" fill="currentColor"/></svg>`;
 }
@@ -1081,21 +1091,77 @@ function setBackground(id){
   event.currentTarget.classList.add('active'); event.currentTarget.setAttribute('aria-pressed','true');
 }
 function setEnvelope(id){ state.envelope = id; renderCreator(); }
+function openFlowerPicker(){ flowerPickerOpen = true; renderCreator(); }
+function closeFlowerPicker(){ flowerPickerOpen = false; renderCreator(); }
+
+// Разметка списка цветов внутри окошка и сводки-кнопки снаружи — вынесены в
+// отдельные функции, чтобы toggleFlower/setFlowerColor/stepFlower могли
+// точечно обновлять только эти два узла (см. ниже), а не весь renderCreator().
+// Раньше выбор цветка внутри уже открытого окошка перерисовывал вообще всю
+// страницу — окошко пересоздавалось заново и его css-анимация появления
+// проигрывалась повторно, из-за чего оно заметно "мигало" при каждом клике.
+function flowerRowsHtml(){
+  return FLOWER_TYPES.map(f=>{
+    const sel = state.flowers[f.id];
+    const on = !!sel;
+    const color = sel ? sel.color : f.colors[0];
+    const count = sel ? sel.count : 3;
+    const label = tr(f.label);
+    return `<div class="flower-item ${on?'on':''}" id="fi-${f.id}">
+      <div class="fi-thumb" tabindex="0" role="button" aria-pressed="${on}" aria-label="${(on?t('Убрать'):t('Добавить'))+' '+label.toLowerCase()}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">
+        ${flowerThumbSvg(f.id, color)}
+        ${on?'<div class="fi-badge">✓</div>':''}
+      </div>
+      <div class="fi-body">
+        <div class="fi-name" tabindex="0" role="button" aria-pressed="${on}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">${label}</div>
+        <div class="swatches">${f.colors.map((c,i)=>`<div class="swatch ${on&&color===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${label.toLowerCase()} №${i+1}" aria-pressed="${on&&color===c}" onclick="setFlowerColor('${f.id}','${c}')" onkeydown="activateOnKey(event)"></div>`).join('')}</div>
+      </div>
+      <div class="stepper">
+        <button aria-label="${t('Меньше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',-1)">−</button>
+        <span aria-live="polite">${count}</span>
+        <button aria-label="${t('Больше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function flowerSummaryHtml(){
+  const chosen = Object.keys(state.flowers).length;
+  const dots = chosen
+    ? FLOWER_TYPES.filter(f=>state.flowers[f.id]).map(f=>
+        `<span class="flower-summary-dot" style="background:${state.flowers[f.id].color}" title="${tr(f.label)} ×${state.flowers[f.id].count}"></span>`
+      ).join('')
+    : `<span class="flower-summary-empty">${t('Цветы ещё не добавлены')}</span>`;
+  return `${dots}
+    <button type="button" class="flower-pick-btn" onclick="openFlowerPicker()">
+      <span class="flower-pick-btn-icon">${chosen ? editIconSvg() : plusIconSvg()}</span>
+      ${chosen ? t('Изменить цветы') : t('Добавить цветы')}
+    </button>`;
+}
+function renderFlowerRows(){
+  const el = document.getElementById('flowerRows');
+  if(el) el.innerHTML = flowerRowsHtml();
+}
+function renderFlowerSummary(){
+  const el = document.getElementById('flowerSummaryBox');
+  if(el) el.innerHTML = flowerSummaryHtml();
+}
+
 function toggleFlower(id){
   if(state.flowers[id]) delete state.flowers[id];
   else { const f=FLOWER_TYPES.find(x=>x.id===id); state.flowers[id]={color:f.colors[0], count:3}; }
-  renderCreator();
+  renderFlowerRows(); renderFlowerSummary(); renderPreviewBouquet();
 }
 function setFlowerColor(id,c){
   if(!state.flowers[id]) return;
-  state.flowers[id].color=c; renderCreator();
+  state.flowers[id].color=c;
+  renderFlowerRows(); renderFlowerSummary(); renderPreviewBouquet();
 }
 function stepFlower(id, d){
   if(!state.flowers[id]) return;
   const v = state.flowers[id].count + d;
   state.flowers[id].count = Math.max(0, Math.min(8, v));
   if(state.flowers[id].count===0) delete state.flowers[id];
-  renderCreator();
+  renderFlowerRows(); renderFlowerSummary(); renderPreviewBouquet();
 }
 function toggleMusic(){
   state.music=!state.music;
