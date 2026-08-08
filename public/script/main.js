@@ -1714,6 +1714,7 @@ function renderRegister(){
         <input type="email" id="regEmail" placeholder="${t('Email')}" required autocomplete="username">
         <label class="sr-only" for="regPassword">${t('Пароль')}</label>
         <input type="password" id="regPassword" placeholder="${t('Пароль')}" required minlength="8" autocomplete="new-password">
+        <input type="text" id="regWebsite" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
         <div class="auth-error" id="registerError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Создать аккаунт')}</button>
       </form>
@@ -1725,10 +1726,11 @@ function renderRegister(){
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
+    const website = document.getElementById('regWebsite').value;
     const errEl = document.getElementById('registerError');
     errEl.textContent = '';
     try{
-      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password, name }) });
+      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password, name, website }) });
       const json = await res.json();
       if(!res.ok) throw new Error(json.error || t('Не удалось зарегистрироваться'));
       session.user = json.user;

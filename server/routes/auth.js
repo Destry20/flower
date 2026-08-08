@@ -24,7 +24,14 @@ const authLimiter = rateLimit({
 router.use(authLimiter);
 
 router.post('/register', (req, res) => {
-  const { email, password, name } = req.body || {};
+  const { email, password, name, website } = req.body || {};
+  // Honeypot: настоящие пользователи это поле не видят и не заполняют (скрыто
+  // за экраном, вне табуляции) — заполненное значение почти наверняка бот,
+  // слепо забивающий все поля формы. Отвечаем обычной ошибкой валидации,
+  // не намекая, что именно его выдало.
+  if(typeof website === 'string' && website.trim()){
+    return res.status(400).json({ error: tServer(req, 'invalidEmail') });
+  }
   if(typeof email !== 'string' || !EMAIL_RE.test(email.trim())){
     return res.status(400).json({ error: tServer(req, 'invalidEmail') });
   }
