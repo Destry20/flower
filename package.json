@@ -1,8 +1,8 @@
 {
-  "name": "mysweetbouquet",
+  "name": "vivorose",
   "version": "1.0.0",
   "private": true,
-  "description": "MySweetBouquet — виртуальные букеты-открытки с аккаунтами и премиум-наборами",
+  "description": "VivoRose — виртуальные букеты-открытки с аккаунтами и премиум-наборами",
   "main": "server/index.js",
   "engines": {
     "node": ">=18"

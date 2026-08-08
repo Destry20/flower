@@ -10,6 +10,7 @@ const { attachUser } = require('./auth');
 const authRoutes = require('./routes/auth');
 const cardsRoutes = require('./routes/cards');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
+const { tServer, pickLang } = require('./i18n');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -64,13 +65,15 @@ app.use('/api/cards', cardsRoutes);
 app.get('/', (req, res, next) => {
   const cardData = typeof req.query.data === 'string' ? req.query.data : null;
   if(!cardData) return next();
-  const meta = buildShareMeta(cardData);
+  const lang = pickLang(req);
+  const meta = buildShareMeta(cardData, lang);
   if(!meta) return next(); // битая ссылка — пусть страницу открывает обычным образом, ошибку покажет main.js
 
   fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
     if(err) return next();
     const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.originalUrl);
     const out = html
+      .replace(/<html lang="[^"]*"/, `<html lang="${lang}"`)
       .replace(/<title>.*?<\/title>/, `<title>${meta.title}</title>`)
       .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${meta.title}$2`)
       .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${meta.title}$2`)
@@ -96,13 +99,13 @@ app.use(express.static(PUBLIC_DIR, {
   }
 }));
 
-app.use('/api', (req, res) => res.status(404).json({ error: 'Не найдено' }));
+app.use('/api', (req, res) => res.status(404).json({ error: tServer(req, 'notFound') }));
 
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+  res.status(500).json({ error: tServer(req, 'serverError') });
 });
 
 app.listen(PORT, () => {
-  console.log(`MySweetBouquet запущен: http://localhost:${PORT}`);
+  console.log(`VivoRose запущен: http://localhost:${PORT}`);
 });

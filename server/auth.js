@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('./db');
+const { tServer } = require('./i18n');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-to-a-long-random-string';
 const COOKIE_NAME = 'msb_token';
@@ -49,7 +50,7 @@ function attachUser(req, res, next){
 }
 
 function requireAuth(req, res, next){
-  if(!req.user) return res.status(401).json({ error: 'Требуется вход в аккаунт' });
+  if(!req.user) return res.status(401).json({ error: tServer(req, 'unauthorized') });
   next();
 }
 

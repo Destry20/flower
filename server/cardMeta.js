@@ -4,11 +4,7 @@
 // данных букета по-прежнему делает клиент при самом рендере открытки — здесь
 // достаточно двух строковых полей, ошибка декодирования просто откатывает
 // сайт к стандартным (общим) meta-тегам, ничего не ломая.
-
-const OCCASION_STAMPS = {
-  foryou: 'Для тебя', birthday: 'С днём рождения', love: 'С любовью',
-  thanks: 'Спасибо тебе', congrats: 'Поздравляю', sorry: 'Я рядом', justbecause: 'Просто так'
-};
+const { STRINGS } = require('./i18n');
 
 function escapeHtml(s){
   return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -20,14 +16,16 @@ function decodeCardDataServer(str){
 }
 
 // Возвращает {title, description} (уже HTML-escaped, готовые к вставке в
-// content="...") либо null, если ссылка битая/нечитаемая.
-function buildShareMeta(encodedData){
+// content="...") либо null, если ссылка битая/нечитаемая. lang выбирает бот
+// (обычно по Accept-Language запроса — сам крауер messenger'а его присылает).
+function buildShareMeta(encodedData, lang){
+  const strings = STRINGS[lang] || STRINGS.ru;
   try{
     const data = decodeCardDataServer(encodedData);
     const from = typeof data.from === 'string' ? data.from.slice(0, 30).trim() : '';
-    const stamp = OCCASION_STAMPS[data.occasion] || 'Открытка с виртуальным букетом';
-    const title = `Вам открытка${from ? ' от ' + from : ''} 🌿`;
-    const description = `${stamp}. Нажмите, чтобы открыть букет и пожелание.`;
+    const stamp = strings.occasionStamps[data.occasion] || strings.cardNotFound;
+    const title = strings.shareTitle(from);
+    const description = strings.shareDescription(stamp);
     return { title: escapeHtml(title), description: escapeHtml(description) };
   }catch(e){
     return null;

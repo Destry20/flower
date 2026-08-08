@@ -1,45 +1,265 @@
+/* ====================== I18N ====================== */
+// Язык интерфейса: сначала смотрим сохранённый выбор в этом браузере, иначе —
+// язык браузера (ru → русский, всё остальное → английский, так сайт по
+// умолчанию понятен и иностранной аудитории). tr({ru,en,...}) — для полей
+// данных (label/stamp/placeholder и т.п.), t('русская строка') — для строк
+// интерфейса: русский текст одновременно служит ключом словаря EN_STRINGS,
+// так что не нужно придумывать отдельные ключи и ничего не сломается, даже
+// если перевод для какой-то строки забыли добавить (тогда просто останется RU).
+function detectLang(){
+  try{
+    const saved = localStorage.getItem('msb-lang');
+    if(saved === 'ru' || saved === 'en') return saved;
+  }catch(e){}
+  return (navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en';
+}
+let uiLang = detectLang();
+function setLang(lang){
+  if(lang !== 'ru' && lang !== 'en') return;
+  uiLang = lang;
+  try{ localStorage.setItem('msb-lang', lang); }catch(e){}
+  document.documentElement.lang = lang;
+  renderRoute();
+}
+function tr(obj){
+  if(obj == null) return '';
+  if(typeof obj === 'string') return obj;
+  return obj[uiLang] || obj.ru || obj.en || '';
+}
+function t(ru){
+  return uiLang === 'ru' ? ru : (EN_STRINGS[ru] || ru);
+}
+
+const EN_STRINGS = {
+  'Мои открытки': 'My cards',
+  'Войти': 'Log in',
+  'Выйти из аккаунта': 'Log out',
+  'Собрать открытку': 'Create a card',
+  'Соберите букет и оставьте послание, которое захочется сохранить': 'Build a bouquet and leave a message worth keeping',
+  'Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.':
+    'Pick an occasion, arrange the flowers, add a few lines — and send it as a single link. It opens like a real card: unfolding and blooming.',
+  'Повод': 'Occasion',
+  'задаёт тон открытки': 'sets the tone of the card',
+  'Букет': 'Bouquet',
+  'форма вазы, цветы, лента': 'vase shape, flowers, ribbon',
+  'Ваза': 'Vase',
+  'Цветы': 'Flowers',
+  'отметьте нужные, выберите цвет и количество': 'pick the ones you want, choose color and count',
+  'Лента': 'Ribbon',
+  'Послание': 'Message',
+  'кому и что хотите сказать': 'who it\'s for and what you want to say',
+  'Имя получателя': 'Recipient\'s name',
+  'Ваше имя': 'Your name',
+  'Текст пожелания': 'Message text',
+  'Дополнительно': 'Extras',
+  'необязательные штрихи': 'optional touches',
+  'Нежная мелодия при открытии': 'Gentle melody on opening',
+  'Короткий сгенерированный перезвон, без сторонних файлов': 'A short generated chime, no external files',
+  'Мелодия': 'Melody',
+  'нажмите, чтобы прослушать': 'click to preview',
+  'Открыть в определённый момент': 'Open at a specific moment',
+  'До этого времени получатель увидит только конверт': 'Until then the recipient will only see the envelope',
+  'Создать ссылку': 'Create link',
+  'Собрать наугад': 'Surprise me',
+  'Фон сцены': 'Scene background',
+  'получатель увидит такой же': 'the recipient will see the same one',
+  'Конверт': 'Envelope',
+  'Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.': 'Live preview of the card. The recipient will see the opening animation.',
+  '↻ Показать анимацию открытия': '↻ Replay opening animation',
+  'Текст пожелания появится здесь…': 'Your message will appear here…',
+  'РЕКЛАМА': 'ADVERTISEMENT',
+  'Реклама': 'Advertisement',
+  'Место для рекламного баннера': 'Ad banner placeholder',
+
+  // occasion labels/stamps/placeholders — см. tr() в самих объектах OCCASIONS
+
+  // flower/vase/envelope/background/melody labels — см. tr() в самих объектах
+
+  'Убрать': 'Remove', 'Добавить': 'Add',
+  'Цвет': 'Color',
+  'Меньше': 'Fewer', 'Больше': 'More',
+
+  'Открытка готова': 'Card ready',
+  'Открытка собрана': 'Card is ready',
+  'Отправьте эту ссылку — она откроется как раскрывающаяся открытка с вашим букетом.':
+    'Send this link — it will open as an unfolding card with your bouquet.',
+  'Ссылка на открытку': 'Card link',
+  'Копировать': 'Copy',
+  'Отсканируйте с телефона': 'Scan with your phone',
+  'Предпросмотреть': 'Preview',
+  'Поделиться': 'Share',
+  'Редактировать': 'Edit',
+  'Создать ещё одну': 'Create another',
+  'Ссылка скопирована': 'Link copied',
+  'Скопируйте ссылку вручную': 'Copy the link manually',
+  'Добавьте текст пожелания': 'Add a message first',
+  'Не удалось создать ссылку, попробуйте ещё раз': 'Could not create the link, please try again',
+  'Собрали для вас новый вариант': 'Put together a new version for you',
+  'Не удалось удалить открытку': 'Could not delete the card',
+  'Открытка удалена': 'Card deleted',
+
+  'Открытка не найдена': 'Card not found',
+  'не найдено': 'not found',
+  'Эта открытка недоступна': 'This card is unavailable',
+  'Ссылка повреждена или указана неверно.': 'The link is broken or incorrect.',
+  'Создать свою': 'Create your own',
+  'эта открытка ждёт своего момента': 'this card is waiting for its moment',
+  'Загляните сюда чуть позже — и получите свой букет': 'Come back a little later to get your bouquet',
+  'Нажмите, чтобы открыть': 'Tap to open',
+  'Открытка создана в': 'This card was made with',
+  'соберите свою за пару минут': 'build your own in a couple of minutes',
+
+  'на этом устройстве': 'on this device',
+  'в вашем аккаунте': 'in your account',
+  'Открытки, которые вы собрали': 'The cards you\'ve made',
+  'Открытки сохранены за вашим аккаунтом и доступны с любого устройства.': 'Your cards are saved to your account and available from any device.',
+  'Пока пусто. Соберите первую открытку — она появится здесь.': 'Nothing here yet. Make your first card and it will show up here.',
+  'Открыть': 'Open',
+  'Ссылка': 'Link',
+  'Удалить': 'Delete',
+
+  'аккаунт': 'account',
+  'Вход': 'Log in',
+  'Чтобы открытки сохранялись за вами, а не только в этом браузере.': 'So your cards are saved to you, not just to this browser.',
+  'Email': 'Email',
+  'Пароль': 'Password',
+  'Нет аккаунта?': 'No account yet?',
+  'Зарегистрироваться': 'Sign up',
+  'Забыли пароль?': 'Forgot your password?',
+  'Восстановить': 'Reset it',
+  'Регистрация': 'Sign up',
+  'Займёт полминуты. Пароль — не короче 6 символов.': 'Takes half a minute. Password must be at least 6 characters.',
+  'Имя (необязательно)': 'Name (optional)',
+  'Создать аккаунт': 'Create account',
+  'Уже есть аккаунт?': 'Already have an account?',
+  'Добро пожаловать!': 'Welcome!',
+  'Аккаунт создан': 'Account created',
+  'Восстановление пароля': 'Password reset',
+  'Укажите email, на который зарегистрирован аккаунт — пришлём ссылку для сброса пароля.':
+    'Enter the email your account is registered with — we\'ll send a password reset link.',
+  'Отправить ссылку': 'Send link',
+  'Вспомнили пароль?': 'Remembered your password?',
+  'Новый пароль': 'New password',
+  'Придумайте новый пароль — не короче 6 символов.': 'Choose a new password — at least 6 characters.',
+  'Сохранить пароль': 'Save password',
+  'Пароль обновлён, вы вошли в аккаунт': 'Password updated, you\'re logged in',
+  'Вы вышли из аккаунта': 'You\'ve been logged out',
+
+  'документ': 'document',
+  'Конфиденциальность': 'Privacy',
+  'Условия использования': 'Terms of use',
+  'Политика конфиденциальности': 'Privacy Policy',
+  'Последнее обновление: черновик — перед публикацией согласуйте с юристом.': 'Last updated: draft — have a lawyer review it before publishing.',
+  'Какие данные мы собираем': 'What data we collect',
+  'Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.':
+    'Email and (optionally) name when you register an account. Passwords are stored hashed, never in plain text. The contents of the cards you build (text, flower choices, etc.) — only if you\'re logged in, so your "My cards" list survives across devices.',
+  'Как используются данные': 'How the data is used',
+  'Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.':
+    'To log you in and show your cards. We don\'t sell or share your email with third parties except where required by law.',
+  'Cookies и реклама': 'Cookies and advertising',
+  'Один технический cookie используется для авторизации (хранит подписанный токен сессии) и не используется для рекламного трекинга. Отдельно на сайте могут показываться рекламные баннеры (например, Google AdSense или Яндекс.Директ) — рекламная сеть может устанавливать собственные cookies для показа объявлений. Эту секцию нужно будет дополнить точной формулировкой из политики выбранной рекламной сети перед подключением реальной рекламы.':
+    'One technical cookie is used for authentication (holds a signed session token) and is not used for ad tracking. Separately, the site may show ad banners (e.g. Google AdSense or Yandex.Direct) — the ad network may set its own cookies to serve ads. This section will need the exact wording from the chosen ad network\'s policy before real ads go live.',
+  'Открытки без аккаунта': 'Cards without an account',
+  'Если вы не входите в аккаунт, вся открытка целиком хранится в самой ссылке (в её части после «#») — сервер её не видит и не сохраняет. Список «Мои открытки» в этом случае хранится только в вашем браузере (localStorage).':
+    'If you\'re not logged in, the entire card is stored inside the link itself (the part after "#") — the server never sees or stores it. In that case, your "My cards" list only lives in this browser (localStorage).',
+  'Удаление данных': 'Deleting your data',
+  'Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на': 'You can delete any card from your "My cards" list. To delete your whole account, email',
+  '(замените на реальный адрес поддержки перед запуском)': '(replace with a real support address before launch)',
+  'Сервис': 'The service',
+  'позволяет собрать виртуальный букет-открытку и отправить её ссылкой. Все цветы, вазы, конверты и фоны бесплатны. Сервис поддерживается показом рекламных баннеров.':
+    'lets you build a virtual bouquet card and send it as a link. All flowers, vases, envelopes and backgrounds are free. The service is supported by ad banners.',
+  'Реклама на сайте': 'Advertising',
+  'На страницах сайта могут показываться рекламные объявления от сторонних рекламных сетей (например, Google AdSense, Яндекс.Директ). Мы не отвечаем за содержание конкретных объявлений — их подбирает рекламная сеть.':
+    'Pages on this site may show ads from third-party ad networks (e.g. Google AdSense, Yandex.Direct). We are not responsible for the content of individual ads — they are selected by the ad network.',
+  'Ответственность': 'Responsibility',
+  'Вы несёте ответственность за содержание текста, который добавляете в открытку. Запрещено использовать сервис для рассылки незаконного, оскорбительного или спам-контента.':
+    'You are responsible for the content of the text you add to a card. Using the service to send unlawful, abusive, or spam content is prohibited.',
+  'Изменения': 'Changes',
+  'Мы можем обновлять эти условия; актуальная версия всегда доступна на этой странице.': 'We may update these terms; the current version is always available on this page.',
+
+  'Для': 'For',
+
+  'Букет цветов': 'Bouquet of flowers',
+  'соберите открытку с букетом': 'create a card with a bouquet',
+  'Дата открытия': 'Reveal date',
+  'Время открытия': 'Reveal time',
+  'соберите открытку за пару минут и отправьте ссылкой': 'build a card in a couple of minutes and send it as a link',
+  'Рекламный блок': 'Ad block',
+  'готово': 'done',
+  'Ссылка получилась длинной': 'The link turned out long',
+  'симв.': 'chars',
+  'некоторые мессенджеры или SMS могут обрезать её. Если получатель не сможет открыть, попробуйте отправить QR-код ниже или сократить текст пожелания.':
+    'some messengers or SMS may truncate it. If the recipient can\'t open it, try sending the QR code below or shortening your message.',
+  'Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.':
+    'The link is fully self-contained: the whole card is baked into it, no separate server is needed to open it.',
+  'Копия также сохранена в разделе «Мои открытки» вашего аккаунта.': 'A copy has also been saved to the "My cards" section of your account.',
+  'Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.': 'Log in so a copy is saved and doesn\'t get lost when you clear your browser.',
+  'Вам открытка с букетом 🌿': 'You\'ve got a card with a bouquet 🌿',
+  'Открытка для': 'A card for',
+  'Открытка': 'Card',
+  'Вам открытка от': 'You\'ve got a card from',
+  'кого-то особенного': 'someone special',
+  'Нажмите, чтобы открыть букет и пожелание.': 'Tap to open the bouquet and the message.',
+  'Откроется': 'Opens on',
+  'в': 'at',
+  'Открыть открытку': 'Open the card',
+  'от': 'from',
+  'Этот список хранится только в браузере на этом устройстве и пропадёт при очистке кэша.': 'This list is only stored in this browser on this device and will be lost if you clear your cache.',
+  'Войдите': 'Log in',
+  'чтобы открытки сохранялись за вами навсегда.': 'so your cards are saved to you for good.',
+  'Загрузка…': 'Loading…',
+  'Не удалось войти': 'Could not log in',
+  'Имя': 'Name',
+  'Не удалось зарегистрироваться': 'Could not sign up',
+  'Не удалось отправить ссылку': 'Could not send the link',
+  'Не удалось сохранить пароль': 'Could not save the password',
+  'Аккаунт': 'Account'
+};
+
 /* ====================== DATA ====================== */
 
-const BRAND = 'MySweetBouquet';
-const SITE_DESCRIPTION = 'Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.';
+const BRAND = 'VivoRose';
+const SITE_DESCRIPTION_RU = 'Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.';
+const SITE_DESCRIPTION_EN = 'Build a virtual bouquet, add a message, and send a card with a single link.';
+function siteDescription(){ return uiLang === 'ru' ? SITE_DESCRIPTION_RU : SITE_DESCRIPTION_EN; }
 
 // anim — какая анимация частиц играет при раскрытии открытки (см. dropParticles):
 // 'confetti' для праздничных поводов, 'hearts' для любви, 'petals' — мягкий вариант по умолчанию
 const OCCASIONS = [
-  {id:'foryou', label:'Для тебя', color:'#5C7457', stamp:'Для тебя', placeholder:'За то что ты есть!', anim:'petals'},
-  {id:'birthday', label:'День рождения', color:'#C97B86', stamp:'С днём рождения', placeholder:'Пусть этот год принесёт тебе только самые тёплые дни...', anim:'confetti'},
-  {id:'love', label:'Любовь', color:'#4B2E3D', stamp:'С любовью', placeholder:'Ты — моё самое доброе утро...', anim:'hearts'},
-  {id:'thanks', label:'Спасибо', color:'#B98A4A', stamp:'Спасибо тебе', placeholder:'Хочу, чтобы ты знал(а), как я ценю тебя...', anim:'petals'},
-  {id:'congrats', label:'Поздравляю', color:'#5C7457', stamp:'Поздравляю', placeholder:'Ты это заслужил(а). Горжусь тобой!', anim:'confetti'},
-  {id:'sorry', label:'Поддержка', color:'#8CA087', stamp:'Я рядом', placeholder:'Просто хочу, чтобы ты знал(а) — я рядом, что бы ни случилось.', anim:'petals'},
-  {id:'justbecause', label:'Просто так', color:'#C97B86', stamp:'Просто так', placeholder:'Без повода. Просто подумал(а) о тебе сегодня.', anim:'petals'}
+  {id:'foryou', label:{ru:'Для тебя',en:'For you'}, color:'#5C7457', stamp:{ru:'Для тебя',en:'For you'}, placeholder:{ru:'За то что ты есть!',en:'Just for being you!'}, anim:'petals'},
+  {id:'birthday', label:{ru:'День рождения',en:'Birthday'}, color:'#C97B86', stamp:{ru:'С днём рождения',en:'Happy Birthday'}, placeholder:{ru:'Пусть этот год принесёт тебе только самые тёплые дни...',en:'May this year bring you only warm, happy days...'}, anim:'confetti'},
+  {id:'love', label:{ru:'Любовь',en:'Love'}, color:'#4B2E3D', stamp:{ru:'С любовью',en:'With love'}, placeholder:{ru:'Ты — моё самое доброе утро...',en:'You are my favorite good morning...'}, anim:'hearts'},
+  {id:'thanks', label:{ru:'Спасибо',en:'Thank you'}, color:'#B98A4A', stamp:{ru:'Спасибо тебе',en:'Thank you'}, placeholder:{ru:'Хочу, чтобы ты знал(а), как я ценю тебя...',en:'I want you to know how much I appreciate you...'}, anim:'petals'},
+  {id:'congrats', label:{ru:'Поздравляю',en:'Congrats'}, color:'#5C7457', stamp:{ru:'Поздравляю',en:'Congratulations'}, placeholder:{ru:'Ты это заслужил(а). Горжусь тобой!',en:'You earned this. So proud of you!'}, anim:'confetti'},
+  {id:'sorry', label:{ru:'Поддержка',en:'Support'}, color:'#8CA087', stamp:{ru:'Я рядом',en:"I'm here"}, placeholder:{ru:'Просто хочу, чтобы ты знал(а) — я рядом, что бы ни случилось.',en:"Just want you to know — I'm here, no matter what."}, anim:'petals'},
+  {id:'justbecause', label:{ru:'Просто так',en:'Just because'}, color:'#C97B86', stamp:{ru:'Просто так',en:'Just because'}, placeholder:{ru:'Без повода. Просто подумал(а) о тебе сегодня.',en:'No reason. Just thought of you today.'}, anim:'petals'}
 ];
 
 const FLOWER_TYPES = [
-  {id:'rose', label:'Роза', colors:['#C97B86','#E3B7BE','#B23A4E','#F2E1C8']},
-  {id:'peony', label:'Пион', colors:['#F0C9D6','#E6A6BC','#FBEAD9','#D98CAE']},
-  {id:'tulip', label:'Тюльпан', colors:['#D65B4A','#E8A03A','#B23A4E','#F2E1C8']},
-  {id:'daisy', label:'Ромашка', colors:['#FBF7ED','#F2E1C8','#E3B7BE']},
-  {id:'carnation', label:'Гвоздика', colors:['#C97B86','#D65B4A','#F0C9D6','#FBF7ED']},
-  {id:'orchid', label:'Орхидея', colors:['#B27BC9','#E8D5F0','#7A4B96']},
-  {id:'sunflower', label:'Подсолнух', colors:['#F2C94C','#E8A03A']}
+  {id:'rose', label:{ru:'Роза',en:'Rose'}, colors:['#C97B86','#E3B7BE','#B23A4E','#F2E1C8']},
+  {id:'peony', label:{ru:'Пион',en:'Peony'}, colors:['#F0C9D6','#E6A6BC','#FBEAD9','#D98CAE']},
+  {id:'tulip', label:{ru:'Тюльпан',en:'Tulip'}, colors:['#D65B4A','#E8A03A','#B23A4E','#F2E1C8']},
+  {id:'daisy', label:{ru:'Ромашка',en:'Daisy'}, colors:['#FBF7ED','#F2E1C8','#E3B7BE']},
+  {id:'carnation', label:{ru:'Гвоздика',en:'Carnation'}, colors:['#C97B86','#D65B4A','#F0C9D6','#FBF7ED']},
+  {id:'orchid', label:{ru:'Орхидея',en:'Orchid'}, colors:['#B27BC9','#E8D5F0','#7A4B96']},
+  {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']}
 ];
 
 const VASES = [
-  {id:'A', label:'Глиняная'},
-  {id:'B', label:'Стеклянная'},
-  {id:'C', label:'Крафтовая'},
-  {id:'D', label:'Мраморная'}
+  {id:'A', label:{ru:'Глиняная',en:'Clay'}},
+  {id:'B', label:{ru:'Стеклянная',en:'Glass'}},
+  {id:'C', label:{ru:'Крафтовая',en:'Kraft-wrapped'}},
+  {id:'D', label:{ru:'Мраморная',en:'Marble'}}
 ];
 
 const RIBBONS = ['#B98A4A','#C97B86','#4B2E3D','#8CA087','#F2E1C8','#7e4ab9'];
 
 const ENVELOPES = [
-  {id:'classic', label:'Классика'},
-  {id:'kraft', label:'Крафт'},
-  {id:'seal', label:'С печатью'},
-  {id:'pattern', label:'Узорный'},
-  {id:'gold', label:'Золотой'}
+  {id:'classic', label:{ru:'Классика',en:'Classic'}},
+  {id:'kraft', label:{ru:'Крафт',en:'Kraft'}},
+  {id:'seal', label:{ru:'С печатью',en:'Wax seal'}},
+  {id:'pattern', label:{ru:'Узорный',en:'Patterned'}},
+  {id:'gold', label:{ru:'Золотой',en:'Gold'}}
 ];
 
 // фон сцены — виден и в предпросмотре при сборке, и в реальной открытке
@@ -47,10 +267,10 @@ const ENVELOPES = [
 // dark:true — фон достаточно тёмный, чтобы текст поверх него нужно было
 // перекрашивать в светлый (см. .stage-dark в main.css)
 const BACKGROUNDS = [
-  {id:'cream', label:'Кремовый', css:'linear-gradient(180deg,#F0E4CE,#FAF3E7)'},
-  {id:'blush', label:'Румяна', css:'linear-gradient(180deg,#F6DDE2,#FBEFE9)'},
-  {id:'sage', label:'Шалфей', css:'linear-gradient(180deg,#DCE6D6,#F2F5EE)'},
-  {id:'night', label:'Ночь', css:'linear-gradient(180deg,#1B2038,#3A3159)', dark:true}
+  {id:'cream', label:{ru:'Кремовый',en:'Cream'}, css:'linear-gradient(180deg,#F0E4CE,#FAF3E7)'},
+  {id:'blush', label:{ru:'Румяна',en:'Blush'}, css:'linear-gradient(180deg,#F6DDE2,#FBEFE9)'},
+  {id:'sage', label:{ru:'Шалфей',en:'Sage'}, css:'linear-gradient(180deg,#DCE6D6,#F2F5EE)'},
+  {id:'night', label:{ru:'Ночь',en:'Night'}, css:'linear-gradient(180deg,#1B2038,#3A3159)', dark:true}
 ];
 
 // Ссылка, где всё "зашито" через base64, растёт с длиной сообщения и количеством
@@ -482,7 +702,7 @@ function buildBouquetSVG(cfg, size){
   const bow = ribbonBow(cx, vaseTopY-2, cfg.ribbon);
   // мягкая тень под вазой — без неё композиция выглядела "приклеенной" к верху холста
   const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94}" rx="46" ry="7" fill="#000000" opacity=".08"/>`;
-  return `<svg viewBox="0 0 ${size} ${size*1.15}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;" role="img" aria-label="Букет цветов">
+  return `<svg viewBox="0 0 ${size} ${size*1.15}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;" role="img" aria-label="${t('Букет цветов')}">
     ${shadow}
     ${stemsSvg}
     ${headsSvg}
@@ -498,9 +718,9 @@ function buildBouquetSVG(cfg, size){
 // Audio) — раньше был один жёстко зашитый перезвон, теперь выбор влияет и на
 // набор нот, и на темп/тип волны, чтобы мелодии звучали заметно по-разному.
 const MELODIES = [
-  {id:'chime', label:'Перезвон', notes:[523.25,659.25,783.99,1046.5], wave:'sine', step:0.18},
-  {id:'bells', label:'Колокольчики', notes:[659.25,987.77,783.99,1318.51], wave:'triangle', step:0.14},
-  {id:'harp', label:'Арфа', notes:[392.00,493.88,587.33,698.46,880.00], wave:'sine', step:0.11}
+  {id:'chime', label:{ru:'Перезвон',en:'Chime'}, notes:[523.25,659.25,783.99,1046.5], wave:'sine', step:0.18},
+  {id:'bells', label:{ru:'Колокольчики',en:'Bells'}, notes:[659.25,987.77,783.99,1318.51], wave:'triangle', step:0.14},
+  {id:'harp', label:{ru:'Арфа',en:'Harp'}, notes:[392.00,493.88,587.33,698.46,880.00], wave:'sine', step:0.11}
 ];
 function melodyById(id){ return MELODIES.find(m=>m.id===id) || MELODIES[0]; }
 
@@ -541,18 +761,18 @@ window.activateOnKey = activateOnKey;
 function occasionById(id){ return OCCASIONS.find(o=>o.id===id) || OCCASIONS[0]; }
 
 function renderCreator(){
-  setPageTitle('Собрать открытку');
-  setMeta(`${BRAND} — соберите открытку с букетом`, SITE_DESCRIPTION);
+  setPageTitle(t('Собрать открытку'));
+  setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
   const occ = occasionById(state.occasion);
   document.getElementById('app').innerHTML = `
   ${topbarHtml()}
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>Соберите букет и оставьте послание, которое захочется сохранить</h1>
-        <p>Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.</p>
+        <h1>${t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
+        <p>${t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
       </div>
-      <div class="hero-stamp">${occ.stamp}</div>
+      <div class="hero-stamp">${tr(occ.stamp)}</div>
     </div>
 
     <div class="builder">
@@ -561,98 +781,98 @@ function renderCreator(){
         <div class="panel">
           <div class="panel-head">
             <span class="step-num">01</span>
-            <div><div class="panel-title">Повод</div><div class="panel-sub">задаёт тон открытки</div></div>
+            <div><div class="panel-title">${t('Повод')}</div><div class="panel-sub">${t('задаёт тон открытки')}</div></div>
           </div>
-          <div class="chip-row" id="occasionChips" role="group" aria-label="Повод открытки"></div>
+          <div class="chip-row" id="occasionChips" role="group" aria-label="${t('Повод')}"></div>
         </div>
 
         <div class="panel">
           <div class="panel-head">
             <span class="step-num">02</span>
-            <div><div class="panel-title">Букет</div><div class="panel-sub">форма вазы, цветы, лента</div></div>
+            <div><div class="panel-title">${t('Букет')}</div><div class="panel-sub">${t('форма вазы, цветы, лента')}</div></div>
           </div>
-          <span class="field-label" id="vaseLabel">Ваза</span>
+          <span class="field-label" id="vaseLabel">${t('Ваза')}</span>
           <div class="vase-row" id="vaseChips" role="group" aria-labelledby="vaseLabel" style="margin-bottom:20px;"></div>
-          <span class="field-label" id="flowersLabel">Цветы <span class="hint">отметьте нужные, выберите цвет и количество</span></span>
+          <span class="field-label" id="flowersLabel">${t('Цветы')} <span class="hint">${t('отметьте нужные, выберите цвет и количество')}</span></span>
           <div class="flower-row" id="flowerRows" role="group" aria-labelledby="flowersLabel"></div>
-          <span class="field-label" id="ribbonLabel" style="margin-top:18px;">Лента</span>
+          <span class="field-label" id="ribbonLabel" style="margin-top:18px;">${t('Лента')}</span>
           <div class="swatches" id="ribbonSwatches" role="group" aria-labelledby="ribbonLabel"></div>
         </div>
 
         <div class="panel">
           <div class="panel-head">
             <span class="step-num">03</span>
-            <div><div class="panel-title">Послание</div><div class="panel-sub">кому и что хотите сказать</div></div>
+            <div><div class="panel-title">${t('Послание')}</div><div class="panel-sub">${t('кому и что хотите сказать')}</div></div>
           </div>
           <div class="row2" style="margin-bottom:12px;">
-            <input type="text" id="toInput" placeholder="Имя получателя" aria-label="Имя получателя" maxlength="30" value="${esc(state.to)}">
-            <input type="text" id="fromInput" placeholder="Ваше имя" aria-label="Ваше имя" maxlength="30" value="${esc(state.from)}">
+            <input type="text" id="toInput" placeholder="${t('Имя получателя')}" aria-label="${t('Имя получателя')}" maxlength="30" value="${esc(state.to)}">
+            <input type="text" id="fromInput" placeholder="${t('Ваше имя')}" aria-label="${t('Ваше имя')}" maxlength="30" value="${esc(state.from)}">
           </div>
-          <label for="msgInput" class="sr-only">Текст пожелания</label>
-          <textarea id="msgInput" maxlength="400" placeholder="${occ.placeholder}">${esc(state.message)}</textarea>
+          <label for="msgInput" class="sr-only">${t('Текст пожелания')}</label>
+          <textarea id="msgInput" maxlength="400" placeholder="${tr(occ.placeholder)}">${esc(state.message)}</textarea>
           <div class="char-count" id="charCount">${state.message.length}/400</div>
         </div>
 
         <div class="panel">
           <div class="panel-head">
             <span class="step-num">04</span>
-            <div><div class="panel-title">Дополнительно</div><div class="panel-sub">необязательные штрихи</div></div>
+            <div><div class="panel-title">${t('Дополнительно')}</div><div class="panel-sub">${t('необязательные штрихи')}</div></div>
           </div>
           <div class="toggle-line">
             <div>
-              <div style="font-size:14px;" id="musicLabel">Нежная мелодия при открытии</div>
-              <div style="font-size:12px;opacity:.6;">Короткий сгенерированный перезвон, без сторонних файлов</div>
+              <div style="font-size:14px;" id="musicLabel">${t('Нежная мелодия при открытии')}</div>
+              <div style="font-size:12px;opacity:.6;">${t('Короткий сгенерированный перезвон, без сторонних файлов')}</div>
             </div>
             <div class="switch ${state.music?'on':''}" id="musicSwitch" tabindex="0" role="switch" aria-checked="${state.music}" aria-labelledby="musicLabel" onclick="toggleMusic()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
           </div>
           <div class="sub-inline ${state.music?'show':''}" id="melodyInline">
-            <span class="field-label" id="melodyLabel">Мелодия <span class="hint">нажмите, чтобы прослушать</span></span>
+            <span class="field-label" id="melodyLabel">${t('Мелодия')} <span class="hint">${t('нажмите, чтобы прослушать')}</span></span>
             <div class="chip-row" id="melodyChips" role="group" aria-labelledby="melodyLabel"></div>
           </div>
           <div class="toggle-line">
             <div>
-              <div style="font-size:14px;" id="revealLabel">Открыть в определённый момент</div>
-              <div style="font-size:12px;opacity:.6;">До этого времени получатель увидит только конверт</div>
+              <div style="font-size:14px;" id="revealLabel">${t('Открыть в определённый момент')}</div>
+              <div style="font-size:12px;opacity:.6;">${t('До этого времени получатель увидит только конверт')}</div>
             </div>
             <div class="switch ${state.revealEnabled?'on':''}" id="revealSwitch" tabindex="0" role="switch" aria-checked="${state.revealEnabled}" aria-labelledby="revealLabel" onclick="toggleReveal()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
           </div>
           <div class="date-inline ${state.revealEnabled?'show':''}" id="dateInline">
             <div class="row2">
-              <label for="revealDate" class="sr-only">Дата открытия</label>
+              <label for="revealDate" class="sr-only">${t('Дата открытия')}</label>
               <input type="date" id="revealDate" value="${state.revealDate}">
-              <label for="revealTime" class="sr-only">Время открытия</label>
+              <label for="revealTime" class="sr-only">${t('Время открытия')}</label>
               <input type="time" id="revealTime" value="${state.revealTime}">
             </div>
           </div>
         </div>
 
         <div class="cta-row">
-          <button class="btn btn-primary" onclick="saveAndShare()">Создать ссылку</button>
-          <button class="btn btn-ghost" onclick="randomizeBouquet()" style="display:inline-flex;align-items:center;gap:7px;">${diceIconSvg()}Собрать наугад</button>
+          <button class="btn btn-primary" onclick="saveAndShare()">${t('Создать ссылку')}</button>
+          <button class="btn btn-ghost" onclick="randomizeBouquet()" style="display:inline-flex;align-items:center;gap:7px;">${diceIconSvg()}${t('Собрать наугад')}</button>
         </div>
       </div>
 
       <div class="col-preview">
         <div class="preview-stage ${BACKGROUNDS.find(b=>b.id===state.background).dark?'stage-dark':''}" id="previewStage" style="background:${BACKGROUNDS.find(b=>b.id===state.background).css}">
           <div class="preview-card">
-            <div class="preview-occasion-band" id="pvBand" style="background:${occ.color}">${occ.stamp}</div>
+            <div class="preview-occasion-band" id="pvBand" style="background:${occ.color}">${tr(occ.stamp)}</div>
             <div class="preview-bouquet" id="pvBouquet"></div>
             <div class="preview-msg">
               <div class="to" id="pvTo"></div>
-              <div class="text" id="pvText">${esc(state.message)||'<span style=\"opacity:.4\">Текст пожелания появится здесь…</span>'}</div>
+              <div class="text" id="pvText">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
               <div class="from" id="pvFrom"></div>
             </div>
           </div>
-          <button class="pv-replay" onclick="replayPreview()">↻ Показать анимацию открытия</button>
-          <div class="preview-note">Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.</div>
+          <button class="pv-replay" onclick="replayPreview()">${t('↻ Показать анимацию открытия')}</button>
+          <div class="preview-note">${t('Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.')}</div>
 
           <div class="scene-picker">
-            <span class="field-label" id="bgLabel">Фон сцены <span class="hint">получатель увидит такой же</span></span>
+            <span class="field-label" id="bgLabel">${t('Фон сцены')} <span class="hint">${t('получатель увидит такой же')}</span></span>
             <div class="bg-row" id="bgChips" role="group" aria-labelledby="bgLabel"></div>
           </div>
 
           <div class="envelope-picker">
-            <span class="field-label" id="envLabel">Конверт</span>
+            <span class="field-label" id="envLabel">${t('Конверт')}</span>
             <div class="envelope-row" id="envelopeChips" role="group" aria-labelledby="envLabel"></div>
           </div>
         </div>
@@ -665,13 +885,13 @@ function renderCreator(){
 
   document.getElementById('occasionChips').innerHTML = OCCASIONS.map(o =>
     `<div class="chip ${state.occasion===o.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.occasion===o.id}" onclick="setOccasion('${o.id}')" onkeydown="activateOnKey(event)">
-      <span class="chip-ic">${occasionIconSvg(o.id, state.occasion===o.id ? '#FAF3E7' : o.color)}</span>${o.label}
+      <span class="chip-ic">${occasionIconSvg(o.id, state.occasion===o.id ? '#FAF3E7' : o.color)}</span>${tr(o.label)}
     </div>`
   ).join('');
 
   document.getElementById('vaseChips').innerHTML = VASES.map(v =>
-    `<div class="vase-chip ${state.vase===v.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.vase===v.id}" aria-label="${v.label}" onclick="setVase('${v.id}')" onkeydown="activateOnKey(event)">
-      ${vaseThumbSvg(v.id)}<span>${v.label}</span>
+    `<div class="vase-chip ${state.vase===v.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.vase===v.id}" aria-label="${tr(v.label)}" onclick="setVase('${v.id}')" onkeydown="activateOnKey(event)">
+      ${vaseThumbSvg(v.id)}<span>${tr(v.label)}</span>
     </div>`
   ).join('');
 
@@ -680,40 +900,41 @@ function renderCreator(){
     const on = !!sel;
     const color = sel ? sel.color : f.colors[0];
     const count = sel ? sel.count : 3;
+    const label = tr(f.label);
     return `<div class="flower-item ${on?'on':''}" id="fi-${f.id}">
-      <div class="fi-thumb" tabindex="0" role="button" aria-pressed="${on}" aria-label="${(on?'Убрать':'Добавить')+' '+f.label.toLowerCase()}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">
+      <div class="fi-thumb" tabindex="0" role="button" aria-pressed="${on}" aria-label="${(on?t('Убрать'):t('Добавить'))+' '+label.toLowerCase()}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">
         ${flowerThumbSvg(f.id, color)}
         ${on?'<div class="fi-badge">✓</div>':''}
       </div>
       <div class="fi-body">
-        <div class="fi-name" tabindex="0" role="button" aria-pressed="${on}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">${f.label}</div>
-        <div class="swatches">${f.colors.map((c,i)=>`<div class="swatch ${on&&color===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="Цвет ${f.label.toLowerCase()} №${i+1}" aria-pressed="${on&&color===c}" onclick="setFlowerColor('${f.id}','${c}')" onkeydown="activateOnKey(event)"></div>`).join('')}</div>
+        <div class="fi-name" tabindex="0" role="button" aria-pressed="${on}" onclick="toggleFlower('${f.id}')" onkeydown="activateOnKey(event)">${label}</div>
+        <div class="swatches">${f.colors.map((c,i)=>`<div class="swatch ${on&&color===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${label.toLowerCase()} №${i+1}" aria-pressed="${on&&color===c}" onclick="setFlowerColor('${f.id}','${c}')" onkeydown="activateOnKey(event)"></div>`).join('')}</div>
       </div>
       <div class="stepper">
-        <button aria-label="Меньше ${f.label.toLowerCase()}" onclick="stepFlower('${f.id}',-1)">−</button>
+        <button aria-label="${t('Меньше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',-1)">−</button>
         <span aria-live="polite">${count}</span>
-        <button aria-label="Больше ${f.label.toLowerCase()}" onclick="stepFlower('${f.id}',1)">+</button>
+        <button aria-label="${t('Больше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',1)">+</button>
       </div>
     </div>`;
   }).join('');
 
   document.getElementById('ribbonSwatches').innerHTML = RIBBONS.map((c,i)=>
-    `<div class="swatch ${state.ribbon===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="Цвет ленты №${i+1}" aria-pressed="${state.ribbon===c}" onclick="setRibbon('${c}')" onkeydown="activateOnKey(event)"></div>`
+    `<div class="swatch ${state.ribbon===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${t('Лента').toLowerCase()} №${i+1}" aria-pressed="${state.ribbon===c}" onclick="setRibbon('${c}')" onkeydown="activateOnKey(event)"></div>`
   ).join('');
 
   document.getElementById('bgChips').innerHTML = BACKGROUNDS.map(b=>
-    `<div class="bg-chip ${state.background===b.id?'active':''}" style="background:${b.css}" tabindex="0" role="button" aria-label="Фон: ${b.label}" aria-pressed="${state.background===b.id}" onclick="setBackground('${b.id}')" onkeydown="activateOnKey(event)"></div>`
+    `<div class="bg-chip ${state.background===b.id?'active':''}" style="background:${b.css}" tabindex="0" role="button" aria-label="${t('Фон сцены')}: ${tr(b.label)}" aria-pressed="${state.background===b.id}" onclick="setBackground('${b.id}')" onkeydown="activateOnKey(event)"></div>`
   ).join('');
 
   document.getElementById('envelopeChips').innerHTML = ENVELOPES.map(en=>
-    `<div class="envelope-chip ${state.envelope===en.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.envelope===en.id}" aria-label="${en.label}" onclick="setEnvelope('${en.id}')" onkeydown="activateOnKey(event)">
+    `<div class="envelope-chip ${state.envelope===en.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.envelope===en.id}" aria-label="${tr(en.label)}" onclick="setEnvelope('${en.id}')" onkeydown="activateOnKey(event)">
       ${envelopeSvg(occ.color, en.id, 44, 32)}
-      <span>${en.label}</span>
+      <span>${tr(en.label)}</span>
     </div>`
   ).join('');
 
   document.getElementById('melodyChips').innerHTML = MELODIES.map(m =>
-    `<div class="chip ${state.melody===m.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.melody===m.id}" onclick="setMelody('${m.id}')" onkeydown="activateOnKey(event)">${m.label}</div>`
+    `<div class="chip ${state.melody===m.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.melody===m.id}" onclick="setMelody('${m.id}')" onkeydown="activateOnKey(event)">${tr(m.label)}</div>`
   ).join('');
 
   document.getElementById('toInput').oninput = e=>{ state.to=e.target.value; updatePreviewText(); };
@@ -742,15 +963,19 @@ function topbarHtml(){
   return `<div class="topbar">
     <div class="brand" tabindex="0" role="link" onclick="goHome()" onkeydown="activateOnKey(event)" style="cursor:pointer;">${leafIcon()}${BRAND}</div>
     <div class="topbar-actions">
-      <a class="topbar-link" href="#mine">Мои открытки</a>
+      <div class="lang-switch" role="group" aria-label="Language / Язык">
+        <button class="lang-btn ${uiLang==='ru'?'active':''}" aria-pressed="${uiLang==='ru'}" onclick="setLang('ru')">RU</button>
+        <button class="lang-btn ${uiLang==='en'?'active':''}" aria-pressed="${uiLang==='en'}" onclick="setLang('en')">EN</button>
+      </div>
+      <a class="topbar-link" href="#mine">${t('Мои открытки')}</a>
       ${session.user
         ? `<button onclick="location.hash='account'">${esc(session.user.name || session.user.email.split('@')[0])}</button>`
-        : `<button onclick="location.hash='login'">Войти</button>`}
+        : `<button onclick="location.hash='login'">${t('Войти')}</button>`}
     </div>
   </div>`;
 }
 function footerHtml(){
-  return `${BRAND} — соберите открытку за пару минут и отправьте ссылкой · <a href="#privacy">Конфиденциальность</a> · <a href="#terms">Условия использования</a>`;
+  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a>`;
 }
 
 // Место под рекламные баннеры (Google AdSense / Яндекс.Директ). Сейчас — просто
@@ -761,9 +986,9 @@ function footerHtml(){
 //  3) разрешить домены AdSense в CSP (server/index.js: scriptSrc/frameSrc/connectSrc) — сейчас там только свой домен и cdnjs.
 // Без пункта 1 у вас не будет ни publisher ID, ни одобренного AdSense-аккаунта — это нужно завести самостоятельно.
 function adSlotHtml(id){
-  return `<div class="ad-slot" aria-label="Рекламный блок">
-    <div class="ad-slot-label">Реклама</div>
-    <div class="ad-slot-body" id="${id}">Место для рекламного баннера</div>
+  return `<div class="ad-slot" aria-label="${t('Рекламный блок')}">
+    <div class="ad-slot-label">${t('Реклама')}</div>
+    <div class="ad-slot-body" id="${id}">${t('Место для рекламного баннера')}</div>
   </div>`;
 }
 
@@ -802,11 +1027,11 @@ function renderPreviewBouquet(){
 }
 function updatePreviewText(){
   const occ = occasionById(state.occasion);
-  document.getElementById('pvTo').textContent = state.to ? `Для ${state.to}` : '';
-  document.getElementById('pvText').innerHTML = esc(state.message) || '<span style="opacity:.4">Текст пожелания появится здесь…</span>';
+  document.getElementById('pvTo').textContent = state.to ? `${t('Для')} ${state.to}` : '';
+  document.getElementById('pvText').innerHTML = esc(state.message) || `<span style="opacity:.4">${t('Текст пожелания появится здесь…')}</span>`;
   document.getElementById('pvFrom').textContent = state.from ? `— ${state.from}` : '';
   document.getElementById('pvBand').style.background = occ.color;
-  document.getElementById('pvBand').textContent = occ.stamp;
+  document.getElementById('pvBand').textContent = tr(occ.stamp);
 }
 
 function setOccasion(id){ state.occasion=id; renderCreator(); }
@@ -880,7 +1105,7 @@ function randomizeBouquet(){
     state.flowers.rose = {color:FLOWER_TYPES[0].colors[0], count:3};
   }
   renderCreator();
-  showToast('Собрали для вас новый вариант');
+  showToast(t('Собрали для вас новый вариант'));
 }
 
 function replayPreview(){
@@ -894,7 +1119,7 @@ function replayPreview(){
 
 function saveAndShare(){
   if(!state.message.trim()){
-    showToast('Добавьте текст пожелания');
+    showToast(t('Добавьте текст пожелания'));
     return;
   }
   const payload = {
@@ -910,7 +1135,7 @@ function saveAndShare(){
   try{
     encoded = encodeCardData(payload);
   }catch(e){
-    showToast('Не удалось создать ссылку, попробуйте ещё раз');
+    showToast(t('Не удалось создать ссылку, попробуйте ещё раз'));
     return;
   }
 
@@ -941,32 +1166,32 @@ function saveAndShare(){
 }
 
 function renderShareScreen(url){
-  setPageTitle('Открытка готова');
+  setPageTitle(t('Открытка готова'));
   const isLong = url.length > LINK_WARN_LENGTH;
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="share-wrap">
-      <div class="eyebrow">готово</div>
-      <h1 style="font-size:30px;margin-top:8px;">Открытка собрана</h1>
-      <p style="opacity:.75;margin-top:10px;">Отправьте эту ссылку — она откроется как раскрывающаяся открытка с вашим букетом.</p>
+      <div class="eyebrow">${t('готово')}</div>
+      <h1 style="font-size:30px;margin-top:8px;">${t('Открытка собрана')}</h1>
+      <p style="opacity:.75;margin-top:10px;">${t('Отправьте эту ссылку — она откроется как раскрывающаяся открытка с вашим букетом.')}</p>
       <div class="link-box">
-        <label for="shareUrl" class="sr-only">Ссылка на открытку</label>
+        <label for="shareUrl" class="sr-only">${t('Ссылка на открытку')}</label>
         <input type="text" id="shareUrl" readonly value="${url}">
-        <button class="btn btn-primary" style="padding:9px 16px;" onclick="copyLink()">Копировать</button>
+        <button class="btn btn-primary" style="padding:9px 16px;" onclick="copyLink()">${t('Копировать')}</button>
       </div>
-      ${isLong ? `<div class="link-warn">Ссылка получилась длинной (${url.length} симв.) — некоторые мессенджеры или SMS могут обрезать её. Если получатель не сможет открыть, попробуйте отправить QR-код ниже или сократить текст пожелания.</div>` : ''}
+      ${isLong ? `<div class="link-warn">${t('Ссылка получилась длинной')} (${url.length} ${t('симв.')}) — ${t('некоторые мессенджеры или SMS могут обрезать её. Если получатель не сможет открыть, попробуйте отправить QR-код ниже или сократить текст пожелания.')}</div>` : ''}
       ${shareChannelsHtml(url)}
       <div class="qr-box" id="qrBox">
         <div id="qrcode"></div>
-        <div class="qr-label">Отсканируйте с телефона</div>
+        <div class="qr-label">${t('Отсканируйте с телефона')}</div>
       </div>
       <div class="cta-row" style="justify-content:center;flex-wrap:wrap;">
-        <button class="btn btn-ghost" onclick="openView('${url}')">Предпросмотреть</button>
-        <button class="btn btn-ghost" id="shareBtn" onclick="shareLink('${url}')">Поделиться</button>
-        <button class="btn btn-ghost" onclick="renderCreator()">Редактировать</button>
-        <button class="btn btn-ghost" onclick="location.href=location.pathname">Создать ещё одну</button>
+        <button class="btn btn-ghost" onclick="openView('${url}')">${t('Предпросмотреть')}</button>
+        <button class="btn btn-ghost" id="shareBtn" onclick="shareLink('${url}')">${t('Поделиться')}</button>
+        <button class="btn btn-ghost" onclick="renderCreator()">${t('Редактировать')}</button>
+        <button class="btn btn-ghost" onclick="location.href=location.pathname">${t('Создать ещё одну')}</button>
       </div>
-      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.${session.user ? ' Копия также сохранена в разделе «Мои открытки» вашего аккаунта.' : ' Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.'}</p>
+      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${t('Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.')}${session.user ? ' '+t('Копия также сохранена в разделе «Мои открытки» вашего аккаунта.') : ' '+t('Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.')}</p>
     </div>
   `;
   try{
@@ -982,18 +1207,18 @@ function copyLink(){
   const el = document.getElementById('shareUrl');
   el.select(); el.setSelectionRange(0, 99999);
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(el.value).then(()=>showToast('Ссылка скопирована')).catch(()=>fallbackCopy());
+    navigator.clipboard.writeText(el.value).then(()=>showToast(t('Ссылка скопирована'))).catch(()=>fallbackCopy());
   } else {
     fallbackCopy();
   }
   function fallbackCopy(){
-    try{ document.execCommand('copy'); showToast('Ссылка скопирована'); }
-    catch(e){ showToast('Скопируйте ссылку вручную'); }
+    try{ document.execCommand('copy'); showToast(t('Ссылка скопирована')); }
+    catch(e){ showToast(t('Скопируйте ссылку вручную')); }
   }
 }
 function shareLink(url){
   if(navigator.share){
-    navigator.share({title: BRAND, text: 'Вам открытка с букетом 🌿', url}).catch(()=>{});
+    navigator.share({title: BRAND, text: t('Вам открытка с букетом 🌿'), url}).catch(()=>{});
   }
 }
 
@@ -1001,14 +1226,14 @@ function shareLink(url){
 // "Поделиться" выше) на десктопе часто просто недоступен, а получатели
 // в основном ждут именно WhatsApp/Telegram/VK, а не системный шеринг-лист.
 function shareChannelsHtml(url){
-  const text = 'Вам открытка с букетом 🌿';
+  const text = t('Вам открытка с букетом 🌿');
   const wa = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
   const tg = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text);
   const vk = 'https://vk.com/share.php?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(text);
   return `<div class="share-channels">
     <a class="share-channel-btn wa" href="${wa}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
     <a class="share-channel-btn tg" href="${tg}" target="_blank" rel="noopener noreferrer">Telegram</a>
-    <a class="share-channel-btn vk" href="${vk}" target="_blank" rel="noopener noreferrer">ВКонтакте</a>
+    <a class="share-channel-btn vk" href="${vk}" target="_blank" rel="noopener noreferrer">${uiLang==='ru'?'ВКонтакте':'VK'}</a>
   </div>`;
 }
 function openView(url){
@@ -1023,12 +1248,12 @@ function renderViewer(encodedData){
   try{
     rawData = decodeCardData(encodedData);
   }catch(e){
-    setPageTitle('Открытка не найдена');
+    setPageTitle(t('Открытка не найдена'));
     document.getElementById('app').innerHTML = `<div class="view-stage"><div style="text-align:center;">
-      <div class="eyebrow">не найдено</div>
-      <h1 style="font-size:24px;margin-top:8px;">Эта открытка недоступна</h1>
-      <p style="opacity:.7;margin-top:8px;">Ссылка повреждена или указана неверно.</p>
-      <button class="btn btn-primary" style="margin-top:20px;" onclick="goHome();">Создать свою</button>
+      <div class="eyebrow">${t('не найдено')}</div>
+      <h1 style="font-size:24px;margin-top:8px;">${t('Эта открытка недоступна')}</h1>
+      <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
+      <button class="btn btn-primary" style="margin-top:20px;" onclick="goHome();">${t('Создать свою')}</button>
     </div></div>`;
     return;
   }
@@ -1039,19 +1264,20 @@ function renderViewer(encodedData){
   const data = sanitizeCardData(rawData);
 
   const occ = occasionById(data.occasion);
-  setPageTitle(data.to ? `Открытка для ${data.to}` : 'Открытка');
-  setMeta(`Вам открытка от ${data.from || 'кого-то особенного'} 🌿`, `${occ.stamp}. Нажмите, чтобы открыть букет и пожелание.`);
+  setPageTitle(data.to ? `${t('Открытка для')} ${data.to}` : t('Открытка'));
+  setMeta(`${t('Вам открытка от')} ${data.from || t('кого-то особенного')} 🌿`, `${tr(occ.stamp)}. ${t('Нажмите, чтобы открыть букет и пожелание.')}`);
 
   const now = Date.now();
   const locked = data.reveal && new Date(data.reveal).getTime() > now;
+  const dateLocale = uiLang === 'ru' ? 'ru-RU' : 'en-US';
 
   if(locked){
     const bgLock = BACKGROUNDS.find(b=>b.id===data.background) || BACKGROUNDS[0];
     const d = new Date(data.reveal);
     document.getElementById('app').innerHTML = `<div class="view-stage ${bgLock.dark?'stage-dark':''}" style="background:${bgLock.css}"><div class="lock-screen">
-      <div class="eyebrow">эта открытка ждёт своего момента</div>
-      <h1 style="font-size:24px;margin-top:10px;">Откроется ${d.toLocaleDateString('ru-RU',{day:'numeric',month:'long'})} в ${d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</h1>
-      <p class="num" style="margin-top:14px;">Загляните сюда чуть позже — и получите свой букет</p>
+      <div class="eyebrow">${t('эта открытка ждёт своего момента')}</div>
+      <h1 style="font-size:24px;margin-top:10px;">${t('Откроется')} ${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long'})} ${t('в')} ${d.toLocaleTimeString(dateLocale,{hour:'2-digit',minute:'2-digit'})}</h1>
+      <p class="num" style="margin-top:14px;">${t('Загляните сюда чуть позже — и получите свой букет')}</p>
     </div></div>`;
     return;
   }
@@ -1060,16 +1286,16 @@ function renderViewer(encodedData){
   document.getElementById('app').innerHTML = `
     <div class="view-stage ${bg.dark?'stage-dark':''}" style="background:${bg.css}">
       <div class="view-card">
-        <button class="view-envelope" id="envelope" onclick="openCard(${data.music?'true':'false'}, '${data.occasion}', '${data.melody}')" aria-label="Открыть открытку">
+        <button class="view-envelope" id="envelope" onclick="openCard(${data.music?'true':'false'}, '${data.occasion}', '${data.melody}')" aria-label="${t('Открыть открытку')}">
           ${envelopeSvg(occ.color, data.envelope)}
-          <div class="view-open-hint">Нажмите, чтобы открыть</div>
+          <div class="view-open-hint">${t('Нажмите, чтобы открыть')}</div>
         </button>
         <div class="view-content" id="viewContent">
-          <div class="view-occasion-band" style="background:${occ.color}">${occ.stamp}</div>
+          <div class="view-occasion-band" style="background:${occ.color}">${tr(occ.stamp)}</div>
           <div class="view-bouquet-wrap" id="viewBouquet">${buildBouquetSVG(data, 300)}</div>
           <div class="view-msg" id="viewMsg">${esc(data.message)}</div>
-          <div class="view-from" id="viewFrom">${data.to ? `Для ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `от ${esc(data.from)}` : ''}</div>
-          <div class="view-footer">Открытка создана в <a href="#" onclick="goHome();return false;">${BRAND}</a> — соберите свою за пару минут</div>
+          <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
+          <div class="view-footer">${t('Открытка создана в')} <a href="#" onclick="goHome();return false;">${BRAND}</a> — ${t('соберите свою за пару минут')}</div>
         </div>
       </div>
     </div>
@@ -1217,16 +1443,16 @@ function dropParticles(style){
 /* ====================== MY CARDS (сервер для вошедших, localStorage для гостей) ====================== */
 
 async function renderMyCards(){
-  setPageTitle('Мои открытки');
+  setPageTitle(t('Мои открытки'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="mine-wrap">
-      <div class="eyebrow">${session.user ? 'в вашем аккаунте' : 'на этом устройстве'}</div>
-      <h1 style="font-size:26px;margin-top:8px;">Открытки, которые вы собрали</h1>
+      <div class="eyebrow">${session.user ? t('в вашем аккаунте') : t('на этом устройстве')}</div>
+      <h1 style="font-size:26px;margin-top:8px;">${t('Открытки, которые вы собрали')}</h1>
       <div class="mine-note">${session.user
-        ? 'Открытки сохранены за вашим аккаунтом и доступны с любого устройства.'
-        : 'Этот список хранится только в браузере на этом устройстве и пропадёт при очистке кэша. <a href="#login">Войдите</a>, чтобы открытки сохранялись за вами навсегда.'}</div>
-      <div class="mine-list" id="mineList"><p style="opacity:.6;">Загрузка…</p></div>
+        ? t('Открытки сохранены за вашим аккаунтом и доступны с любого устройства.')
+        : `${t('Этот список хранится только в браузере на этом устройстве и пропадёт при очистке кэша.')} <a href="#login">${t('Войдите')}</a>, ${t('чтобы открытки сохранялись за вами навсегда.')}`}</div>
+      <div class="mine-list" id="mineList"><p style="opacity:.6;">${t('Загрузка…')}</p></div>
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
   `;
@@ -1245,22 +1471,23 @@ async function renderMyCards(){
   const wrap = document.getElementById('mineList');
   if(!wrap) return; // пользователь мог уйти со страницы, пока шёл запрос
   if(!list.length){
-    wrap.innerHTML = `<div class="mine-empty">Пока пусто. Соберите первую открытку — она появится здесь.</div>`;
+    wrap.innerHTML = `<div class="mine-empty">${t('Пока пусто. Соберите первую открытку — она появится здесь.')}</div>`;
     return;
   }
+  const dateLocale = uiLang === 'ru' ? 'ru-RU' : 'en-US';
   wrap.innerHTML = list.map(item=>{
     const occ = occasionById(item.occasion) || OCCASIONS[0];
     const d = new Date(item.createdAt);
     return `<div class="mine-row">
       <div class="mine-dot" style="background:${occ.color}"></div>
       <div class="mine-info">
-        <div class="mi-to">${item.to ? 'Для '+esc(item.to) : occ.label}</div>
-        <div class="mi-date">${d.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'})}</div>
+        <div class="mi-to">${item.to ? t('Для')+' '+esc(item.to) : tr(occ.label)}</div>
+        <div class="mi-date">${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long',year:'numeric'})}</div>
       </div>
       <div class="mine-actions">
-        <button onclick="openCardLink('${item.data}')">Открыть</button>
-        <button onclick="copyMineLink('${item.data}')">Ссылка</button>
-        <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'})">Удалить</button>
+        <button onclick="openCardLink('${item.data}')">${t('Открыть')}</button>
+        <button onclick="copyMineLink('${item.data}')">${t('Ссылка')}</button>
+        <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'})">${t('Удалить')}</button>
       </div>
     </div>`;
   }).join('');
@@ -1276,7 +1503,7 @@ function openCardLink(encodedData){
 function copyMineLink(encodedData){
   const url = location.origin + location.pathname + '?data=' + encodedData;
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(()=>showToast('Ссылка скопирована'));
+    navigator.clipboard.writeText(url).then(()=>showToast(t('Ссылка скопирована')));
   } else {
     showToast(url);
   }
@@ -1286,37 +1513,37 @@ async function deleteMineCard(id, isServer){
     try{
       const res = await fetch('/api/cards/'+encodeURIComponent(id), { method:'DELETE' });
       if(!res.ok) throw new Error();
-    }catch(e){ showToast('Не удалось удалить открытку'); return; }
+    }catch(e){ showToast(t('Не удалось удалить открытку')); return; }
   } else {
     let list = JSON.parse(localStorage.getItem('my-cards') || '[]');
     list = list.filter(item => item.id !== id);
     localStorage.setItem('my-cards', JSON.stringify(list));
   }
   renderMyCards(); // перерисовать список без удалённой открытки
-  showToast('Открытка удалена');
+  showToast(t('Открытка удалена'));
 }
 
 /* ====================== АККАУНТ (вход/регистрация/профиль) ====================== */
 
 function renderLogin(){
   if(session.user){ goHome(); return; }
-  setPageTitle('Вход');
+  setPageTitle(t('Вход'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="auth-wrap">
-      <div class="eyebrow">аккаунт</div>
-      <h1 style="font-size:26px;margin-top:8px;">Вход</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">Чтобы открытки сохранялись за вами, а не только в этом браузере.</p>
+      <div class="eyebrow">${t('аккаунт')}</div>
+      <h1 style="font-size:26px;margin-top:8px;">${t('Вход')}</h1>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Чтобы открытки сохранялись за вами, а не только в этом браузере.')}</p>
       <form id="loginForm" class="auth-form">
-        <label class="sr-only" for="loginEmail">Email</label>
-        <input type="email" id="loginEmail" placeholder="Email" required autocomplete="username">
-        <label class="sr-only" for="loginPassword">Пароль</label>
-        <input type="password" id="loginPassword" placeholder="Пароль" required autocomplete="current-password">
+        <label class="sr-only" for="loginEmail">${t('Email')}</label>
+        <input type="email" id="loginEmail" placeholder="${t('Email')}" required autocomplete="username">
+        <label class="sr-only" for="loginPassword">${t('Пароль')}</label>
+        <input type="password" id="loginPassword" placeholder="${t('Пароль')}" required autocomplete="current-password">
         <div class="auth-error" id="loginError"></div>
-        <button class="btn btn-primary" type="submit" style="width:100%;">Войти</button>
+        <button class="btn btn-primary" type="submit" style="width:100%;">${t('Войти')}</button>
       </form>
-      <p class="auth-switch">Нет аккаунта? <a href="#register">Зарегистрироваться</a></p>
-      <p class="auth-switch">Забыли пароль? <a href="#forgot">Восстановить</a></p>
+      <p class="auth-switch">${t('Нет аккаунта?')} <a href="#register">${t('Зарегистрироваться')}</a></p>
+      <p class="auth-switch">${t('Забыли пароль?')} <a href="#forgot">${t('Восстановить')}</a></p>
     </div>
   `;
   document.getElementById('loginForm').onsubmit = async (e) => {
@@ -1326,11 +1553,11 @@ function renderLogin(){
     const errEl = document.getElementById('loginError');
     errEl.textContent = '';
     try{
-      const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+      const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password }) });
       const json = await res.json();
-      if(!res.ok) throw new Error(json.error || 'Не удалось войти');
+      if(!res.ok) throw new Error(json.error || t('Не удалось войти'));
       session.user = json.user;
-      showToast('Добро пожаловать!');
+      showToast(t('Добро пожаловать!'));
       const dest = pendingRoute; pendingRoute = null;
       location.hash = dest || '';
       renderRoute();
@@ -1342,24 +1569,24 @@ function renderLogin(){
 
 function renderRegister(){
   if(session.user){ goHome(); return; }
-  setPageTitle('Регистрация');
+  setPageTitle(t('Регистрация'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="auth-wrap">
-      <div class="eyebrow">аккаунт</div>
-      <h1 style="font-size:26px;margin-top:8px;">Регистрация</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">Займёт полминуты. Пароль — не короче 6 символов.</p>
+      <div class="eyebrow">${t('аккаунт')}</div>
+      <h1 style="font-size:26px;margin-top:8px;">${t('Регистрация')}</h1>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Займёт полминуты. Пароль — не короче 6 символов.')}</p>
       <form id="registerForm" class="auth-form">
-        <label class="sr-only" for="regName">Имя</label>
-        <input type="text" id="regName" placeholder="Имя (необязательно)" maxlength="60" autocomplete="name">
-        <label class="sr-only" for="regEmail">Email</label>
-        <input type="email" id="regEmail" placeholder="Email" required autocomplete="username">
-        <label class="sr-only" for="regPassword">Пароль</label>
-        <input type="password" id="regPassword" placeholder="Пароль" required minlength="6" autocomplete="new-password">
+        <label class="sr-only" for="regName">${t('Имя')}</label>
+        <input type="text" id="regName" placeholder="${t('Имя (необязательно)')}" maxlength="60" autocomplete="name">
+        <label class="sr-only" for="regEmail">${t('Email')}</label>
+        <input type="email" id="regEmail" placeholder="${t('Email')}" required autocomplete="username">
+        <label class="sr-only" for="regPassword">${t('Пароль')}</label>
+        <input type="password" id="regPassword" placeholder="${t('Пароль')}" required minlength="6" autocomplete="new-password">
         <div class="auth-error" id="registerError"></div>
-        <button class="btn btn-primary" type="submit" style="width:100%;">Создать аккаунт</button>
+        <button class="btn btn-primary" type="submit" style="width:100%;">${t('Создать аккаунт')}</button>
       </form>
-      <p class="auth-switch">Уже есть аккаунт? <a href="#login">Войти</a></p>
+      <p class="auth-switch">${t('Уже есть аккаунт?')} <a href="#login">${t('Войти')}</a></p>
     </div>
   `;
   document.getElementById('registerForm').onsubmit = async (e) => {
@@ -1370,11 +1597,11 @@ function renderRegister(){
     const errEl = document.getElementById('registerError');
     errEl.textContent = '';
     try{
-      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password, name }) });
+      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password, name }) });
       const json = await res.json();
-      if(!res.ok) throw new Error(json.error || 'Не удалось зарегистрироваться');
+      if(!res.ok) throw new Error(json.error || t('Не удалось зарегистрироваться'));
       session.user = json.user;
-      showToast('Аккаунт создан');
+      showToast(t('Аккаунт создан'));
       const dest = pendingRoute; pendingRoute = null;
       location.hash = dest || '';
       renderRoute();
@@ -1386,21 +1613,21 @@ function renderRegister(){
 
 function renderForgotPassword(){
   if(session.user){ goHome(); return; }
-  setPageTitle('Восстановление пароля');
+  setPageTitle(t('Восстановление пароля'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="auth-wrap">
-      <div class="eyebrow">аккаунт</div>
-      <h1 style="font-size:26px;margin-top:8px;">Восстановление пароля</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">Укажите email, на который зарегистрирован аккаунт — пришлём ссылку для сброса пароля.</p>
+      <div class="eyebrow">${t('аккаунт')}</div>
+      <h1 style="font-size:26px;margin-top:8px;">${t('Восстановление пароля')}</h1>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Укажите email, на который зарегистрирован аккаунт — пришлём ссылку для сброса пароля.')}</p>
       <form id="forgotForm" class="auth-form">
-        <label class="sr-only" for="forgotEmail">Email</label>
-        <input type="email" id="forgotEmail" placeholder="Email" required autocomplete="username">
+        <label class="sr-only" for="forgotEmail">${t('Email')}</label>
+        <input type="email" id="forgotEmail" placeholder="${t('Email')}" required autocomplete="username">
         <div class="auth-error" id="forgotError"></div>
         <div class="auth-note" id="forgotNote" style="display:none;"></div>
-        <button class="btn btn-primary" type="submit" style="width:100%;" id="forgotSubmit">Отправить ссылку</button>
+        <button class="btn btn-primary" type="submit" style="width:100%;" id="forgotSubmit">${t('Отправить ссылку')}</button>
       </form>
-      <p class="auth-switch">Вспомнили пароль? <a href="#login">Войти</a></p>
+      <p class="auth-switch">${t('Вспомнили пароль?')} <a href="#login">${t('Войти')}</a></p>
     </div>
   `;
   document.getElementById('forgotForm').onsubmit = async (e) => {
@@ -1412,9 +1639,9 @@ function renderForgotPassword(){
     errEl.textContent = ''; noteEl.style.display = 'none';
     btn.disabled = true;
     try{
-      const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+      const res = await fetch('/api/auth/forgot-password', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email }) });
       const json = await res.json();
-      if(!res.ok) throw new Error(json.error || 'Не удалось отправить ссылку');
+      if(!res.ok) throw new Error(json.error || t('Не удалось отправить ссылку'));
       noteEl.textContent = json.message;
       noteEl.style.display = 'block';
       e.target.reset();
@@ -1427,18 +1654,18 @@ function renderForgotPassword(){
 }
 
 function renderResetPassword(token){
-  setPageTitle('Новый пароль');
+  setPageTitle(t('Новый пароль'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="auth-wrap">
-      <div class="eyebrow">аккаунт</div>
-      <h1 style="font-size:26px;margin-top:8px;">Новый пароль</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">Придумайте новый пароль — не короче 6 символов.</p>
+      <div class="eyebrow">${t('аккаунт')}</div>
+      <h1 style="font-size:26px;margin-top:8px;">${t('Новый пароль')}</h1>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Придумайте новый пароль — не короче 6 символов.')}</p>
       <form id="resetForm" class="auth-form">
-        <label class="sr-only" for="resetPassword">Новый пароль</label>
-        <input type="password" id="resetPassword" placeholder="Новый пароль" required minlength="6" autocomplete="new-password">
+        <label class="sr-only" for="resetPassword">${t('Новый пароль')}</label>
+        <input type="password" id="resetPassword" placeholder="${t('Новый пароль')}" required minlength="6" autocomplete="new-password">
         <div class="auth-error" id="resetError"></div>
-        <button class="btn btn-primary" type="submit" style="width:100%;">Сохранить пароль</button>
+        <button class="btn btn-primary" type="submit" style="width:100%;">${t('Сохранить пароль')}</button>
       </form>
     </div>
   `;
@@ -1448,11 +1675,11 @@ function renderResetPassword(token){
     const errEl = document.getElementById('resetError');
     errEl.textContent = '';
     try{
-      const res = await fetch('/api/auth/reset-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token, password }) });
+      const res = await fetch('/api/auth/reset-password', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ token, password }) });
       const json = await res.json();
-      if(!res.ok) throw new Error(json.error || 'Не удалось сохранить пароль');
+      if(!res.ok) throw new Error(json.error || t('Не удалось сохранить пароль'));
       session.user = json.user;
-      showToast('Пароль обновлён, вы вошли в аккаунт');
+      showToast(t('Пароль обновлён, вы вошли в аккаунт'));
       goHome();
     }catch(err){
       errEl.textContent = err.message;
@@ -1462,15 +1689,15 @@ function renderResetPassword(token){
 
 function renderAccount(){
   if(!session.user){ pendingRoute = 'account'; location.hash = 'login'; return; }
-  setPageTitle('Аккаунт');
+  setPageTitle(t('Аккаунт'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="auth-wrap" style="max-width:520px;">
-      <div class="eyebrow">аккаунт</div>
+      <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${esc(session.user.name || session.user.email)}</h1>
       <p style="opacity:.6;margin-top:4px;font-size:13.5px;">${esc(session.user.email)}</p>
 
-      <button class="btn btn-ghost" style="margin-top:22px;" onclick="doLogout()">Выйти из аккаунта</button>
+      <button class="btn btn-ghost" style="margin-top:22px;" onclick="doLogout()">${t('Выйти из аккаунта')}</button>
     </div>
   `;
 }
@@ -1478,60 +1705,60 @@ function renderAccount(){
 async function doLogout(){
   try{ await fetch('/api/auth/logout', { method:'POST' }); }catch(e){}
   session.user = null;
-  showToast('Вы вышли из аккаунта');
+  showToast(t('Вы вышли из аккаунта'));
   goHome();
 }
 
 /* ====================== ЮРИДИЧЕСКИЕ СТРАНИЦЫ ====================== */
 
 function renderPrivacy(){
-  setPageTitle('Конфиденциальность');
+  setPageTitle(t('Конфиденциальность'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="legal-wrap">
-      <div class="eyebrow">документ</div>
-      <h1 style="font-size:28px;margin-top:8px;">Политика конфиденциальности</h1>
-      <p class="legal-updated">Последнее обновление: черновик — перед публикацией согласуйте с юристом.</p>
+      <div class="eyebrow">${t('документ')}</div>
+      <h1 style="font-size:28px;margin-top:8px;">${t('Политика конфиденциальности')}</h1>
+      <p class="legal-updated">${t('Последнее обновление: черновик — перед публикацией согласуйте с юристом.')}</p>
 
-      <h2>Какие данные мы собираем</h2>
-      <p>Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.</p>
+      <h2>${t('Какие данные мы собираем')}</h2>
+      <p>${t('Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.')}</p>
 
-      <h2>Как используются данные</h2>
-      <p>Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.</p>
+      <h2>${t('Как используются данные')}</h2>
+      <p>${t('Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.')}</p>
 
-      <h2>Cookies и реклама</h2>
-      <p>Один технический cookie используется для авторизации (хранит подписанный токен сессии) и не используется для рекламного трекинга. Отдельно на сайте могут показываться рекламные баннеры (например, Google AdSense или Яндекс.Директ) — рекламная сеть может устанавливать собственные cookies для показа объявлений. Эту секцию нужно будет дополнить точной формулировкой из политики выбранной рекламной сети перед подключением реальной рекламы.</p>
+      <h2>${t('Cookies и реклама')}</h2>
+      <p>${t('Один технический cookie используется для авторизации (хранит подписанный токен сессии) и не используется для рекламного трекинга. Отдельно на сайте могут показываться рекламные баннеры (например, Google AdSense или Яндекс.Директ) — рекламная сеть может устанавливать собственные cookies для показа объявлений. Эту секцию нужно будет дополнить точной формулировкой из политики выбранной рекламной сети перед подключением реальной рекламы.')}</p>
 
-      <h2>Открытки без аккаунта</h2>
-      <p>Если вы не входите в аккаунт, вся открытка целиком хранится в самой ссылке (в её части после «#») — сервер её не видит и не сохраняет. Список «Мои открытки» в этом случае хранится только в вашем браузере (localStorage).</p>
+      <h2>${t('Открытки без аккаунта')}</h2>
+      <p>${t('Если вы не входите в аккаунт, вся открытка целиком хранится в самой ссылке (в её части после «#») — сервер её не видит и не сохраняет. Список «Мои открытки» в этом случае хранится только в вашем браузере (localStorage).')}</p>
 
-      <h2>Удаление данных</h2>
-      <p>Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на <a href="mailto:support@mysweetbouquet.example">support@mysweetbouquet.example</a> (замените на реальный адрес поддержки перед запуском).</p>
+      <h2>${t('Удаление данных')}</h2>
+      <p>${t('Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на')} <a href="mailto:support@vivorose.example">support@vivorose.example</a> ${t('(замените на реальный адрес поддержки перед запуском)')}.</p>
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
   `;
 }
 
 function renderTerms(){
-  setPageTitle('Условия использования');
+  setPageTitle(t('Условия использования'));
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="legal-wrap">
-      <div class="eyebrow">документ</div>
-      <h1 style="font-size:28px;margin-top:8px;">Условия использования</h1>
-      <p class="legal-updated">Последнее обновление: черновик — перед публикацией согласуйте с юристом.</p>
+      <div class="eyebrow">${t('документ')}</div>
+      <h1 style="font-size:28px;margin-top:8px;">${t('Условия использования')}</h1>
+      <p class="legal-updated">${t('Последнее обновление: черновик — перед публикацией согласуйте с юристом.')}</p>
 
-      <h2>Сервис</h2>
-      <p>${BRAND} позволяет собрать виртуальный букет-открытку и отправить её ссылкой. Все цветы, вазы, конверты и фоны бесплатны. Сервис поддерживается показом рекламных баннеров.</p>
+      <h2>${t('Сервис')}</h2>
+      <p>${BRAND} ${t('позволяет собрать виртуальный букет-открытку и отправить её ссылкой. Все цветы, вазы, конверты и фоны бесплатны. Сервис поддерживается показом рекламных баннеров.')}</p>
 
-      <h2>Реклама</h2>
-      <p>На страницах сайта могут показываться рекламные объявления от сторонних рекламных сетей (например, Google AdSense, Яндекс.Директ). Мы не отвечаем за содержание конкретных объявлений — их подбирает рекламная сеть.</p>
+      <h2>${t('Реклама на сайте')}</h2>
+      <p>${t('На страницах сайта могут показываться рекламные объявления от сторонних рекламных сетей (например, Google AdSense, Яндекс.Директ). Мы не отвечаем за содержание конкретных объявлений — их подбирает рекламная сеть.')}</p>
 
-      <h2>Ответственность</h2>
-      <p>Вы несёте ответственность за содержание текста, который добавляете в открытку. Запрещено использовать сервис для рассылки незаконного, оскорбительного или спам-контента.</p>
+      <h2>${t('Ответственность')}</h2>
+      <p>${t('Вы несёте ответственность за содержание текста, который добавляете в открытку. Запрещено использовать сервис для рассылки незаконного, оскорбительного или спам-контента.')}</p>
 
-      <h2>Изменения</h2>
-      <p>Мы можем обновлять эти условия; актуальная версия всегда доступна на этой странице.</p>
+      <h2>${t('Изменения')}</h2>
+      <p>${t('Мы можем обновлять эти условия; актуальная версия всегда доступна на этой странице.')}</p>
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
   `;
@@ -1569,6 +1796,7 @@ function goHome(){
 }
 
 async function bootstrap(){
+  document.documentElement.lang = uiLang; // статичный <html lang> в index.html — только запасной вариант до этой строки
   await loadMe();
   window.addEventListener('hashchange', renderRoute);
   window.addEventListener('popstate', renderRoute); // кнопки назад/вперёд для ?data=-ссылок

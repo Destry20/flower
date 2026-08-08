@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html lang="ru">
+<!-- lang/title/meta ниже — англоязычные по умолчанию (это же поведение задаёт
+     detectLang() в main.js для любого браузера, чей язык не начинается с "ru").
+     После загрузки JS сам переключает <html lang>, <title> и meta на русский
+     для русскоязычных браузеров — см. bootstrap()/setLang() в public/script/main.js.
+     Для ссылок на конкретную открытку (?data=...) сервер отдаёт свои, уже
+     персонализированные meta по Accept-Language — см. server/index.js. -->
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MySweetBouquet — открытка с виртуальным букетом</title>
-<meta name="description" content="Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой. Бесплатно, регистрация не обязательна.">
+<title>VivoRose — a card with a virtual bouquet</title>
+<meta name="description" content="Build a virtual bouquet, add a message, and send a card with a single link. Free, no registration required.">
 
 <!-- Favicon: тот же лист, что и в шапке сайта, зашитый как inline SVG —
      отдельный файл иконки не нужен -->
@@ -22,20 +28,20 @@
      Значения title/description обновляются на лету скриптом (см. setMeta в main.js)
      для страниц создания открытки и просмотра готовой открытки. -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="MySweetBouquet">
-<meta property="og:title" content="MySweetBouquet — открытка с виртуальным букетом">
-<meta property="og:description" content="Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.">
+<meta property="og:site_name" content="VivoRose">
+<meta property="og:title" content="VivoRose — a card with a virtual bouquet">
+<meta property="og:description" content="Build a virtual bouquet, add a message, and send a card with a single link.">
 <meta property="og:url" content="">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="MySweetBouquet — открытка с виртуальным букетом">
-<meta name="twitter:description" content="Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.">
+<meta name="twitter:title" content="VivoRose — a card with a virtual bouquet">
+<meta name="twitter:description" content="Build a virtual bouquet, add a message, and send a card with a single link.">
 
 <link rel="stylesheet" href="style/main.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-<div id="app"><div class="boot-loading">Загрузка…</div></div>
+<div id="app"><div class="boot-loading">Loading…</div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="script/main.js"></script>
 </body>

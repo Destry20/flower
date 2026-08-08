@@ -5,6 +5,7 @@
 // печатается в консоль сервера — этого достаточно для разработки и тестов,
 // но реальным пользователям писем так не доставить.
 const nodemailer = require('nodemailer');
+const { STRINGS } = require('./i18n');
 
 let transporter = null;
 function getTransporter(){
@@ -19,7 +20,8 @@ function getTransporter(){
   return transporter;
 }
 
-async function sendPasswordResetEmail(to, resetUrl){
+async function sendPasswordResetEmail(to, resetUrl, lang){
+  const strings = STRINGS[lang] || STRINGS.ru;
   const t = getTransporter();
   if(!t){
     console.log(`\n[mailer] SMTP не настроен — письмо не отправлено. Ссылка для сброса пароля (${to}):\n${resetUrl}\n`);
@@ -28,9 +30,9 @@ async function sendPasswordResetEmail(to, resetUrl){
   await t.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to,
-    subject: 'Восстановление пароля — MySweetBouquet',
-    text: `Чтобы задать новый пароль, перейдите по ссылке: ${resetUrl}\n\nЕсли вы не запрашивали сброс пароля, просто проигнорируйте это письмо.`,
-    html: `<p>Чтобы задать новый пароль, перейдите по ссылке:</p><p><a href="${resetUrl}">${resetUrl}</a></p><p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>`
+    subject: strings.mailSubject,
+    text: strings.mailBodyText(resetUrl),
+    html: strings.mailBodyHtml(resetUrl)
   });
 }
 
