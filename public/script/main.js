@@ -266,11 +266,11 @@ const OCCASIONS = [
 ];
 
 const FLOWER_TYPES = [
-  {id:'rose', label:{ru:'Роза',en:'Rose'}, colors:['#C97B86','#E3B7BE','#B23A4E','#F2E1C8']},
+  {id:'rose', label:{ru:'Роза',en:'Rose'}, colors:['#C97B86','#E3B7BE','#B23A4E','#E6C88A']},
   {id:'peony', label:{ru:'Пион',en:'Peony'}, colors:['#F0C9D6','#E6A6BC','#FBEAD9','#D98CAE']},
-  {id:'tulip', label:{ru:'Тюльпан',en:'Tulip'}, colors:['#D65B4A','#E8A03A','#B23A4E','#F2E1C8']},
-  {id:'daisy', label:{ru:'Ромашка',en:'Daisy'}, colors:['#FBF7ED','#F2E1C8','#E3B7BE']},
-  {id:'carnation', label:{ru:'Гвоздика',en:'Carnation'}, colors:['#C97B86','#D65B4A','#F0C9D6','#FBF7ED']},
+  {id:'tulip', label:{ru:'Тюльпан',en:'Tulip'}, colors:['#D65B4A','#E8A03A','#B23A4E','#E6C88A']},
+  {id:'daisy', label:{ru:'Ромашка',en:'Daisy'}, colors:['#FFFFFF','#E6C88A','#E3B7BE']},
+  {id:'carnation', label:{ru:'Гвоздика',en:'Carnation'}, colors:['#C97B86','#D65B4A','#F0C9D6','#FFFFFF']},
   {id:'orchid', label:{ru:'Орхидея',en:'Orchid'}, colors:['#B27BC9','#E8D5F0','#7A4B96']},
   {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']}
 ];
@@ -737,10 +737,21 @@ function buildBouquetSVG(cfg, size){
   const bow = ribbonBow(cx, vaseTopY-2, cfg.ribbon);
   // мягкая тень под вазой — без неё композиция выглядела "приклеенной" к верху холста
   const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94}" rx="46" ry="7" fill="#000000" opacity=".08"/>`;
+  // Мягкая тень под каждой головкой цветка — раньше светлые/кремовые лепестки
+  // (белая ромашка/гвоздика и т.п.) визуально сливались с фоном карточки,
+  // у которой похожий тёплый кремовый тон. Тень даёт край независимо от того,
+  // насколько светлый выбран цвет — работает для любого оттенка, а не только
+  // для конкретных "проблемных" цветов.
+  const headsFilterId = 'bqShadow' + Math.random().toString(36).slice(2,8);
   return `<svg viewBox="0 0 ${size} ${size*1.15}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;" role="img" aria-label="${t('Букет цветов')}">
+    <defs>
+      <filter id="${headsFilterId}" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="1" stdDeviation="1.6" flood-color="#2F3B2A" flood-opacity="0.4"/>
+      </filter>
+    </defs>
     ${shadow}
     ${stemsSvg}
-    ${headsSvg}
+    <g filter="url(#${headsFilterId})">${headsSvg}</g>
     ${vase}
     ${leaves}
     ${bow}
