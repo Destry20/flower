@@ -1141,7 +1141,7 @@ function replayPreview(){
 
 /* ====================== SAVE + SHARE (без сервера — данные лежат прямо в ссылке) ====================== */
 
-function saveAndShare(){
+async function saveAndShare(){
   if(!state.message.trim()){
     showToast(t('Добавьте текст пожелания'));
     return;
@@ -1163,30 +1163,44 @@ function saveAndShare(){
     return;
   }
 
-  if(session.user){
-    // вошли в аккаунт — открытка сохраняется на сервере и доступна с любого устройства
-    fetch('/api/cards', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ encodedData: encoded, occasion: state.occasion, to: state.to, from: state.from })
-    }).catch(()=>{ /* не критично: ссылка всё равно рабочая сама по себе */ });
-  } else {
-    // гость — "Мои открытки" храним локально в этом браузере (localStorage)
-    try{
-      let list = [];
-      try{ list = JSON.parse(localStorage.getItem('my-cards') || '[]'); }catch(e){ list = []; }
-      list.unshift({ id: uid(), occasion: state.occasion, to: state.to, createdAt: payload.createdAt, data: encoded });
-      localStorage.setItem('my-cards', JSON.stringify(list.slice(0,50)));
-    }catch(e){ /* не критично, если локальное хранилище недоступно */ }
-  }
-
   // ?data= (query-строка), а не #data= (хэш) — хэш никогда не уходит на сервер,
   // поэтому боты мессенджеров (WhatsApp/Telegram и т.д.) не могли увидеть
-  // персональный og:title/og:description при вставке ссылки. Query-параметр
-  // сервер видит и умеет отрендерить под него персональные meta-теги
-  // (см. buildShareMeta в server/index.js), сама открытка при этом всё ещё
-  // целиком лежит в самой ссылке — сервер её не обязан хранить.
-  const url = location.origin + location.pathname + '?data=' + encoded;
-  renderShareScreen(url);
+  // персональный og:title/og:description при вставке ссылки. Сама открытка
+  // при этом всё ещё целиком лежит в самой ссылке — сервер её не обязан хранить.
+  const longUrl = location.origin + location.pathname + '?data=' + encoded;
+
+  if(session.user){
+    // Вошли в аккаунт — открытка сохраняется на сервере (доступна с любого
+    // устройства), и это же даёт короткую ссылку /c/<id> вместо длинной
+    // "?data=..." — сервер уже хранит открытку, отдавать ту же копию в самой
+    // ссылке смысла нет. У гостей сервер открытку не видит и не хранит,
+    // поэтому для них ссылка остаётся длинной (см. ветку else ниже).
+    try{
+      const res = await fetch('/api/cards', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ encodedData: encoded, occasion: state.occasion, to: state.to, from: state.from })
+      });
+      if(res.ok){
+        const json = await res.json();
+        if(json.card && json.card.shortId){
+          renderShareScreen(location.origin + '/c/' + json.card.shortId);
+          return;
+        }
+      }
+    }catch(e){ /* сеть недоступна — используем длинную ссылку как запасной вариант */ }
+    renderShareScreen(longUrl);
+    return;
+  }
+
+  // гость — "Мои открытки" храним локально в этом браузере (localStorage)
+  try{
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem('my-cards') || '[]'); }catch(e){ list = []; }
+    list.unshift({ id: uid(), occasion: state.occasion, to: state.to, createdAt: payload.createdAt, data: encoded });
+    localStorage.setItem('my-cards', JSON.stringify(list.slice(0,50)));
+  }catch(e){ /* не критично, если локальное хранилище недоступно */ }
+
+  renderShareScreen(longUrl);
 }
 
 function renderShareScreen(url){
@@ -1267,18 +1281,36 @@ function openView(url){
 
 /* ====================== VIEWER ====================== */
 
+function renderCardNotFound(){
+  setPageTitle(t('Открытка не найдена'));
+  document.getElementById('app').innerHTML = `<div class="view-stage"><div style="text-align:center;">
+    <div class="eyebrow">${t('не найдено')}</div>
+    <h1 style="font-size:24px;margin-top:8px;">${t('Эта открытка недоступна')}</h1>
+    <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="goHome();">${t('Создать свою')}</button>
+  </div></div>`;
+}
+
+// Короткая ссылка (/c/AbC123) — открытка хранится на сервере (сохранялась
+// с аккаунта), тут просто вытягиваем её encodedData и рендерим тем же
+// renderViewer, что и обычную "?data="-ссылку.
+async function renderShortViewer(shortId){
+  try{
+    const res = await fetch('/api/share/' + encodeURIComponent(shortId));
+    if(!res.ok) throw new Error('not found');
+    const json = await res.json();
+    renderViewer(json.encodedData);
+  }catch(e){
+    renderCardNotFound();
+  }
+}
+
 function renderViewer(encodedData){
   let rawData;
   try{
     rawData = decodeCardData(encodedData);
   }catch(e){
-    setPageTitle(t('Открытка не найдена'));
-    document.getElementById('app').innerHTML = `<div class="view-stage"><div style="text-align:center;">
-      <div class="eyebrow">${t('не найдено')}</div>
-      <h1 style="font-size:24px;margin-top:8px;">${t('Эта открытка недоступна')}</h1>
-      <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
-      <button class="btn btn-primary" style="margin-top:20px;" onclick="goHome();">${t('Создать свою')}</button>
-    </div></div>`;
+    renderCardNotFound();
     return;
   }
 
@@ -1486,7 +1518,7 @@ async function renderMyCards(){
     try{
       const res = await fetch('/api/cards');
       const json = await res.json();
-      list = (json.cards || []).map(c => ({ id:c.id, occasion:c.occasion, to:c.to, createdAt:c.createdAt, data:c.encodedData, server:true }));
+      list = (json.cards || []).map(c => ({ id:c.id, shortId:c.shortId, occasion:c.occasion, to:c.to, createdAt:c.createdAt, data:c.encodedData, server:true }));
     }catch(e){ list = []; }
   } else {
     try{ list = JSON.parse(localStorage.getItem('my-cards') || '[]'); }catch(e){ list = []; }
@@ -1510,7 +1542,7 @@ async function renderMyCards(){
       </div>
       <div class="mine-actions">
         <button onclick="openCardLink('${item.data}')">${t('Открыть')}</button>
-        <button onclick="copyMineLink('${item.data}')">${t('Ссылка')}</button>
+        <button onclick="copyMineLink('${item.data}', ${item.shortId ? `'${item.shortId}'` : 'null'})">${t('Ссылка')}</button>
         <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'})">${t('Удалить')}</button>
       </div>
     </div>`;
@@ -1524,8 +1556,10 @@ function openCardLink(encodedData){
   history.pushState(null, '', '?data=' + encodedData);
   renderRoute();
 }
-function copyMineLink(encodedData){
-  const url = location.origin + location.pathname + '?data=' + encodedData;
+function copyMineLink(encodedData, shortId){
+  const url = shortId
+    ? location.origin + '/c/' + shortId
+    : location.origin + location.pathname + '?data=' + encodedData;
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(url).then(()=>showToast(t('Ссылка скопирована')));
   } else {
@@ -1804,6 +1838,9 @@ function renderRoute(){
   if(hash.startsWith('#reset=')) return renderResetPassword(hash.slice(7));
   if(hash === '#privacy') return renderPrivacy();
   if(hash === '#terms') return renderTerms();
+
+  const shortMatch = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
+  if(shortMatch) return renderShortViewer(shortMatch[1]);
 
   const cardData = new URLSearchParams(location.search).get('data');
   if(cardData) return renderViewer(cardData);

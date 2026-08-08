@@ -2,3 +2,4 @@ node_modules/
 .env
 server/data/db.json
 npm-debug.log*
+admin pass.txt

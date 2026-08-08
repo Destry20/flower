@@ -10,6 +10,7 @@ const { attachUser } = require('./auth');
 const authRoutes = require('./routes/auth');
 const cardsRoutes = require('./routes/cards');
 const adminRoutes = require('./routes/admin');
+const shareRoutes = require('./routes/share');
 const db = require('./db');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
 const { tServer, pickLang } = require('./i18n');
@@ -83,6 +84,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/share', shareRoutes);
 
 // Ссылка на открытку ("?data=...") сама по себе не грузит JS у ботов
 // мессенджеров (WhatsApp/Telegram и т.д. не выполняют JavaScript) — без этого
@@ -107,6 +109,31 @@ app.get('/', (req, res, next) => {
       .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${meta.description}$2`)
       .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
       .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(out);
+  });
+});
+
+// Короткая ссылка на сохранённую (за аккаунтом) открытку — вида /c/AbC123.
+// Та же логика подстановки og:title/og:description под мессенджеры, что и у
+// "?data=" выше, только данные открытки берём из базы по shortId, а не из URL.
+app.get('/c/:shortId', (req, res, next) => {
+  const card = db.findCardByShortId(req.params.shortId);
+  const lang = pickLang(req);
+  fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
+    if(err) return next();
+    let out = html.replace(/<html lang="[^"]*"/, `<html lang="${lang}"`);
+    const meta = card && buildShareMeta(card.encodedData, lang);
+    if(meta){
+      const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.originalUrl);
+      out = out
+        .replace(/<title>.*?<\/title>/, `<title>${meta.title}</title>`)
+        .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${meta.title}$2`)
+        .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${meta.title}$2`)
+        .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${meta.description}$2`)
+        .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
+        .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
+    }
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(out);
   });

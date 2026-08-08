@@ -110,14 +110,32 @@ function updateUserPassword(userId, passwordHash){
 
 /* ---------------- cards ---------------- */
 
+// Короткий публичный id для ссылки-шаринга (только у открыток, сохранённых
+// за аккаунтом — у гостевых открыток сервер по-прежнему не хранит данные,
+// см. saveAndShare в public/script/main.js). 7 знаков base62 — как случайный
+// токен, а не последовательный счётчик, чтобы id нельзя было угадать перебором.
+const SHORT_ID_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+function genShortId(len = 7){
+  let id;
+  do{
+    const bytes = crypto.randomBytes(len);
+    id = Array.from(bytes, b => SHORT_ID_CHARS[b % SHORT_ID_CHARS.length]).join('');
+  }while(data.cards.some(c => c.shortId === id));
+  return id;
+}
+
 function listCardsByUser(userId){
   return data.cards
     .filter(c => c.userId === userId)
     .sort((a,b) => b.createdAt - a.createdAt);
 }
+function findCardByShortId(shortId){
+  return data.cards.find(c => c.shortId === shortId) || null;
+}
 function createCard({ userId, encodedData, occasion, to, from }){
   const card = {
     id: uid(),
+    shortId: genShortId(),
     userId,
     encodedData,
     occasion: occasion || '',
@@ -219,7 +237,7 @@ function getCounts(){
 module.exports = {
   findUserByEmail, findUserById, createUser,
   setResetToken, findUserByResetTokenHash, updateUserPassword,
-  listCardsByUser, createCard, deleteCard,
+  listCardsByUser, createCard, deleteCard, findCardByShortId,
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors,
