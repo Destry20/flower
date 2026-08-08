@@ -1,3 +1,27 @@
+/* ====================== ERROR REPORTING ====================== */
+// Ловим неотловленные ошибки/rejection'ы и молча шлём их на сервер — админка
+// (public/admin/) показывает их владельцу сайта. Не блокирует и не отвлекает
+// пользователя: никакого UI, просто fire-and-forget запрос.
+function reportClientError(message, stack){
+  try{
+    fetch('/api/admin/report-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, stack, url: location.href, userAgent: navigator.userAgent })
+    }).catch(() => {});
+  }catch(e){ /* fetch недоступен/заблокирован — молча игнорируем */ }
+}
+window.addEventListener('error', (e) => {
+  reportClientError(e.message, e.error && e.error.stack);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  reportClientError(
+    (reason && reason.message) || String(reason),
+    reason && reason.stack
+  );
+});
+
 /* ====================== I18N ====================== */
 // Язык интерфейса: сначала смотрим сохранённый выбор в этом браузере, иначе —
 // язык браузера (ru → русский, всё остальное → английский, так сайт по

@@ -9,6 +9,8 @@ const cookieParser = require('cookie-parser');
 const { attachUser } = require('./auth');
 const authRoutes = require('./routes/auth');
 const cardsRoutes = require('./routes/cards');
+const adminRoutes = require('./routes/admin');
+const db = require('./db');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
 const { tServer, pickLang } = require('./i18n');
 
@@ -54,8 +56,33 @@ app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
 app.use(attachUser);
 
+// Считаем "просмотр страницы" только для GET без расширения файла и вне /api —
+// иначе один визит раздувался бы в десятки записей за счёт JS/CSS/шрифтов.
+app.use((req, res, next) => {
+  if(req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/admin') && !path.extname(req.path)){
+    db.recordVisit(req.path);
+  }
+  next();
+});
+
+// Рубильник сайта из админки (POST /api/admin/site-status). /admin и
+// /api/admin всегда пропускаем — иначе включить сайт обратно стало бы неоткуда.
+app.use((req, res, next) => {
+  if(db.getSiteEnabled()) return next();
+  if(req.path.startsWith('/admin') || req.path.startsWith('/api/admin')) return next();
+  if(req.path.startsWith('/api')){
+    return res.status(503).json({ error: 'Site is temporarily unavailable' });
+  }
+  const lang = pickLang(req);
+  const html = lang === 'ru'
+    ? '<!doctype html><html lang="ru"><meta charset="utf-8"><title>VivoRose — техническое обслуживание</title><body style="font-family:sans-serif;text-align:center;padding:80px 20px;color:#4B2E3D"><h1>Сайт временно недоступен</h1><p>Мы скоро вернёмся. Загляните чуть позже.</p></body></html>'
+    : '<!doctype html><html lang="en"><meta charset="utf-8"><title>VivoRose — under maintenance</title><body style="font-family:sans-serif;text-align:center;padding:80px 20px;color:#4B2E3D"><h1>Site temporarily unavailable</h1><p>We\'ll be back shortly. Please check back soon.</p></body></html>';
+  res.status(503).set('Cache-Control', 'no-store').type('html').send(html);
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Ссылка на открытку ("?data=...") сама по себе не грузит JS у ботов
 // мессенджеров (WhatsApp/Telegram и т.д. не выполняют JavaScript) — без этого

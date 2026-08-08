@@ -10,8 +10,17 @@ const crypto = require('crypto');
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
+const MAX_RECENT_VISITS = 200;
+const MAX_CLIENT_ERRORS = 200;
+const TRAFFIC_RETENTION_DAYS = 90;
+
 function defaultData(){
-  return { users: [], cards: [] };
+  return {
+    users: [], cards: [],
+    meta: { siteEnabled: true },
+    traffic: { byDay: {}, recent: [] },
+    errors: []
+  };
 }
 
 function load(){
@@ -128,8 +137,91 @@ function deleteCard(id, userId){
   return removed;
 }
 
+/* ---------------- admin: site status ---------------- */
+
+function getSiteEnabled(){
+  return data.meta.siteEnabled !== false;
+}
+function setSiteEnabled(enabled){
+  data.meta.siteEnabled = !!enabled;
+  persist();
+}
+
+/* ---------------- admin: traffic ---------------- */
+
+function dayKey(ts){
+  return new Date(ts).toISOString().slice(0, 10);
+}
+
+// Считаем только "просмотры страниц" (см. вызов в server/index.js) — не каждый
+// запрос подряд, иначе один визит раздувался бы в десятки записей за счёт
+// статики (JS/CSS/шрифты).
+function recordVisit(path){
+  const now = Date.now();
+  const key = dayKey(now);
+  data.traffic.byDay[key] = (data.traffic.byDay[key] || 0) + 1;
+  data.traffic.recent.unshift({ path, ts: now });
+  if(data.traffic.recent.length > MAX_RECENT_VISITS){
+    data.traffic.recent.length = MAX_RECENT_VISITS;
+  }
+  const cutoff = dayKey(now - TRAFFIC_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  for(const dayStr of Object.keys(data.traffic.byDay)){
+    if(dayStr < cutoff) delete data.traffic.byDay[dayStr];
+  }
+  persist();
+}
+
+function getTrafficSummary(){
+  const days = [];
+  for(let i = 6; i >= 0; i--){
+    const key = dayKey(Date.now() - i * 24 * 60 * 60 * 1000);
+    days.push({ date: key, count: data.traffic.byDay[key] || 0 });
+  }
+  const total = Object.values(data.traffic.byDay).reduce((sum, n) => sum + n, 0);
+  return {
+    today: days[days.length - 1].count,
+    last7Days: days,
+    total,
+    recent: data.traffic.recent.slice(0, 30)
+  };
+}
+
+/* ---------------- admin: client-side error reports ---------------- */
+
+function recordClientError({ message, stack, url, userAgent }){
+  const entry = {
+    id: uid(),
+    message: String(message || '').slice(0, 500),
+    stack: String(stack || '').slice(0, 3000),
+    url: String(url || '').slice(0, 500),
+    userAgent: String(userAgent || '').slice(0, 300),
+    ts: Date.now()
+  };
+  data.errors.unshift(entry);
+  if(data.errors.length > MAX_CLIENT_ERRORS){
+    data.errors.length = MAX_CLIENT_ERRORS;
+  }
+  persist();
+  return entry;
+}
+function listClientErrors(){
+  return data.errors;
+}
+function clearClientErrors(){
+  data.errors = [];
+  persist();
+}
+
+function getCounts(){
+  return { users: data.users.length, cards: data.cards.length };
+}
+
 module.exports = {
   findUserByEmail, findUserById, createUser,
   setResetToken, findUserByResetTokenHash, updateUserPassword,
-  listCardsByUser, createCard, deleteCard
+  listCardsByUser, createCard, deleteCard,
+  getSiteEnabled, setSiteEnabled,
+  recordVisit, getTrafficSummary,
+  recordClientError, listClientErrors, clearClientErrors,
+  getCounts
 };
