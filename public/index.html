@@ -34,10 +34,13 @@
 }
 </script>
 
-<!-- Favicon: SVG для браузеров, что его понимают (масштабируется без потерь),
-     плюс PNG-фолбэк для остальных (например Safari) -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20C4 12 9 4 20 4C20 15 12 20 4 20Z' fill='%238CA087' stroke='%235C7457' stroke-width='1'/%3E%3Cpath d='M4 20C8 15 12 11 18 6' stroke='%235C7457' stroke-width='1'/%3E%3C/svg%3E">
+<!-- Favicon: реальный PNG-файл первым (Google Search рекомендует именно
+     файл, кратный 48px, для показа иконки в выдаче — inline data-URI как
+     единственный источник он не всегда корректно подхватывает), SVG вторым
+     для браузеров — те умеют выбрать более чёткий вариант сами. -->
+<link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png">
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20C4 12 9 4 20 4C20 15 12 20 4 20Z' fill='%238CA087' stroke='%235C7457' stroke-width='1'/%3E%3Cpath d='M4 20C8 15 12 11 18 6' stroke='%235C7457' stroke-width='1'/%3E%3C/svg%3E">
 
 <!-- PWA: позволяет добавить сайт на главный экран телефона как приложение. -->
 <link rel="manifest" href="/manifest.json">
