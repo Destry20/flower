@@ -1,0 +1,14 @@
+{
+  "name": "MySweetBouquet — открытка с виртуальным букетом",
+  "short_name": "MySweetBouquet",
+  "description": "Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FAF3E7",
+  "theme_color": "#4B2E3D",
+  "lang": "ru",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

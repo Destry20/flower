@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MySweetBouquet — открытка с виртуальным букетом</title>
+<meta name="description" content="Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой. Бесплатно, регистрация не обязательна.">
+
+<!-- Favicon: тот же лист, что и в шапке сайта, зашитый как inline SVG —
+     отдельный файл иконки не нужен -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20C4 12 9 4 20 4C20 15 12 20 4 20Z' fill='%238CA087' stroke='%235C7457' stroke-width='1'/%3E%3Cpath d='M4 20C8 15 12 11 18 6' stroke='%235C7457' stroke-width='1'/%3E%3C/svg%3E">
+
+<!-- PWA: позволяет добавить сайт на главный экран телефона как приложение.
+     apple-touch-icon в виде SVG — не идеальное решение (iOS ждёт PNG),
+     но рабочее приближение без дополнительных инструментов растеризации. -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#4B2E3D">
+
+<!-- Open Graph / Twitter Card: даёт превью со вкладками картинки и текста,
+     когда ссылку вставляют в мессенджеры (WhatsApp, Telegram) или соцсети.
+     Значения title/description обновляются на лету скриптом (см. setMeta в main.js)
+     для страниц создания открытки и просмотра готовой открытки. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MySweetBouquet">
+<meta property="og:title" content="MySweetBouquet — открытка с виртуальным букетом">
+<meta property="og:description" content="Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.">
+<meta property="og:url" content="">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MySweetBouquet — открытка с виртуальным букетом">
+<meta name="twitter:description" content="Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.">
+
+<link rel="stylesheet" href="style/main.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div id="app"><div class="boot-loading">Загрузка…</div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="script/main.js"></script>
+</body>
+</html>
