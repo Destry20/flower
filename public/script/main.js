@@ -152,7 +152,7 @@ const EN_STRINGS = {
   'Забыли пароль?': 'Forgot your password?',
   'Восстановить': 'Reset it',
   'Регистрация': 'Sign up',
-  'Займёт полминуты. Пароль — не короче 6 символов.': 'Takes half a minute. Password must be at least 6 characters.',
+  'Займёт полминуты. Пароль — не короче 8 символов.': 'Takes half a minute. Password must be at least 8 characters.',
   'Имя (необязательно)': 'Name (optional)',
   'Создать аккаунт': 'Create account',
   'Уже есть аккаунт?': 'Already have an account?',
@@ -164,7 +164,7 @@ const EN_STRINGS = {
   'Отправить ссылку': 'Send link',
   'Вспомнили пароль?': 'Remembered your password?',
   'Новый пароль': 'New password',
-  'Придумайте новый пароль — не короче 6 символов.': 'Choose a new password — at least 6 characters.',
+  'Придумайте новый пароль — не короче 8 символов.': 'Choose a new password — at least 8 characters.',
   'Сохранить пароль': 'Save password',
   'Пароль обновлён, вы вошли в аккаунт': 'Password updated, you\'re logged in',
   'Вы вышли из аккаунта': 'You\'ve been logged out',
@@ -1633,14 +1633,14 @@ function renderRegister(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Регистрация')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Займёт полминуты. Пароль — не короче 6 символов.')}</p>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Займёт полминуты. Пароль — не короче 8 символов.')}</p>
       <form id="registerForm" class="auth-form">
         <label class="sr-only" for="regName">${t('Имя')}</label>
         <input type="text" id="regName" placeholder="${t('Имя (необязательно)')}" maxlength="60" autocomplete="name">
         <label class="sr-only" for="regEmail">${t('Email')}</label>
         <input type="email" id="regEmail" placeholder="${t('Email')}" required autocomplete="username">
         <label class="sr-only" for="regPassword">${t('Пароль')}</label>
-        <input type="password" id="regPassword" placeholder="${t('Пароль')}" required minlength="6" autocomplete="new-password">
+        <input type="password" id="regPassword" placeholder="${t('Пароль')}" required minlength="8" autocomplete="new-password">
         <div class="auth-error" id="registerError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Создать аккаунт')}</button>
       </form>
@@ -1718,10 +1718,10 @@ function renderResetPassword(token){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Новый пароль')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Придумайте новый пароль — не короче 6 символов.')}</p>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Придумайте новый пароль — не короче 8 символов.')}</p>
       <form id="resetForm" class="auth-form">
         <label class="sr-only" for="resetPassword">${t('Новый пароль')}</label>
-        <input type="password" id="resetPassword" placeholder="${t('Новый пароль')}" required minlength="6" autocomplete="new-password">
+        <input type="password" id="resetPassword" placeholder="${t('Новый пароль')}" required minlength="8" autocomplete="new-password">
         <div class="auth-error" id="resetError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Сохранить пароль')}</button>
       </form>

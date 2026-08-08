@@ -28,7 +28,7 @@ router.post('/register', (req, res) => {
   if(typeof email !== 'string' || !EMAIL_RE.test(email.trim())){
     return res.status(400).json({ error: tServer(req, 'invalidEmail') });
   }
-  if(typeof password !== 'string' || password.length < 6){
+  if(typeof password !== 'string' || password.length < 8){
     return res.status(400).json({ error: tServer(req, 'passwordTooShort') });
   }
   if(db.findUserByEmail(email)){
@@ -97,7 +97,7 @@ router.post('/reset-password', (req, res) => {
   if(typeof token !== 'string' || !token){
     return res.status(400).json({ error: tServer(req, 'resetTokenMissing') });
   }
-  if(typeof password !== 'string' || password.length < 6){
+  if(typeof password !== 'string' || password.length < 8){
     return res.status(400).json({ error: tServer(req, 'passwordTooShort') });
   }
   const user = db.findUserByResetTokenHash(auth.hashResetToken(token));

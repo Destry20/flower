@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { requireAuth } = require('../auth');
 const { tServer } = require('../i18n');
@@ -11,11 +12,23 @@ router.use(requireAuth);
 // чтобы список "Мои открытки" не терялся при очистке браузера/смене устройства.
 const MAX_ENCODED_LEN = 20000;
 
+// Без лимита залогиненный аккаунт мог бы в цикле наштамповать сколько угодно
+// открыток — база растёт без ограничений (в отличие от traffic/errors, у
+// которых есть capped-массивы). GET/DELETE лимитом не ограничиваем — их
+// злоупотребление само собой ограничено количеством уже существующих открыток.
+const createLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many cards created. Please wait a bit and try again.' }
+});
+
 router.get('/', (req, res) => {
   res.json({ cards: db.listCardsByUser(req.user.id) });
 });
 
-router.post('/', (req, res) => {
+router.post('/', createLimiter, (req, res) => {
   const { encodedData, occasion, to, from } = req.body || {};
   if(typeof encodedData !== 'string' || !encodedData || encodedData.length > MAX_ENCODED_LEN){
     return res.status(400).json({ error: tServer(req, 'cardInvalid') });

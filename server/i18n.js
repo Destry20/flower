@@ -7,7 +7,7 @@
 const STRINGS = {
   ru: {
     invalidEmail: 'Введите корректный email',
-    passwordTooShort: 'Пароль должен быть не короче 6 символов',
+    passwordTooShort: 'Пароль должен быть не короче 8 символов',
     emailTaken: 'Этот email уже зарегистрирован',
     invalidLogin: 'Неверный email или пароль',
     tooManyAttempts: 'Слишком много попыток. Подождите немного и попробуйте снова.',
@@ -31,7 +31,7 @@ const STRINGS = {
   },
   en: {
     invalidEmail: 'Enter a valid email',
-    passwordTooShort: 'Password must be at least 6 characters',
+    passwordTooShort: 'Password must be at least 8 characters',
     emailTaken: 'This email is already registered',
     invalidLogin: 'Incorrect email or password',
     tooManyAttempts: 'Too many attempts. Please wait a bit and try again.',
