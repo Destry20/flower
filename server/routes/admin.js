@@ -101,6 +101,16 @@ router.post('/errors/clear', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+router.delete('/errors/:id', requireAdmin, (req, res) => {
+  const removed = db.deleteClientError(req.params.id);
+  if(!removed) return res.status(404).json({ error: 'Not found' });
+  res.json({ ok: true });
+});
+
+router.get('/users', requireAdmin, (req, res) => {
+  res.json({ users: db.listRecentUsers(15) });
+});
+
 router.post('/site-status', requireAdmin, (req, res) => {
   const { enabled } = req.body || {};
   db.setSiteEnabled(!!enabled);

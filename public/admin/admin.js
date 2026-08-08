@@ -52,38 +52,80 @@ function renderErrors(errors){
     el.innerHTML = '<div class="empty">No errors reported.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Time</th><th>Message</th><th>Page</th></tr></thead><tbody>${
+  el.innerHTML = `<table><thead><tr><th>Time</th><th>Message</th><th>Page</th><th></th></tr></thead><tbody>${
     errors.map(e => `
       <tr>
         <td>${fmtTime(e.ts)}</td>
         <td class="msg">${escapeHtml(e.message)}${e.stack ? `<div class="stack">${escapeHtml(e.stack)}</div>` : ''}</td>
         <td class="msg">${escapeHtml(e.url)}</td>
+        <td class="dismiss"><button data-id="${e.id}" title="Dismiss" aria-label="Dismiss">✕</button></td>
       </tr>
     `).join('')
+  }</tbody></table>`;
+  el.querySelectorAll('td.dismiss button').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try{ await api('/errors/' + btn.dataset.id, { method: 'DELETE' }); await loadDashboard(); }
+      catch(e){ btn.disabled = false; }
+    });
+  });
+}
+
+// Раньше сервер уже считал последние посещения (traffic.recent), но экран
+// их просто никак не показывал — данные уходили в никуда. Показываем здесь.
+function renderRecent(recent){
+  const el = $('recentList');
+  if(!recent.length){
+    el.innerHTML = '<div class="empty">No visits recorded yet.</div>';
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>Time</th><th>Page</th></tr></thead><tbody>${
+    recent.map(r => `<tr><td>${fmtTime(r.ts)}</td><td class="msg">${escapeHtml(r.path)}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+function renderUsers(users){
+  const el = $('usersList');
+  if(!users.length){
+    el.innerHTML = '<div class="empty">No accounts yet.</div>';
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>Signed up</th><th>Email</th><th>Name</th></tr></thead><tbody>${
+    users.map(u => `<tr><td>${fmtTime(u.createdAt)}</td><td class="msg">${escapeHtml(u.email)}</td><td class="msg">${escapeHtml(u.name || '—')}</td></tr>`).join('')
   }</tbody></table>`;
 }
 
 let currentSiteEnabled = true;
+let refreshTimer = null;
+const AUTO_REFRESH_MS = 60000;
 
 async function loadDashboard(){
-  const [stats, errorsRes] = await Promise.all([api('/stats'), api('/errors')]);
+  const [stats, errorsRes, usersRes] = await Promise.all([api('/stats'), api('/errors'), api('/users')]);
   currentSiteEnabled = stats.siteEnabled;
   renderTraffic(stats.traffic, stats.counts);
   renderStatus(stats.siteEnabled);
+  renderRecent(stats.traffic.recent);
   renderErrors(errorsRes.errors);
+  renderUsers(usersRes.users);
+  $('updatedAt').textContent = 'Updated ' + new Date().toLocaleTimeString();
 }
 
 function showDashboard(){
   $('loginScreen').style.display = 'none';
   $('dashboard').style.display = '';
   $('logoutBtn').style.display = '';
+  $('refreshBtn').style.display = '';
   loadDashboard().catch(err => console.error(err));
+  if(refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = setInterval(() => loadDashboard().catch(err => console.error(err)), AUTO_REFRESH_MS);
 }
 
 function showLogin(){
   $('loginScreen').style.display = '';
   $('dashboard').style.display = 'none';
   $('logoutBtn').style.display = 'none';
+  $('refreshBtn').style.display = 'none';
+  if(refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
 }
 
 $('loginForm').addEventListener('submit', async (e) => {
@@ -96,6 +138,10 @@ $('loginForm').addEventListener('submit', async (e) => {
   }catch(err){
     $('loginError').textContent = 'Wrong password.';
   }
+});
+
+$('refreshBtn').addEventListener('click', () => {
+  loadDashboard().catch(err => console.error(err));
 });
 
 $('logoutBtn').addEventListener('click', async () => {

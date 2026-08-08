@@ -233,6 +233,19 @@ function clearClientErrors(){
 function getCounts(){
   return { users: data.users.length, cards: data.cards.length };
 }
+function listRecentUsers(limit = 15){
+  return [...data.users]
+    .sort((a,b) => b.createdAt - a.createdAt)
+    .slice(0, limit)
+    .map(u => ({ id: u.id, email: u.email, name: u.name, createdAt: u.createdAt }));
+}
+function deleteClientError(id){
+  const before = data.errors.length;
+  data.errors = data.errors.filter(e => e.id !== id);
+  const removed = data.errors.length !== before;
+  if(removed) persist();
+  return removed;
+}
 
 module.exports = {
   findUserByEmail, findUserById, createUser,
@@ -240,6 +253,6 @@ module.exports = {
   listCardsByUser, createCard, deleteCard, findCardByShortId,
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
-  recordClientError, listClientErrors, clearClientErrors,
-  getCounts
+  recordClientError, listClientErrors, clearClientErrors, deleteClientError,
+  getCounts, listRecentUsers
 };

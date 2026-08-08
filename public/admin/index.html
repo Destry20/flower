@@ -42,13 +42,23 @@
   td.stack{ font-family:monospace; font-size:11px; color:#8a7b6a; white-space:pre-wrap; word-break:break-word; }
   .empty{ color:#8a7b6a; font-size:14px; padding:8px 0; }
   .row-between{ display:flex; justify-content:space-between; align-items:center; }
+  td.dismiss{ width:1%; white-space:nowrap; }
+  td.dismiss button{ background:none; border:1px solid var(--border); color:#8a7b6a; width:22px; height:22px; padding:0; border-radius:50%; line-height:1; }
+  td.dismiss button:hover{ border-color:var(--danger); color:var(--danger); }
+  .refresh-btn{ background:none; border:1px solid var(--border); color:var(--ink); padding:6px 12px; font-size:12.5px; }
+  .refresh-btn:hover{ border-color:var(--ink); }
+  .updated-at{ font-size:11px; color:#8a7b6a; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>VivoRose — Admin</h1>
-  <button id="logoutBtn" class="secondary">Log out</button>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span class="updated-at" id="updatedAt"></span>
+    <button id="refreshBtn" class="refresh-btn" style="display:none;">↻ Refresh</button>
+    <button id="logoutBtn" class="secondary">Log out</button>
+  </div>
 </header>
 
 <main>
@@ -82,6 +92,16 @@
       </div>
       <div class="bars" id="trafficBars"></div>
       <div class="bars lbl" id="trafficLabels"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recent activity</h2>
+      <div id="recentList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recent signups</h2>
+      <div id="usersList"></div>
     </div>
 
     <div class="card">
