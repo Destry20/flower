@@ -11,6 +11,7 @@ router.use(requireAuth);
 // сервер здесь просто хранит копию + метаданные для конкретного пользователя,
 // чтобы список "Мои открытки" не терялся при очистке браузера/смене устройства.
 const MAX_ENCODED_LEN = 20000;
+const MAX_CARDS_PER_USER = 10;
 
 // Без лимита залогиненный аккаунт мог бы в цикле наштамповать сколько угодно
 // открыток — база растёт без ограничений (в отличие от traffic/errors, у
@@ -32,6 +33,9 @@ router.post('/', createLimiter, (req, res) => {
   const { encodedData, occasion, to, from } = req.body || {};
   if(typeof encodedData !== 'string' || !encodedData || encodedData.length > MAX_ENCODED_LEN){
     return res.status(400).json({ error: tServer(req, 'cardInvalid') });
+  }
+  if(db.listCardsByUser(req.user.id).length >= MAX_CARDS_PER_USER){
+    return res.status(403).json({ error: tServer(req, 'cardLimitReached') });
   }
   const card = db.createCard({ userId: req.user.id, encodedData, occasion, to, from });
   res.status(201).json({ card });

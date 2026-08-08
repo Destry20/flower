@@ -56,6 +56,7 @@ function t(ru){
 
 const EN_STRINGS = {
   'Мои открытки': 'My cards',
+  'Достигнут лимит открыток': 'You\'ve reached the card limit',
   'Войти': 'Log in',
   'Выйти из аккаунта': 'Log out',
   'Собрать открытку': 'Create a card',
@@ -1177,7 +1178,7 @@ async function saveAndShare(){
     // поэтому для них ссылка остаётся длинной (см. ветку else ниже).
     try{
       const res = await fetch('/api/cards', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
+        method: 'POST', headers: {'Content-Type':'application/json', 'X-Lang':uiLang},
         body: JSON.stringify({ encodedData: encoded, occasion: state.occasion, to: state.to, from: state.from })
       });
       if(res.ok){
@@ -1186,6 +1187,13 @@ async function saveAndShare(){
           renderShareScreen(location.origin + '/c/' + json.card.shortId);
           return;
         }
+      } else if(res.status === 403){
+        // Лимит открыток на аккаунт — не тихий фолбэк на длинную ссылку
+        // (это выглядело бы как "сохранилось", хотя на деле нет), а явное
+        // сообщение с подсказкой удалить старую открытку.
+        const json = await res.json().catch(() => ({}));
+        showToast(json.error || t('Достигнут лимит открыток'));
+        return;
       }
     }catch(e){ /* сеть недоступна — используем длинную ссылку как запасной вариант */ }
     renderShareScreen(longUrl);
