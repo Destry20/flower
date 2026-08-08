@@ -12,15 +12,14 @@
 <title>VivoRose — a card with a virtual bouquet</title>
 <meta name="description" content="Build a virtual bouquet, add a message, and send a card with a single link. Free, no registration required.">
 
-<!-- Favicon: тот же лист, что и в шапке сайта, зашитый как inline SVG —
-     отдельный файл иконки не нужен -->
+<!-- Favicon: SVG для браузеров, что его понимают (масштабируется без потерь),
+     плюс PNG-фолбэк для остальных (например Safari) -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20C4 12 9 4 20 4C20 15 12 20 4 20Z' fill='%238CA087' stroke='%235C7457' stroke-width='1'/%3E%3Cpath d='M4 20C8 15 12 11 18 6' stroke='%235C7457' stroke-width='1'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
 
-<!-- PWA: позволяет добавить сайт на главный экран телефона как приложение.
-     apple-touch-icon в виде SVG — не идеальное решение (iOS ждёт PNG),
-     но рабочее приближение без дополнительных инструментов растеризации. -->
+<!-- PWA: позволяет добавить сайт на главный экран телефона как приложение. -->
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/icon-180.png">
 <meta name="theme-color" content="#4B2E3D">
 
 <!-- Open Graph / Twitter Card: даёт превью со вкладками картинки и текста,
