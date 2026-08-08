@@ -195,7 +195,6 @@ const EN_STRINGS = {
     'If you\'re not logged in, the entire card is stored inside the link itself (the part after "#") — the server never sees or stores it. In that case, your "My cards" list only lives in this browser (localStorage).',
   'Удаление данных': 'Deleting your data',
   'Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на': 'You can delete any card from your "My cards" list. To delete your whole account, email',
-  '(замените на реальный адрес поддержки перед запуском)': '(replace with a real support address before launch)',
   'Сервис': 'The service',
   'позволяет собрать виртуальный букет-открытку и отправить её ссылкой. Все цветы, вазы, конверты и фоны бесплатны. Сервис поддерживается показом рекламных баннеров.':
     'lets you build a virtual bouquet card and send it as a link. All flowers, vases, envelopes and backgrounds are free. The service is supported by ad banners.',
@@ -1865,7 +1864,7 @@ function renderPrivacy(){
       <p>${t('Если вы не входите в аккаунт, вся открытка целиком хранится в самой ссылке (в её части после «#») — сервер её не видит и не сохраняет. Список «Мои открытки» в этом случае хранится только в вашем браузере (localStorage).')}</p>
 
       <h2>${t('Удаление данных')}</h2>
-      <p>${t('Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на')} <a href="mailto:support@vivorose.example">support@vivorose.example</a> ${t('(замените на реальный адрес поддержки перед запуском)')}.</p>
+      <p>${t('Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на')} <a href="mailto:vivorosesupport@gmail.com">vivorosesupport@gmail.com</a>.</p>
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
   `;
