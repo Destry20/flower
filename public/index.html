@@ -12,6 +12,28 @@
 <title>VivoRose — a card with a virtual bouquet</title>
 <meta name="description" content="Build a virtual bouquet, add a message, and send a card with a single link. Free, no registration required.">
 
+<!-- Всегда указывает на главную, а не на текущий URL — открытки по ссылкам
+     (?data=..., /c/...) намеренно не претендуют на отдельное место в
+     индексации, канонической страницей сайта остаётся только сама главная. -->
+<link rel="canonical" href="https://vivorose.com/">
+
+<!-- Structured data: помогает поисковику понять, что это за сайт (не
+     подряд текста, а размеченный факт) — само по себе топ не гарантирует,
+     но не будет хуже. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "VivoRose",
+  "url": "https://vivorose.com/",
+  "description": "Build a virtual bouquet, add a message, and send a card with a single link. Free, no registration required.",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "inLanguage": ["en", "ru"]
+}
+</script>
+
 <!-- Favicon: SVG для браузеров, что его понимают (масштабируется без потерь),
      плюс PNG-фолбэк для остальных (например Safari) -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 20C4 12 9 4 20 4C20 15 12 20 4 20Z' fill='%238CA087' stroke='%235C7457' stroke-width='1'/%3E%3Cpath d='M4 20C8 15 12 11 18 6' stroke='%235C7457' stroke-width='1'/%3E%3C/svg%3E">
