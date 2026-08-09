@@ -186,12 +186,6 @@ const EN_STRINGS = {
   'Как используются данные': 'How the data is used',
   'Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.':
     'To log you in and show your cards. We don\'t sell or share your email with third parties except where required by law.',
-  'Cookies и реклама': 'Cookies and advertising',
-  'Один технический cookie используется для авторизации (хранит подписанный токен сессии) и не используется для рекламного трекинга. Отдельно на сайте могут показываться рекламные баннеры (например, Google AdSense или Яндекс.Директ) — рекламная сеть может устанавливать собственные cookies для показа объявлений. Эту секцию нужно будет дополнить точной формулировкой из политики выбранной рекламной сети перед подключением реальной рекламы.':
-    'One technical cookie is used for authentication (holds a signed session token) and is not used for ad tracking. Separately, the site may show ad banners (e.g. Google AdSense or Yandex.Direct) — the ad network may set its own cookies to serve ads. This section will need the exact wording from the chosen ad network\'s policy before real ads go live.',
-  'Открытки без аккаунта': 'Cards without an account',
-  'Если вы не входите в аккаунт, вся открытка целиком хранится в самой ссылке (в её части после «#») — сервер её не видит и не сохраняет. Список «Мои открытки» в этом случае хранится только в вашем браузере (localStorage).':
-    'If you\'re not logged in, the entire card is stored inside the link itself (the part after "#") — the server never sees or stores it. In that case, your "My cards" list only lives in this browser (localStorage).',
   'Удаление данных': 'Deleting your data',
   'Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на': 'You can delete any card from your "My cards" list. To delete your whole account, email',
   'Сервис': 'The service',
@@ -1880,12 +1874,6 @@ function renderPrivacy(){
 
       <h2>${t('Как используются данные')}</h2>
       <p>${t('Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.')}</p>
-
-      <h2>${t('Cookies и реклама')}</h2>
-      <p>${t('Один технический cookie используется для авторизации (хранит подписанный токен сессии) и не используется для рекламного трекинга. Отдельно на сайте могут показываться рекламные баннеры (например, Google AdSense или Яндекс.Директ) — рекламная сеть может устанавливать собственные cookies для показа объявлений. Эту секцию нужно будет дополнить точной формулировкой из политики выбранной рекламной сети перед подключением реальной рекламы.')}</p>
-
-      <h2>${t('Открытки без аккаунта')}</h2>
-      <p>${t('Если вы не входите в аккаунт, вся открытка целиком хранится в самой ссылке (в её части после «#») — сервер её не видит и не сохраняет. Список «Мои открытки» в этом случае хранится только в вашем браузере (localStorage).')}</p>
 
       <h2>${t('Удаление данных')}</h2>
       <p>${t('Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на')} <a href="mailto:vivorosesupport@gmail.com">vivorosesupport@gmail.com</a>.</p>
