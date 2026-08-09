@@ -186,6 +186,9 @@ const EN_STRINGS = {
   'Как используются данные': 'How the data is used',
   'Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.':
     'To log you in and show your cards. We don\'t sell or share your email with third parties except where required by law.',
+  'Cookies и реклама': 'Cookies and advertising',
+  'Один cookie используется для авторизации и не служит для рекламного трекинга. Рекламные сети (например, Google AdSense) могут устанавливать собственные cookies для показа объявлений.':
+    'One cookie is used for authentication and is not used for ad tracking. Ad networks (e.g. Google AdSense) may set their own cookies to serve ads.',
   'Удаление данных': 'Deleting your data',
   'Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на': 'You can delete any card from your "My cards" list. To delete your whole account, email',
   'Сервис': 'The service',
@@ -1874,6 +1877,9 @@ function renderPrivacy(){
 
       <h2>${t('Как используются данные')}</h2>
       <p>${t('Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.')}</p>
+
+      <h2>${t('Cookies и реклама')}</h2>
+      <p>${t('Один cookie используется для авторизации и не служит для рекламного трекинга. Рекламные сети (например, Google AdSense) могут устанавливать собственные cookies для показа объявлений.')}</p>
 
       <h2>${t('Удаление данных')}</h2>
       <p>${t('Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на')} <a href="mailto:vivorosesupport@gmail.com">vivorosesupport@gmail.com</a>.</p>
