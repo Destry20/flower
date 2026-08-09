@@ -180,7 +180,6 @@ const EN_STRINGS = {
   'Конфиденциальность': 'Privacy',
   'Условия использования': 'Terms of use',
   'Политика конфиденциальности': 'Privacy Policy',
-  'Последнее обновление: черновик — перед публикацией согласуйте с юристом.': 'Last updated: draft — have a lawyer review it before publishing.',
   'Какие данные мы собираем': 'What data we collect',
   'Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.':
     'Email and (optionally) name when you register an account. Passwords are stored hashed, never in plain text. The contents of the cards you build (text, flower choices, etc.) — only if you\'re logged in, so your "My cards" list survives across devices.',
@@ -1876,8 +1875,6 @@ function renderPrivacy(){
     <div class="legal-wrap">
       <div class="eyebrow">${t('документ')}</div>
       <h1 style="font-size:28px;margin-top:8px;">${t('Политика конфиденциальности')}</h1>
-      <p class="legal-updated">${t('Последнее обновление: черновик — перед публикацией согласуйте с юристом.')}</p>
-
       <h2>${t('Какие данные мы собираем')}</h2>
       <p>${t('Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.')}</p>
 
@@ -1904,8 +1901,6 @@ function renderTerms(){
     <div class="legal-wrap">
       <div class="eyebrow">${t('документ')}</div>
       <h1 style="font-size:28px;margin-top:8px;">${t('Условия использования')}</h1>
-      <p class="legal-updated">${t('Последнее обновление: черновик — перед публикацией согласуйте с юристом.')}</p>
-
       <h2>${t('Сервис')}</h2>
       <p>${BRAND} ${t('позволяет собрать виртуальный букет-открытку и отправить её ссылкой. Все цветы, вазы, конверты и фоны бесплатны. Сервис поддерживается показом рекламных баннеров.')}</p>
 
