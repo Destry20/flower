@@ -46,10 +46,13 @@ a{color:var(--plum);}
 
 /* ---------- top bar ---------- */
 .topbar{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:22px 36px;
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+  padding:22px 36px; gap:10px 16px;
   border-bottom:1px solid var(--line);
   background:var(--paper);
+}
+@media (max-width:480px){
+  .topbar{padding:16px 18px;}
 }
 .brand{
   display:flex; align-items:center; gap:10px;

@@ -222,6 +222,8 @@ const EN_STRINGS = {
     'some messengers or SMS may truncate it. If the recipient can\'t open it, try sending the QR code below or shortening your message.',
   'Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.':
     'The link is fully self-contained: the whole card is baked into it, no separate server is needed to open it.',
+  'Это короткая ссылка: сама открытка хранится на сервере в вашем аккаунте, а ссылка лишь указывает на неё.':
+    'This is a short link: the card itself is stored on the server under your account, and the link just points to it.',
   'Копия также сохранена в разделе «Мои открытки» вашего аккаунта.': 'A copy has also been saved to the "My cards" section of your account.',
   'Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.': 'Log in so a copy is saved and doesn\'t get lost when you clear your browser.',
   'Вам открытка с букетом 🌿': 'You\'ve got a card with a bouquet 🌿',
@@ -1290,6 +1292,7 @@ async function saveAndShare(){
 function renderShareScreen(url){
   setPageTitle(t('Открытка готова'));
   const isLong = url.length > LINK_WARN_LENGTH;
+  const isShortLink = /\/c\/[A-Za-z0-9]+$/.test(url);
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="share-wrap">
@@ -1313,7 +1316,7 @@ function renderShareScreen(url){
         <button class="btn btn-ghost" onclick="renderCreator()">${t('Редактировать')}</button>
         <button class="btn btn-ghost" onclick="location.href=location.pathname">${t('Создать ещё одну')}</button>
       </div>
-      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${t('Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.')}${session.user ? ' '+t('Копия также сохранена в разделе «Мои открытки» вашего аккаунта.') : ' '+t('Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.')}</p>
+      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${isShortLink ? t('Это короткая ссылка: сама открытка хранится на сервере в вашем аккаунте, а ссылка лишь указывает на неё.') : t('Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.')}${session.user ? ' '+t('Копия также сохранена в разделе «Мои открытки» вашего аккаунта.') : ' '+t('Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.')}</p>
     </div>
   `;
   try{
@@ -1967,6 +1970,6 @@ bootstrap();
 // он нужен только для критерия "installability", а не для офлайн-режима.
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
   });
 }

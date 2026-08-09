@@ -120,7 +120,7 @@ app.get('/', (req, res, next) => {
 // Короткая ссылка на сохранённую (за аккаунтом) открытку — вида /c/AbC123.
 // Та же логика подстановки og:title/og:description под мессенджеры, что и у
 // "?data=" выше, только данные открытки берём из базы по shortId, а не из URL.
-app.get('/c/:shortId', (req, res, next) => {
+app.get('/c/:shortId([A-Za-z0-9]{7})', (req, res, next) => {
   const card = db.findCardByShortId(req.params.shortId);
   const lang = pickLang(req);
   fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
