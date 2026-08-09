@@ -462,7 +462,7 @@ input[type=date], input[type=time]{
 }
 .link-box input{border:none; background:none; flex:1; font-size:13.5px; color:var(--ink); outline:none;}
 .qr-box{
-  margin:26px auto 0; width:150px; padding:14px; background:var(--paper);
+  margin:26px auto 0; width:330px; max-width:90vw; padding:14px; background:var(--paper);
   border:1px solid var(--line); border-radius:14px;
 }
 .qr-box img, .qr-box canvas{display:block; margin:0 auto;}

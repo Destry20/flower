@@ -1318,7 +1318,18 @@ function renderShareScreen(url){
   `;
   try{
     if(window.QRCode){
-      new QRCode(document.getElementById('qrcode'), {text:url, width:120, height:120, colorDark:'#4B2E3D', colorLight:'#FAF3E7'});
+      // typeNumber:0 — библиотека сама подбирает минимальную версию QR под
+      // длину ссылки (по умолчанию она фиксирована и мала, а гостевые ссылки
+      // могут быть по 500-1500+ символов — не помещались и давали то ли
+      // ошибку, то ли код с тысячами модулей). correctLevel:L — минимальная
+      // избыточность, оставляет больше места под сами данные. Размер 220px —
+      // без него при таком количестве модулей код физически нечитаем камерой,
+      // как бы верно он ни был закодирован.
+      new QRCode(document.getElementById('qrcode'), {
+        text:url, width:300, height:300,
+        colorDark:'#4B2E3D', colorLight:'#FAF3E7',
+        typeNumber:0, correctLevel:QRCode.CorrectLevel.L
+      });
     } else {
       document.getElementById('qrBox').style.display='none';
     }
