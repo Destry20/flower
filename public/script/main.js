@@ -69,6 +69,18 @@ const EN_STRINGS = {
   'Соберите букет и оставьте послание, которое захочется сохранить': 'Build a bouquet and leave a message worth keeping',
   'Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.':
     'Pick an occasion, arrange the flowers, add a few lines — and send it as a single link. It opens like a real card: unfolding and blooming.',
+  'О сервисе': 'About the service',
+  'VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.':
+    'VivoRose is a simple way to send warm words not as plain text, but as a living card: build a bouquet from flowers, a ribbon and a vase to your taste, add a short message, and send it all as a single link. The recipient opens it like a real card — with an unfolding envelope and the bouquet blooming into view, no app install required.',
+  'Нужна ли регистрация': 'Do I need to register',
+  'Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.':
+    'No — you can build and send a card without an account, the whole card fits inside the link itself. An account is only useful if you want your list of cards saved and available from any device.',
+  'Это бесплатно?': 'Is it free?',
+  'Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.':
+    'Yes, completely. All flowers, vases, ribbons, envelopes and backgrounds are free — the service runs on ad banners, not paid subscriptions.',
+  'Для каких поводов': 'What occasions it fits',
+  'Дни рождения, признания в любви, слова благодарности, поздравления или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.':
+    'Birthdays, love confessions, thank-yous, congratulations, or just a card "because you thought of someone" — each occasion gets its own set of flowers, ribbon color, and card tone.',
   'Повод': 'Occasion',
   'задаёт тон открытки': 'sets the tone of the card',
   'Букет': 'Bouquet',
@@ -937,6 +949,20 @@ function renderCreator(){
       </div>
     </div>
     ${adSlotHtml('adSlotBottom')}
+
+    <div class="legal-wrap" style="padding-top:10px;">
+      <h2>${t('О сервисе')}</h2>
+      <p>${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
+
+      <h2>${t('Нужна ли регистрация')}</h2>
+      <p>${t('Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.')}</p>
+
+      <h2>${t('Это бесплатно?')}</h2>
+      <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
+
+      <h2>${t('Для каких поводов')}</h2>
+      <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
+    </div>
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
   `;
