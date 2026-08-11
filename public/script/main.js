@@ -285,6 +285,11 @@ const FLOWER_TYPES = [
   {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']}
 ];
 
+// Предел количества цветков одного типа (раньше было 8) — большие количества
+// визуально перегружали купол букета, головки сливались в плотное пятно без
+// читаемых промежутков между отдельными цветами.
+const MAX_FLOWERS_PER_TYPE = 5;
+
 const VASES = [
   {id:'A', label:{ru:'Глиняная',en:'Clay'}},
   {id:'B', label:{ru:'Стеклянная',en:'Glass'}},
@@ -520,19 +525,42 @@ function petalPath(len, width){
   const w = width/2;
   return `M0,0 C${-w},${-len*0.22} ${-w*0.9},${-len*0.78} 0,${-len} C${w*0.9},${-len*0.78} ${w},${-len*0.22} 0,0 Z`;
 }
-// тот же принцип, но с рваным трёхзубым краем — для гвоздики
+// тот же принцип, но с волнистым "рюшевым" краем — для гвоздики. Раньше край
+// был острым зигзагом из прямых линий и на малом размере читался как колючий
+// шарик репейника, а не цветок; волна на кривых Безье даёт мягкую бахрому.
 function fringedPetal(len, width){
   const w = width/2;
-  return `M0,0 L${-w},${-len*0.55} L${-w*0.4},${-len*0.82} L${-w*0.15},${-len*0.55} L0,${-len} L${w*0.15},${-len*0.55} L${w*0.4},${-len*0.82} L${w},${-len*0.55} Z`;
+  return `M0,0 C${-w*0.7},${-len*0.2} ${-w},${-len*0.32} ${-w*0.55},${-len*0.42}
+    C${-w*0.85},${-len*0.5} ${-w*0.7},${-len*0.62} ${-w*0.25},${-len*0.7}
+    C${-w*0.5},${-len*0.8} ${-w*0.22},${-len*0.92} 0,${-len}
+    C${w*0.22},${-len*0.92} ${w*0.5},${-len*0.8} ${w*0.25},${-len*0.7}
+    C${w*0.7},${-len*0.62} ${w*0.85},${-len*0.5} ${w*0.55},${-len*0.42}
+    C${w},${-len*0.32} ${w*0.7},${-len*0.2} 0,0 Z`;
 }
 // маленький глянцевый блик — на светлом полупрозрачном пятне глаз считывает объём
 function glint(x, y, rot, color){
   return `<ellipse cx="${x}" cy="${y}" rx="1.7" ry="1" fill="${color}" opacity=".55" transform="rotate(${rot} ${x} ${y})"/>`;
 }
+// радиальный градиент вместо плоской заливки — даёт лепестку выпуклость,
+// а не плоское цветовое пятно. id генерится на каждый вызов, поэтому
+// несколько цветков одного типа/цвета на холсте не делят один <defs> и не
+// "ловят" чужую анимацию/изменение при частичном ре-рендере.
+function petalGradient(color){
+  const id = 'pg' + Math.random().toString(36).slice(2,10);
+  const light = lighten(color, 34);
+  const mid = color;
+  const edge = darken(color, 14);
+  const defs = `<radialGradient id="${id}" cx="38%" cy="26%" r="82%"><stop offset="0%" stop-color="${light}"/><stop offset="60%" stop-color="${mid}"/><stop offset="100%" stop-color="${edge}"/></radialGradient>`;
+  return {url:`url(#${id})`, defs};
+}
 
 function flowerHead(type, cx, cy, color, rot, scale){
   const dark = darken(color, 42);
   const light = lighten(color, 26);
+  // общий радиальный градиент для этого экземпляра цветка — заменяет плоскую
+  // заливку основного яруса лепестков, даёт объём (светлый "выступ" к центру,
+  // затемнение к краю) вместо одноцветного пятна
+  const pg = petalGradient(color);
   let g = '';
   // все фигуры лепестков рисуются вокруг локального (0,0) — это гарантирует, что
   // rotate/scale ниже вращают и масштабируют цветок ровно вокруг его собственного
@@ -543,11 +571,11 @@ function flowerHead(type, cx, cy, color, rot, scale){
     const outer = 8, inner = 5;
     for(let i=0;i<outer;i++){
       const a = (i/outer)*360;
-      g += `<g transform="rotate(${a})"><path d="${petalPath(10,11)}" fill="${i%2?color:light}" stroke="${dark}" stroke-width=".5" transform="translate(0,-3.5)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(10,11)}" fill="${i%2?pg.url:light}" stroke="${dark}" stroke-width=".5" transform="translate(0,-3.5)"/></g>`;
     }
     for(let i=0;i<inner;i++){
       const a = (i/inner)*360 + 18;
-      g += `<g transform="rotate(${a})"><path d="${petalPath(6.5,7)}" fill="${color}" stroke="${dark}" stroke-width=".45" transform="translate(0,-1)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(6.5,7)}" fill="${pg.url}" stroke="${dark}" stroke-width=".45" transform="translate(0,-1)"/></g>`;
     }
     g += `<circle cx="0" cy="0" r="2.6" fill="${dark}"/>`;
     g += glint(-2, -6.5, -20, lighten(color,42));
@@ -556,7 +584,7 @@ function flowerHead(type, cx, cy, color, rot, scale){
     const ringA = 9, ringB = 7;
     for(let i=0;i<ringA;i++){
       const a = (i/ringA)*360;
-      g += `<g transform="rotate(${a})"><path d="${petalPath(8.5,9.5)}" fill="${i%3===0?light:color}" stroke="${dark}" stroke-width=".45" transform="translate(0,-5)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(8.5,9.5)}" fill="${i%3===0?light:pg.url}" stroke="${dark}" stroke-width=".45" transform="translate(0,-5)"/></g>`;
     }
     for(let i=0;i<ringB;i++){
       const a = (i/ringB)*360 + 22;
@@ -565,20 +593,29 @@ function flowerHead(type, cx, cy, color, rot, scale){
     g += `<circle cx="0" cy="0" r="2.3" fill="${dark}"/>`;
     g += glint(-1.5, -8, -15, lighten(color,45));
   } else if(type==='tulip'){
-    // три внешних лепестка врозь + просвечивающая внутренняя чаша — тюльпан
-    // перестаёт быть одним "блобом" и получает лёгкую многослойность
-    [-16, 0, 16].forEach((a,i)=>{
-      const fill = i===1 ? color : darken(color,8);
-      g += `<g transform="rotate(${a})"><path d="M 0 15 C -9 4 -8 -20 0 -15 C 8 -20 9 4 0 15 Z" fill="${fill}" stroke="${dark}" stroke-width=".6"/></g>`;
-    });
-    g += `<path d="M 0 13 C -5 4 -4.5 -9 0 -7.5 C 4.5 -9 5 4 0 13 Z" fill="${light}" opacity=".65"/>`;
-    g += glint(-1.6, -9, -10, lighten(color,48));
+    // Все остальные цветы рисуются "вид сверху, кольцо лепестков вокруг центра" —
+    // для тюльпана это не работает: раскрытый сверху тюльпан превращается в
+    // плоскую звезду, ничего общего с узнаваемым силуэтом. Поэтому тюльпан —
+    // единственный, кто рисуется сбоку, закрытым бутоном. Перебрал несколько
+    // неудачных вариантов: гладкий сплошной купол читался как яйцо/ягода; три
+    // острых лепестка с большим разлётом расходились слишком широко и превращали
+    // бутон в "трезубец"; узкий бутон с проблесками лепестков внутри контура —
+    // снова гладкое яйцо, просто в полоску. Рабочий вариант — те же острые
+    // лепестки-"слёзы", что и во втором варианте, но с гораздо меньшим углом
+    // разлёта и большим нахлёстом: кончики остаются близко друг к другу
+    // (узнаваемые три острия), а не расходятся в стороны.
+    g += `<g transform="translate(-2.5,4) rotate(-13)"><path d="${petalPath(16,10)}" fill="${darken(color,10)}" stroke="${dark}" stroke-width=".5"/></g>`;
+    g += `<g transform="translate(2.5,4) rotate(13)"><path d="${petalPath(16,10)}" fill="${darken(color,10)}" stroke="${dark}" stroke-width=".5"/></g>`;
+    g += `<g transform="translate(0,4)"><path d="${petalPath(18,11)}" fill="${pg.url}" stroke="${dark}" stroke-width=".55"/></g>`;
+    // тонкая складка по центру переднего лепестка — читается как настоящий сгиб бутона
+    g += `<path d="M0,-2 C-1.5,-10 -1,-17 0,-22" stroke="${dark}" stroke-width=".5" opacity=".3" fill="none"/>`;
+    g += glint(-3, -13, -12, lighten(color,48));
   } else if(type==='daisy'){
     // узкие лепестки-слёзы вместо ровных эллипсов — кончики теперь мягко заострены
     const count = 12;
     for(let i=0;i<count;i++){
       const a = (i/count)*360;
-      g += `<g transform="rotate(${a})"><path d="${petalPath(10.5,4.2)}" fill="${color}" stroke="${dark}" stroke-width=".35" transform="translate(0,-2.5)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(10.5,4.2)}" fill="${pg.url}" stroke="${dark}" stroke-width=".35" transform="translate(0,-2.5)"/></g>`;
     }
     g += `<circle cx="0" cy="0" r="5.3" fill="#D9A441"/>`;
     for(let i=0;i<8;i++){
@@ -586,15 +623,16 @@ function flowerHead(type, cx, cy, color, rot, scale){
       g += `<circle cx="${Math.cos(a)*2.7}" cy="${Math.sin(a)*2.7}" r=".55" fill="#8A5E22" opacity=".55"/>`;
     }
   } else if(type==='carnation'){
-    // два яруса рваных лепестков — бахромчатый край остаётся, но цветок стал полнее
-    const outer=14, inner=9;
+    // два яруса лепестков с мягкой волнистой бахромой — цветок стал полнее и
+    // менее "колючим", чем раньше
+    const outer=12, inner=8;
     for(let i=0;i<outer;i++){
       const a = (i/outer)*360;
-      g += `<g transform="rotate(${a})"><path d="${fringedPetal(8,6)}" fill="${i%2?color:light}" stroke="${dark}" stroke-width=".35" transform="translate(0,-2.5)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${fringedPetal(8,6)}" fill="${i%2?pg.url:light}" stroke="${dark}" stroke-width=".35" transform="translate(0,-2.5)"/></g>`;
     }
     for(let i=0;i<inner;i++){
       const a = (i/inner)*360 + 20;
-      g += `<g transform="rotate(${a})"><path d="${fringedPetal(5.5,4.5)}" fill="${color}" stroke="${dark}" stroke-width=".3" transform="translate(0,-0.5)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${fringedPetal(5.5,4.5)}" fill="${pg.url}" stroke="${dark}" stroke-width=".3" transform="translate(0,-0.5)"/></g>`;
     }
     g += `<circle cx="0" cy="0" r="2" fill="${dark}"/>`;
   } else if(type==='orchid'){
@@ -602,7 +640,7 @@ function flowerHead(type, cx, cy, color, rot, scale){
     // узнаваемый силуэт орхидеи, но с более мягкими, живыми краями лепестков
     for(let i=0;i<5;i++){
       const a = (i/5)*360 - 90;
-      g += `<g transform="rotate(${a})"><path d="${petalPath(9,7)}" fill="${i===0?light:color}" stroke="${dark}" stroke-width=".45" transform="translate(0,-2)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(9,7)}" fill="${i===0?light:pg.url}" stroke="${dark}" stroke-width=".45" transform="translate(0,-2)"/></g>`;
     }
     g += `<path d="M -6 4 C -6 9 6 9 6 4 C 6 1 3 -1 0 -1 C -3 -1 -6 1 -6 4 Z" fill="${lighten(color,16)}" stroke="${dark}" stroke-width=".5"/>`;
     g += `<circle cx="-1.6" cy="4.6" r=".7" fill="${dark}" opacity=".6"/><circle cx="1.6" cy="4.9" r=".6" fill="${dark}" opacity=".5"/>`;
@@ -613,7 +651,7 @@ function flowerHead(type, cx, cy, color, rot, scale){
     const count=13;
     for(let i=0;i<count;i++){
       const a = (i/count)*360;
-      g += `<g transform="rotate(${a})"><path d="${petalPath(9,4.6)}" fill="${color}" stroke="${dark}" stroke-width=".35" transform="translate(0,-4.5)"/></g>`;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(9,4.6)}" fill="${pg.url}" stroke="${dark}" stroke-width=".35" transform="translate(0,-4.5)"/></g>`;
     }
     g += `<circle cx="0" cy="0" r="6.8" fill="#6B4A2A"/>`;
     const GOLDEN = 137.508*Math.PI/180;
@@ -624,8 +662,37 @@ function flowerHead(type, cx, cy, color, rot, scale){
     }
   }
   // translate → rotate → scale, в этом порядке: сначала ставим цветок на место стебля,
-  // затем крутим и масштабируем строго вокруг этой самой точки — без сюрпризов рендера
-  return `<g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${scale})">${g}</g>`;
+  // затем крутим и масштабируем строго вокруг этой самой точки — без сюрпризов рендера.
+  // <defs> с градиентом кладём тут же, рядом с использующим его <g> — в SVG defs
+  // не обязаны идти перед разметкой, которая на них ссылается.
+  return `<defs>${pg.defs}</defs><g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${scale})">${g}</g>`;
+}
+
+// Наполнитель букета: мелкая зелень и веточки гипсофилы (белые "облачка" из
+// точек), разбросанные между основными цветами золотым углом (та же
+// закономерность, что и у самих голов букета в buildBouquetSVG) — придаёт
+// пышность и заполняет "пустоты" между крупными цветами, как у настоящего
+// собранного флористом букета, а не просто у пары одиночных бутонов.
+function fillerSpray(cx, domeCenterY, domeR, n){
+  if(n <= 0) return '';
+  const count = Math.min(9, 4 + Math.round(n*0.9));
+  const GOLDEN = 137.508 * Math.PI/180;
+  let s = '';
+  for(let i=0;i<count;i++){
+    const r = domeR * (0.1 + 0.62*((i+0.5)/count));
+    const a = i*GOLDEN + 2.4; // сдвиг фазы — чтобы не совпадать с точками самих цветов
+    const x = cx + r*Math.cos(a);
+    const y = domeCenterY + r*Math.sin(a)*0.85 - 3;
+    if(i%2===0){
+      const rot = (a*180/Math.PI) % 360;
+      s += `<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0,2 C-3.4,-2 -3.2,-8 0,-12 C3.2,-8 3.4,-2 0,2 Z" fill="#7C9A6B" stroke="#4F6B45" stroke-width=".4"/></g>`;
+    } else {
+      [[-2,-1],[2.2,-2.4],[0,-5.4],[-1.4,1.2]].forEach(([dx,dy])=>{
+        s += `<circle cx="${x+dx}" cy="${y+dy}" r="1.4" fill="#FBF6EA" stroke="#DFCBA0" stroke-width=".3"/>`;
+      });
+    }
+  }
+  return s;
 }
 
 // пара небольших листьев у горлышка вазы — лёгкий штрих зелени, который делает
@@ -708,9 +775,14 @@ function buildBouquetSVG(cfg, size){
   });
   const n = heads.length;
 
-  // купол букета: радиус растёт с количеством цветов, но всегда остаётся внутри холста
-  const domeR = n>0 ? Math.min(size*0.30, size*0.10 + Math.sqrt(n)*8) : 0;
-  const domeCenterY = vaseTopY - size*0.30;
+  // купол букета: радиус растёт с количеством цветов, но всегда остаётся внутри холста.
+  // Меньше прежнего — чем плотнее радиус, тем сильнее головки цветов
+  // перекрывают друг друга и тем "пышнее" читается купол; широкий радиус
+  // наоборот раскидывает цветы редкой россыпью с пустотами между ними.
+  const domeR = n>0 ? Math.min(size*0.27, size*0.085 + Math.sqrt(n)*7.2) : 0;
+  // купол подтянут ближе к вазе, но не вплотную — при большом числе цветов
+  // нужен запас по высоте, иначе плотный купол ложится прямо на горлышко
+  const domeCenterY = vaseTopY - size*0.27;
 
   const GOLDEN = 137.508 * Math.PI/180;
   const pts = heads.map((h,i)=>{
@@ -721,7 +793,10 @@ function buildBouquetSVG(cfg, size){
     const r = n>1 ? domeR*Math.pow((i+0.5)/n, 0.62) : 0;
     const a = i*GOLDEN;
     const x = cx + r*Math.cos(a);
-    const y = domeCenterY + r*Math.sin(a)*0.7; // приплюснуто по вертикали — читается как купол, не шар
+    // 0.85, а не почти круглые 1.0 — купол чуть приплюснут по вертикали,
+    // читается как букет, а не шар, но раньше (0.7) был слишком плоским и
+    // широким: при плотной посадке цветы почти не давали высоты, только ширину
+    const y = domeCenterY + r*Math.sin(a)*0.85;
     const scale = 1 - (r/(domeR||1))*0.18; // дальние бутоны чуть мельче — эффект глубины
     return {type:h.type, color:h.color, x, y, r, scale};
   });
@@ -736,10 +811,15 @@ function buildBouquetSVG(cfg, size){
     stemsSvg += `<path d="${stemPath(cx, tieY, p.x, p.y, bow)}" fill="none" stroke="#5C7457" stroke-width="1.6" opacity=".85"/>`;
   });
 
+  const filler = fillerSpray(cx, domeCenterY, domeR, n);
+
   // головки цветов — от дальних (верх купола) к ближним (низ купола), чтобы передние перекрывали задние
   pts.slice().sort((a,b)=>a.y-b.y).forEach(p=>{
     const rot = (p.x-cx)*0.3;
-    headsSvg += flowerHead(p.type, p.x, p.y, p.color, rot, Math.max(0.72, p.scale));
+    // ×1.35 — головки цветов были слишком мелкими относительно вазы и
+    // "терялись" в композиции; крупнее и плотнее сидящие друг к другу
+    // головки — то, что отличает настоящий букет от пары воткнутых бутонов
+    headsSvg += flowerHead(p.type, p.x, p.y, p.color, rot, Math.max(0.78, p.scale) * 1.35);
   });
 
   const vase = vaseSvg(cfg.vase, cx, vaseTopY);
@@ -761,7 +841,7 @@ function buildBouquetSVG(cfg, size){
     </defs>
     ${shadow}
     ${stemsSvg}
-    <g filter="url(#${headsFilterId})">${headsSvg}</g>
+    <g filter="url(#${headsFilterId})">${filler}${headsSvg}</g>
     ${vase}
     ${leaves}
     ${bow}
@@ -1193,7 +1273,7 @@ function setFlowerColor(id,c){
 function stepFlower(id, d){
   if(!state.flowers[id]) return;
   const v = state.flowers[id].count + d;
-  state.flowers[id].count = Math.max(0, Math.min(8, v));
+  state.flowers[id].count = Math.max(0, Math.min(MAX_FLOWERS_PER_TYPE, v));
   if(state.flowers[id].count===0) delete state.flowers[id];
   renderFlowerRows(); renderFlowerSummary(); renderPreviewBouquet();
 }
