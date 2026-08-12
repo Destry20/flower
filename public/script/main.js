@@ -45,6 +45,29 @@ function setLang(lang){
   document.documentElement.lang = lang;
   renderRoute();
 }
+
+/* ====================== ТЕМА (светлая/тёмная) ====================== */
+// В отличие от языка — НЕ подхватываем системную тему устройства, только
+// явный выбор пользователя. По умолчанию всегда светлая: раньше уже пробовали
+// ориентироваться на системную тёмную тему и это сбивало с толку (сайт
+// внезапно оказывался тёмным без того, чтобы пользователь сам это выбрал).
+function detectTheme(){
+  try{
+    const saved = localStorage.getItem('vr-theme');
+    if(saved === 'dark' || saved === 'light') return saved;
+  }catch(e){}
+  return 'light';
+}
+let uiTheme = detectTheme();
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', uiTheme);
+}
+function toggleTheme(){
+  uiTheme = uiTheme === 'dark' ? 'light' : 'dark';
+  try{ localStorage.setItem('vr-theme', uiTheme); }catch(e){}
+  applyTheme();
+  renderRoute(); // перерисовать шапку — у кнопки переключения меняются иконка и aria-label
+}
 function tr(obj){
   if(obj == null) return '';
   if(typeof obj === 'string') return obj;
@@ -56,6 +79,9 @@ function t(ru){
 
 const EN_STRINGS = {
   'Мои открытки': 'My cards',
+  'Написать нам': 'Contact us',
+  'Включить светлую тему': 'Switch to light theme',
+  'Включить тёмную тему': 'Switch to dark theme',
   'Достигнут лимит открыток': 'You\'ve reached the card limit',
   'Цветы ещё не добавлены': 'No flowers added yet',
   'Изменить цветы': 'Edit flowers',
@@ -1030,7 +1056,7 @@ function renderCreator(){
     </div>
     ${adSlotHtml('adSlotBottom')}
 
-    <div class="legal-wrap" style="padding-top:10px;">
+    <div class="legal-wrap" id="about" style="padding-top:10px; scroll-margin-top:24px;">
       <h2>${t('О сервисе')}</h2>
       <p>${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
 
@@ -1110,6 +1136,8 @@ function topbarHtml(){
         <button class="lang-btn ${uiLang==='ru'?'active':''}" aria-pressed="${uiLang==='ru'}" onclick="setLang('ru')">RU</button>
         <button class="lang-btn ${uiLang==='en'?'active':''}" aria-pressed="${uiLang==='en'}" onclick="setLang('en')">EN</button>
       </div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
+      <a class="topbar-link" href="javascript:void(0)" onclick="scrollToAbout()">${t('О сервисе')}</a>
       <a class="topbar-link" href="#mine">${t('Мои открытки')}</a>
       ${session.user
         ? `<button onclick="location.hash='account'">${esc(session.user.name || session.user.email.split('@')[0])}</button>`
@@ -1117,8 +1145,25 @@ function topbarHtml(){
     </div>
   </div>`;
 }
+// Ссылка "О сервисе" в шапке доступна на любой странице сайта — сам блок
+// с описанием есть только на главной (renderCreator), поэтому если мы не там,
+// сперва уходим на главную (как goHome), и только потом скроллим к блоку —
+// иначе на, например, странице входа просто ничего не произошло бы.
+function scrollToAbout(){
+  const scroll = () => {
+    const el = document.getElementById('about');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+  if(location.hash || location.search){
+    history.replaceState(null, '', location.pathname);
+    renderRoute();
+    requestAnimationFrame(scroll);
+  } else {
+    scroll();
+  }
+}
 function footerHtml(){
-  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a>`;
+  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a>`;
 }
 
 // Место под рекламные баннеры (Google AdSense / Яндекс.Директ). Сейчас — просто
@@ -1158,6 +1203,16 @@ function editIconSvg(){
 }
 function diceIconSvg(){
   return `<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="5" r="1.1" fill="currentColor"/><circle cx="11" cy="5" r="1.1" fill="currentColor"/><circle cx="8" cy="8" r="1.1" fill="currentColor"/><circle cx="5" cy="11" r="1.1" fill="currentColor"/><circle cx="11" cy="11" r="1.1" fill="currentColor"/></svg>`;
+}
+// Кнопка показывает иконку того, во что переключит клик (не текущее состояние) —
+// в светлой теме показываем луну ("нажми — станет тёмно"), в тёмной — солнце.
+// Раньше иконка была тонким контуром 16px и терялась в интерфейсе — тут заливка
+// сплошным цветом и покрупнее, чтобы кнопка сразу читалась как переключатель.
+function themeIconSvg(theme){
+  if(theme==='dark'){
+    return `<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4.3" fill="currentColor"/><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="10" y1="1.2" x2="10" y2="3.6"/><line x1="10" y1="16.4" x2="10" y2="18.8"/><line x1="1.2" y1="10" x2="3.6" y2="10"/><line x1="16.4" y1="10" x2="18.8" y2="10"/><line x1="3.9" y1="3.9" x2="5.6" y2="5.6"/><line x1="14.4" y1="14.4" x2="16.1" y2="16.1"/><line x1="3.9" y1="16.1" x2="5.6" y2="14.4"/><line x1="14.4" y1="5.6" x2="16.1" y2="3.9"/></g></svg>`;
+  }
+  return `<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M17.5 12.8A7.3 7.3 0 1 1 7.2 2.5 5.8 5.8 0 0 0 17.5 12.8Z" fill="currentColor"/></svg>`;
 }
 
 function vaseThumbSvg(type){
@@ -2053,6 +2108,7 @@ function goHome(){
 
 async function bootstrap(){
   document.documentElement.lang = uiLang; // статичный <html lang> в index.html — только запасной вариант до этой строки
+  applyTheme();
   await loadMe();
   window.addEventListener('hashchange', renderRoute);
   window.addEventListener('popstate', renderRoute); // кнопки назад/вперёд для ?data=-ссылок
