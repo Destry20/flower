@@ -286,7 +286,7 @@ const EN_STRINGS = {
 
 const BRAND = 'VivoRose';
 const SITE_DESCRIPTION_RU = 'Соберите виртуальный букет, добавьте пожелание и отправьте открытку одной ссылкой.';
-const SITE_DESCRIPTION_EN = 'Build a virtual bouquet, add a message, and send a card with a single link.';
+const SITE_DESCRIPTION_EN = 'A virtual bouquet that never wilts — pick the flowers, write your message, and share it with one link.';
 function siteDescription(){ return uiLang === 'ru' ? SITE_DESCRIPTION_RU : SITE_DESCRIPTION_EN; }
 
 // anim — какая анимация частиц играет при раскрытии открытки (см. dropParticles):

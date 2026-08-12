@@ -1,7 +1,7 @@
 {
   "name": "VivoRose — a card with a virtual bouquet",
   "short_name": "VivoRose",
-  "description": "Build a virtual bouquet, add a message, and send a card with a single link.",
+  "description": "A virtual bouquet that never wilts — pick the flowers, write your message, and share it with one link.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
