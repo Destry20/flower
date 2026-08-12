@@ -48,6 +48,9 @@
   .refresh-btn{ background:none; border:1px solid var(--border); color:var(--ink); padding:6px 12px; font-size:12.5px; }
   .refresh-btn:hover{ border-color:var(--ink); }
   .updated-at{ font-size:11px; color:#8a7b6a; }
+  .tag{ display:inline-block; font-size:10.5px; padding:2px 7px; border-radius:999px; white-space:nowrap; }
+  .tag-bot{ background:#efe6e6; color:#8a7b6a; }
+  .tag-visitor{ background:#e9f0e6; color:#4a8a5c; }
 </style>
 </head>
 <body>
@@ -89,9 +92,11 @@
         <div class="stat"><div class="n" id="statTotal">—</div><div class="l">views (90d)</div></div>
         <div class="stat"><div class="n" id="statUsers">—</div><div class="l">accounts</div></div>
         <div class="stat"><div class="n" id="statCards">—</div><div class="l">cards created</div></div>
+        <div class="stat"><div class="n" id="statBotToday">—</div><div class="l">bot views today</div></div>
       </div>
       <div class="bars" id="trafficBars"></div>
       <div class="bars lbl" id="trafficLabels"></div>
+      <div class="updated-at" style="margin-top:10px;">"Views" above are real visitors only — bot/crawler traffic is counted separately and excluded from these numbers.</div>
     </div>
 
     <div class="card">
@@ -102,6 +107,11 @@
     <div class="card">
       <h2>Recent signups</h2>
       <div id="usersList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recent cards</h2>
+      <div id="cardsList"></div>
     </div>
 
     <div class="card">

@@ -26,6 +26,7 @@ function renderTraffic(traffic, counts){
   $('statTotal').textContent = traffic.total;
   $('statUsers').textContent = counts.users;
   $('statCards').textContent = counts.cards;
+  $('statBotToday').textContent = traffic.todayBot;
 
   const max = Math.max(1, ...traffic.last7Days.map(d => d.count));
   $('trafficBars').innerHTML = traffic.last7Days.map(d =>
@@ -73,14 +74,17 @@ function renderErrors(errors){
 
 // Раньше сервер уже считал последние посещения (traffic.recent), но экран
 // их просто никак не показывал — данные уходили в никуда. Показываем здесь.
+// Каждый визит теперь помечен bot:true/false (см. isBotUserAgent в db.js) —
+// боты предпросмотра ссылок в мессенджерах дёргают те же "/" и "/c/<id>",
+// что и живые люди, и раньше их было не отличить в этом списке.
 function renderRecent(recent){
   const el = $('recentList');
   if(!recent.length){
     el.innerHTML = '<div class="empty">No visits recorded yet.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Time</th><th>Page</th></tr></thead><tbody>${
-    recent.map(r => `<tr><td>${fmtTime(r.ts)}</td><td class="msg">${escapeHtml(r.path)}</td></tr>`).join('')
+  el.innerHTML = `<table><thead><tr><th>Time</th><th>Page</th><th>Type</th></tr></thead><tbody>${
+    recent.map(r => `<tr><td>${fmtTime(r.ts)}</td><td class="msg">${escapeHtml(r.path)}</td><td>${r.bot ? '<span class="tag tag-bot">bot</span>' : '<span class="tag tag-visitor">visitor</span>'}</td></tr>`).join('')
   }</tbody></table>`;
 }
 
@@ -95,18 +99,36 @@ function renderUsers(users){
   }</tbody></table>`;
 }
 
+function renderCards(cards){
+  const el = $('cardsList');
+  if(!cards.length){
+    el.innerHTML = '<div class="empty">No cards created yet.</div>';
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>Link</th></tr></thead><tbody>${
+    cards.map(c => `<tr>
+      <td>${fmtTime(c.createdAt)}</td>
+      <td class="msg">${escapeHtml(c.ownerEmail || '—')}</td>
+      <td class="msg">${escapeHtml(c.occasion || '—')}</td>
+      <td class="msg">${escapeHtml(c.to || '—')}</td>
+      <td><a href="/c/${encodeURIComponent(c.shortId)}" target="_blank" rel="noopener">/c/${escapeHtml(c.shortId)}</a></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
 let currentSiteEnabled = true;
 let refreshTimer = null;
 const AUTO_REFRESH_MS = 60000;
 
 async function loadDashboard(){
-  const [stats, errorsRes, usersRes] = await Promise.all([api('/stats'), api('/errors'), api('/users')]);
+  const [stats, errorsRes, usersRes, cardsRes] = await Promise.all([api('/stats'), api('/errors'), api('/users'), api('/cards')]);
   currentSiteEnabled = stats.siteEnabled;
   renderTraffic(stats.traffic, stats.counts);
   renderStatus(stats.siteEnabled);
   renderRecent(stats.traffic.recent);
   renderErrors(errorsRes.errors);
   renderUsers(usersRes.users);
+  renderCards(cardsRes.cards);
   $('updatedAt').textContent = 'Updated ' + new Date().toLocaleTimeString();
 }
 

@@ -111,6 +111,10 @@ router.get('/users', requireAdmin, (req, res) => {
   res.json({ users: db.listRecentUsers(15) });
 });
 
+router.get('/cards', requireAdmin, (req, res) => {
+  res.json({ cards: db.listRecentCards(15) });
+});
+
 router.post('/site-status', requireAdmin, (req, res) => {
   const { enabled } = req.body || {};
   db.setSiteEnabled(!!enabled);

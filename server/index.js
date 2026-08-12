@@ -64,7 +64,7 @@ app.use(attachUser);
 const REAL_PAGE_RE = /^\/(c\/[A-Za-z0-9]+)?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
-    db.recordVisit(req.path);
+    db.recordVisit(req.path, req.get('user-agent'));
   }
   next();
 });

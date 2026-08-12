@@ -18,7 +18,7 @@ function defaultData(){
   return {
     users: [], cards: [],
     meta: { siteEnabled: true },
-    traffic: { byDay: {}, recent: [] },
+    traffic: { byDay: {}, byDayBot: {}, recent: [] },
     errors: []
   };
 }
@@ -43,6 +43,10 @@ function load(){
 }
 
 let data = load();
+// Подстраховка для db.json, сохранённого до появления byDayBot ({...defaultData(), ...parsed}
+// выше — не глубокое слияние, поле traffic целиком берётся из старого файла и byDayBot
+// в нём просто нет) — без этого recordVisit упал бы на "Cannot set properties of undefined".
+if(!data.traffic.byDayBot) data.traffic.byDayBot = {};
 
 // Запись сериализуется через очередь промисов, чтобы параллельные запросы
 // не затирали файл друг другом (нет настоящих транзакций у JSON-файла).
@@ -171,20 +175,44 @@ function dayKey(ts){
   return new Date(ts).toISOString().slice(0, 10);
 }
 
+// Грубая, но практичная эвристика — по User-Agent нельзя доказать бота
+// (подделывается тривиально), но для админ-панели важно не строгое
+// доказательство, а "на глаз" отделить очевидных ботов/краулеров от реальных
+// посетителей. Сюда попадают: поисковые роботы, боты предпросмотра ссылок
+// в мессенджерах/соцсетях (именно они и дёргают "/" и "/c/<id>" — те же
+// страницы, что смотрят живые люди, поэтому раньше смешивались с реальным
+// трафиком), и типовые consej/скрипт-клиенты. Отсутствие User-Agent тоже
+// считаем ботом — настоящие браузеры его всегда посылают.
+const BOT_UA_RE = /bot|spider|crawl|slurp|facebookexternalhit|whatsapp|telegrambot|discordbot|slackbot|vkshare|redditbot|skypeuripreview|applebot|preview|headless|curl|wget|python-requests|go-http-client|okhttp|node-fetch|axios\/|postmanruntime|ahrefsbot|semrushbot|mj12bot|dotbot|petalbot|bingpreview/i;
+function isBotUserAgent(ua){
+  if(!ua) return true;
+  return BOT_UA_RE.test(ua);
+}
+
 // Считаем только "просмотры страниц" (см. вызов в server/index.js) — не каждый
 // запрос подряд, иначе один визит раздувался бы в десятки записей за счёт
-// статики (JS/CSS/шрифты).
-function recordVisit(path){
+// статики (JS/CSS/шрифты). Люди и боты считаются в отдельные корзины —
+// byDay/total остаются "чистыми" (только реальные посетители), боты видны
+// отдельно (byDayBot) и помечены в списке последних визитов.
+function recordVisit(path, userAgent){
   const now = Date.now();
   const key = dayKey(now);
-  data.traffic.byDay[key] = (data.traffic.byDay[key] || 0) + 1;
-  data.traffic.recent.unshift({ path, ts: now });
+  const bot = isBotUserAgent(userAgent);
+  if(bot){
+    data.traffic.byDayBot[key] = (data.traffic.byDayBot[key] || 0) + 1;
+  } else {
+    data.traffic.byDay[key] = (data.traffic.byDay[key] || 0) + 1;
+  }
+  data.traffic.recent.unshift({ path, ts: now, bot });
   if(data.traffic.recent.length > MAX_RECENT_VISITS){
     data.traffic.recent.length = MAX_RECENT_VISITS;
   }
   const cutoff = dayKey(now - TRAFFIC_RETENTION_DAYS * 24 * 60 * 60 * 1000);
   for(const dayStr of Object.keys(data.traffic.byDay)){
     if(dayStr < cutoff) delete data.traffic.byDay[dayStr];
+  }
+  for(const dayStr of Object.keys(data.traffic.byDayBot)){
+    if(dayStr < cutoff) delete data.traffic.byDayBot[dayStr];
   }
   persist();
 }
@@ -193,13 +221,16 @@ function getTrafficSummary(){
   const days = [];
   for(let i = 6; i >= 0; i--){
     const key = dayKey(Date.now() - i * 24 * 60 * 60 * 1000);
-    days.push({ date: key, count: data.traffic.byDay[key] || 0 });
+    days.push({ date: key, count: data.traffic.byDay[key] || 0, botCount: data.traffic.byDayBot[key] || 0 });
   }
   const total = Object.values(data.traffic.byDay).reduce((sum, n) => sum + n, 0);
+  const totalBot = Object.values(data.traffic.byDayBot).reduce((sum, n) => sum + n, 0);
   return {
     today: days[days.length - 1].count,
+    todayBot: days[days.length - 1].botCount,
     last7Days: days,
     total,
+    totalBot,
     recent: data.traffic.recent.slice(0, 30)
   };
 }
@@ -239,6 +270,27 @@ function listRecentUsers(limit = 15){
     .slice(0, limit)
     .map(u => ({ id: u.id, email: u.email, name: u.name, createdAt: u.createdAt }));
 }
+// Для панели администратора — раньше счётчик "cards created" был, а самого
+// списка открыток не было нигде, поэтому не было способа увидеть, что и когда
+// реально создавалось. encodedData (содержимое открытки) намеренно не отдаём —
+// админке для обзора достаточно метаданных, а не текста чужого пожелания.
+function listRecentCards(limit = 15){
+  return [...data.cards]
+    .sort((a,b) => b.createdAt - a.createdAt)
+    .slice(0, limit)
+    .map(c => {
+      const owner = findUserById(c.userId);
+      return {
+        id: c.id,
+        shortId: c.shortId,
+        occasion: c.occasion,
+        to: c.to,
+        from: c.from,
+        createdAt: c.createdAt,
+        ownerEmail: owner ? owner.email : null
+      };
+    });
+}
 function deleteClientError(id){
   const before = data.errors.length;
   data.errors = data.errors.filter(e => e.id !== id);
@@ -254,5 +306,5 @@ module.exports = {
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors, deleteClientError,
-  getCounts, listRecentUsers
+  getCounts, listRecentUsers, listRecentCards
 };
