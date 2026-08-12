@@ -194,6 +194,16 @@ function isBotUserAgent(ua){
 // статики (JS/CSS/шрифты). Люди и боты считаются в отдельные корзины —
 // byDay/total остаются "чистыми" (только реальные посетители), боты видны
 // отдельно (byDayBot) и помечены в списке последних визитов.
+// Отдельная от isBotUserAgent эвристика — та ловит только ботов, которые сами
+// себя выдают через User-Agent; аптайм-мониторы и скрейперы часто нарочно
+// притворяются обычным Chrome/Safari и остаются невидимы для неё. Признак,
+// который всё равно их выдаёт: несколько заходов на один и тот же путь за
+// считанные секунды — ни один живой человек не обновляет страницу трижды
+// за 8 секунд. Это тоже эвристика, не доказательство: помечаем "suspicious"
+// только для отображения в списке, на подсчёт human/bot не влияет.
+const BURST_WINDOW_MS = 8000;
+const BURST_MIN_COUNT = 3;
+
 function recordVisit(path, userAgent){
   const now = Date.now();
   const key = dayKey(now);
@@ -203,7 +213,12 @@ function recordVisit(path, userAgent){
   } else {
     data.traffic.byDay[key] = (data.traffic.byDay[key] || 0) + 1;
   }
-  data.traffic.recent.unshift({ path, ts: now, bot });
+  const burstSiblings = data.traffic.recent.filter(v => v.path === path && now - v.ts <= BURST_WINDOW_MS);
+  const suspicious = burstSiblings.length + 1 >= BURST_MIN_COUNT;
+  if(suspicious){
+    burstSiblings.forEach(v => { v.suspicious = true; });
+  }
+  data.traffic.recent.unshift({ path, ts: now, bot, suspicious });
   if(data.traffic.recent.length > MAX_RECENT_VISITS){
     data.traffic.recent.length = MAX_RECENT_VISITS;
   }

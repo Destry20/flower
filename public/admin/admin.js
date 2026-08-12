@@ -84,7 +84,10 @@ function renderRecent(recent){
     return;
   }
   el.innerHTML = `<table><thead><tr><th>Time</th><th>Page</th><th>Type</th></tr></thead><tbody>${
-    recent.map(r => `<tr><td>${fmtTime(r.ts)}</td><td class="msg">${escapeHtml(r.path)}</td><td>${r.bot ? '<span class="tag tag-bot">bot</span>' : '<span class="tag tag-visitor">visitor</span>'}</td></tr>`).join('')
+    recent.map(r => `<tr><td>${fmtTime(r.ts)}</td><td class="msg">${escapeHtml(r.path)}</td><td>${
+      r.bot ? '<span class="tag tag-bot">bot</span>'
+        : (r.suspicious ? '<span class="tag tag-suspicious" title="Same page hit 3+ times within seconds — likely a monitor/scraper spoofing a real browser">rapid?</span>' : '<span class="tag tag-visitor">visitor</span>')
+    }</td></tr>`).join('')
   }</tbody></table>`;
 }
 
