@@ -1054,7 +1054,6 @@ function renderCreator(){
         </div>
       </div>
     </div>
-    ${adSlotHtml('adSlotBottom')}
 
     <div class="legal-wrap" id="about" style="padding-top:10px; scroll-margin-top:24px;">
       <h2>${t('О сервисе')}</h2>
