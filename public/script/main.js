@@ -82,6 +82,7 @@ const EN_STRINGS = {
   'Написать нам': 'Contact us',
   'Включить светлую тему': 'Switch to light theme',
   'Включить тёмную тему': 'Switch to dark theme',
+  'Меню': 'Menu',
   'Достигнут лимит открыток': 'You\'ve reached the card limit',
   'Цветы ещё не добавлены': 'No flowers added yet',
   'Изменить цветы': 'Edit flowers',
@@ -1124,6 +1125,15 @@ function leafIcon(){
   return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="margin-right:2px;" aria-hidden="true"><path d="M4 20C4 12 9 4 20 4C20 15 12 20 4 20Z" fill="#8CA087" stroke="#5C7457" stroke-width="1"/><path d="M4 20C8 15 12 11 18 6" stroke="#5C7457" stroke-width="1"/></svg>`;
 }
 
+// Открыта ли выпадающая панель "ещё" в шапке на узких экранах (RU/EN, тема,
+// "О сервисе", "Мои открытки") — см. topbarHtml() и .topbar-more в main.css.
+let topbarMenuOpen = false;
+function toggleTopbarMenu(){ topbarMenuOpen = !topbarMenuOpen; renderRoute(); }
+function closeTopbarMenu(){ if(topbarMenuOpen){ topbarMenuOpen = false; renderRoute(); } }
+function menuIconSvg(){
+  return `<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6H17M3 10H17M3 14H17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+}
+
 // Общий топбар для всех "внутренних" страниц (конструктор, мои открытки,
 // аккаунт, юридические страницы) — держит навигацию и состояние входа
 // в одном месте, чтобы не дублировать разметку по страницам.
@@ -1131,13 +1141,21 @@ function topbarHtml(){
   return `<div class="topbar">
     <div class="brand" tabindex="0" role="link" onclick="goHome()" onkeydown="activateOnKey(event)" style="cursor:pointer;">${leafIcon()}${BRAND}</div>
     <div class="topbar-actions">
-      <div class="lang-switch" role="group" aria-label="Language / Язык">
-        <button class="lang-btn ${uiLang==='ru'?'active':''}" aria-pressed="${uiLang==='ru'}" onclick="setLang('ru')">RU</button>
-        <button class="lang-btn ${uiLang==='en'?'active':''}" aria-pressed="${uiLang==='en'}" onclick="setLang('en')">EN</button>
+      <button class="topbar-menu-btn" onclick="toggleTopbarMenu()" aria-expanded="${topbarMenuOpen}" aria-label="${t('Меню')}">${menuIconSvg()}</button>
+      <div class="topbar-more ${topbarMenuOpen?'open':''}" id="topbarMore">
+        <div class="topbar-more-backdrop" onclick="if(event.target===this) closeTopbarMenu()"></div>
+        <div class="topbar-more-panel">
+          <div class="topbar-more-row">
+            <div class="lang-switch" role="group" aria-label="Language / Язык">
+              <button class="lang-btn ${uiLang==='ru'?'active':''}" aria-pressed="${uiLang==='ru'}" onclick="closeTopbarMenu();setLang('ru')">RU</button>
+              <button class="lang-btn ${uiLang==='en'?'active':''}" aria-pressed="${uiLang==='en'}" onclick="closeTopbarMenu();setLang('en')">EN</button>
+            </div>
+            <button class="theme-toggle" onclick="closeTopbarMenu();toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
+          </div>
+          <a class="topbar-link" href="#" onclick="event.preventDefault();closeTopbarMenu();scrollToAbout()">${t('О сервисе')}</a>
+          <a class="topbar-link" href="#mine" onclick="closeTopbarMenu()">${t('Мои открытки')}</a>
+        </div>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
-      <a class="topbar-link" href="javascript:void(0)" onclick="scrollToAbout()">${t('О сервисе')}</a>
-      <a class="topbar-link" href="#mine">${t('Мои открытки')}</a>
       ${session.user
         ? `<button onclick="location.hash='account'">${esc(session.user.name || session.user.email.split('@')[0])}</button>`
         : `<button onclick="location.hash='login'">${t('Войти')}</button>`}
@@ -1153,8 +1171,8 @@ function scrollToAbout(){
     const el = document.getElementById('about');
     if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
   };
-  if(location.hash || location.search){
-    history.replaceState(null, '', location.pathname);
+  if(location.pathname !== '/' || location.hash || location.search){
+    history.replaceState(null, '', '/');
     renderRoute();
     requestAnimationFrame(scroll);
   } else {

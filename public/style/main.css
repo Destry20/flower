@@ -104,7 +104,7 @@ a{color:var(--accent);}
   letter-spacing:-.01em;
 }
 .brand svg{flex:none;}
-.topbar-actions{display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px 16px;}
+.topbar-actions{display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px 16px; position:relative;}
 .topbar-actions button{
   background:var(--paper);border:1px solid var(--line);
   padding:9px 18px; border-radius:999px; cursor:pointer;
@@ -126,6 +126,46 @@ a{color:var(--accent);}
    игнорировал. Явно фиксируем размер через CSS, а не полагаемся на атрибуты. */
 .theme-toggle svg{width:18px; height:18px; flex:none; display:block;}
 .theme-toggle:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, transparent);}
+
+/* Кнопка-меню и панель "ещё" (RU/EN, тема, "О сервисе", "Мои открытки") —
+   на широких экранах эти три обёртки прозрачны для раскладки (display:contents),
+   так что лежащие внутри элементы ведут себя ровно как раньше, простыми
+   элементами topbar-actions. Схлопываются в выпадающую панель только по
+   медиа-запросу ниже — на телефоне шапка в один ряд не помещалась и
+   разваливалась на 3 строки, съедая ~19% экрана до любого контента. */
+.topbar-menu-btn{display:none;}
+.topbar-more, .topbar-more-row, .topbar-more-panel{display:contents;}
+.topbar-more-backdrop{display:none;}
+@media (max-width:680px){
+  .topbar-menu-btn{
+    display:flex; width:36px; height:36px; border-radius:50%; flex:none; padding:0;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink);
+    align-items:center; justify-content:center; cursor:pointer;
+    transition:border-color .15s ease, color .15s ease, background-color .15s ease;
+  }
+  .topbar-menu-btn svg{width:18px; height:18px; flex:none; display:block;}
+  .topbar-menu-btn:hover{border-color:var(--accent); color:var(--accent);}
+
+  .topbar-more{display:none;}
+  .topbar-more.open{display:block;}
+  /* Клик по прозрачной подложке вне самой панели закрывает меню — тот же
+     приём, что и у .flower-modal-backdrop (event.target===this). */
+  .topbar-more.open .topbar-more-backdrop{display:block; position:fixed; inset:0; z-index:60; background:transparent;}
+  .topbar-more.open .topbar-more-row,
+  .topbar-more.open .topbar-more-panel{display:flex;}
+  .topbar-more-panel{
+    flex-direction:column; gap:4px;
+    position:absolute; top:calc(100% + 8px); right:0;
+    background:var(--paper); border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 20px 45px -18px rgba(47,59,42,0.35);
+    padding:12px; min-width:200px; z-index:61;
+  }
+  .topbar-more-row{
+    align-items:center; gap:10px;
+    padding-bottom:10px; margin-bottom:6px; border-bottom:1px solid var(--line);
+  }
+  .topbar-more-panel .topbar-link{padding:9px 4px;}
+}
 
 .lang-switch{
   display:flex; border:1px solid var(--line); border-radius:999px; padding:2px; flex:none;
