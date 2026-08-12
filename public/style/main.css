@@ -249,7 +249,7 @@ a{color:var(--accent);}
   transition:border-color .15s ease, background-color .15s ease, transform .12s ease;
 }
 .vase-chip:hover{border-color:var(--accent); transform:translateY(-2px);}
-.vase-chip.active{border-color:var(--sage-dark); background:var(--paper-deep); box-shadow:inset 0 0 0 1px var(--sage-dark);}
+.vase-chip.active{border-color:var(--rose); background:var(--paper-deep); box-shadow:inset 0 0 0 1px var(--rose);}
 .vase-chip svg{display:block; margin:0 auto 6px;}
 .vase-chip span{font-size:11.5px; color:var(--ink); opacity:.8;}
 
@@ -259,11 +259,14 @@ a{color:var(--accent);}
 
 /* Кнопка "Добавить/Изменить цветы" — намеренно заметнее обычных ghost-кнопок
    (пунктирная рамка + цветной кружок-иконка), чтобы читалось как явное
-   действие "добавить", а не как ещё один нейтральный чип-переключатель. */
+   действие "добавить", а не как ещё один нейтральный чип-переключатель.
+   Цвет — var(--plum), тот же, что у .btn-primary: раньше здесь был шалфей
+   (--sage-dark), единственный зелёный акцент среди слива/розы/золота —
+   на глаз читался чужеродной "эко"-темой поверх тёплой палитры. */
 .flower-pick-btn{
   display:inline-flex; align-items:center; gap:8px;
   padding:7px 16px 7px 7px; border-radius:999px;
-  border:1.5px dashed var(--sage-dark); background:rgba(140,160,135,0.1);
+  border:1.5px dashed var(--plum); background:color-mix(in srgb, var(--plum) 6%, transparent);
   font-family:inherit; font-size:13px; font-weight:500; color:var(--ink); cursor:pointer;
   transition:border-color .15s ease, background-color .15s ease, transform .1s ease;
 }
@@ -271,11 +274,9 @@ a{color:var(--accent);}
 .flower-pick-btn:active{transform:scale(.97);}
 .flower-pick-btn-icon{
   flex:none; width:24px; height:24px; border-radius:50%;
-  background:var(--sage-dark); color:var(--pale);
+  background:var(--plum); color:var(--pale);
   display:flex; align-items:center; justify-content:center;
-  transition:background-color .15s ease;
 }
-.flower-pick-btn:hover .flower-pick-btn-icon{background:var(--plum);}
 
 /* Прижимаем к левому краю (а не по центру экрана), чтобы букет в правой
    колонке предпросмотра оставался виден, пока открыт выбор цветов. Фон
@@ -332,14 +333,14 @@ a{color:var(--accent);}
   background:var(--paper);
   transition:border-color .15s ease;
 }
-.flower-item.on{border-color:var(--sage-dark);}
+.flower-item.on{border-color:var(--rose);}
 .fi-thumb{
   width:46px; height:46px; border-radius:10px; flex:none;
   background:var(--paper-deep); border:1px solid var(--line);
   display:flex; align-items:center; justify-content:center; cursor:pointer;
   position:relative;
 }
-.flower-item.on .fi-thumb{background:#FBF7ED; border-color:var(--sage-dark);}
+.flower-item.on .fi-thumb{background:#FBF7ED; border-color:var(--rose);}
 .flower-item:not(.on) .fi-thumb svg{opacity:.35; filter:grayscale(60%);}
 .fi-badge{
   position:absolute; top:-5px; right:-5px; width:16px; height:16px; border-radius:50%;
@@ -386,7 +387,7 @@ a{color:var(--accent);}
   transition:border-color .15s ease, background-color .15s ease, transform .12s ease;
 }
 .envelope-chip:hover{ border-color:var(--accent); transform:translateY(-2px); }
-.envelope-chip.active{ border-color:var(--sage-dark); background:var(--paper-deep); }
+.envelope-chip.active{ border-color:var(--rose); background:var(--paper-deep); }
 .envelope-chip span{ font-size:11px; color:var(--ink); opacity:.8; }
 
 textarea, input[type=text], input[type=email], input[type=password]{
@@ -412,7 +413,7 @@ input[type=text], input[type=email], input[type=password]{height:42px;}
   position:relative; cursor:pointer; flex:none;
   transition:background-color .15s ease;
 }
-.switch.on{background:var(--sage-dark);}
+.switch.on{background:var(--rose);}
 .switch .dot{
   width:16px;height:16px;border-radius:50%;background:var(--pale);
   position:absolute; top:3px; left:3px; transition:left .15s ease;
@@ -526,7 +527,7 @@ input[type=date], input[type=time]{
 }
 .preview-bouquet{padding:6px 10px 0;}
 .preview-msg{
-  padding:14px 22px 22px; text-align:center;
+  padding:6px 22px 22px; text-align:center;
 }
 .preview-msg .to{font-size:12px; color:var(--ink); opacity:.6; margin-bottom:6px;}
 .preview-msg .text{
