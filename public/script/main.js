@@ -2102,7 +2102,7 @@ function renderRoute(){
 // вида "Создать свою" молча оставалась бы на месте — renderRoute() увидел бы
 // прежний ?data= и снова показал бы ту же открытку.
 function goHome(){
-  history.replaceState(null, '', location.pathname);
+  history.replaceState(null, '', '/');
   renderRoute();
 }
 
