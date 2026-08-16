@@ -83,6 +83,40 @@ const EN_STRINGS = {
   'Включить светлую тему': 'Switch to light theme',
   'Включить тёмную тему': 'Switch to dark theme',
   'Меню': 'Menu',
+  'Или соберите её всей компанией →': 'Or build it together with a group →',
+  'Собрать всей компанией': 'Build it as a group',
+  'вместе': 'together',
+  'Собрать открытку всей компанией': 'Build a card as a group',
+  'Вы задаёте основу — повод и вазу. Дальше отправьте ссылку остальным: каждый добавит своё имя, пожелание и один цветок. Букет соберётся из цветов всех участников — вы сами закроете приём подписей, когда решите, что открытка готова.':
+    'You set the base — the occasion and vase. Then send the link to everyone else: each person adds their name, a message, and one flower. The bouquet grows from everyone’s flowers — you decide when to close it for signatures.',
+  'Букет пока пуст — его наполнят цветами те, кто подпишет открытку': 'The bouquet starts empty — it fills up as people sign the card',
+  'Кому': 'To',
+  'Создать ссылку-приглашение': 'Create invite link',
+  'Введите имя получателя': 'Enter the recipient’s name',
+  'Не удалось создать открытку': 'Couldn’t create the card',
+  'Открытка всей компанией': 'Group card',
+  'Ссылка повреждена или открытка уже удалена.': 'This link is broken or the card was already removed.',
+  'Открыта для подписей': 'Open for signatures',
+  'подписал(и)': 'signed',
+  'Добавить свою подпись': 'Add your signature',
+  'Ваше пожелание': 'Your message',
+  'Выберите один цветок в букет': 'Pick one flower for the bouquet',
+  'Добавить в открытку': 'Add to the card',
+  'Спасибо! Ваша подпись добавлена.': 'Thanks! Your signature was added.',
+  'Пока никто не подписал — станьте первым': 'No one has signed yet — be the first',
+  'Скопировать ссылку-приглашение': 'Copy invite link',
+  'Приём подписей завершён': 'Signatures are closed',
+  'Вы организатор': 'You’re the organizer',
+  'Когда открытка будет готова, закройте приём подписей — после этого добавить строку будет уже нельзя. Управлять этой открыткой можно и позже, из своего аккаунта.': 'When the card is ready, close it for signatures — after that, no one can add another line. You can also manage this card later, from your account.',
+  'Закрыть приём подписей': 'Close for signatures',
+  'Каждый добавляет своё имя, пожелание и один цветок — вместе они и складываются в букет выше.': 'Everyone adds their name, a message, and one flower — together they make up the bouquet above.',
+  'Не удалось закрыть открытку': 'Couldn’t close the card',
+  'Приём подписей закрыт': 'Closed for signatures',
+  'Заполните имя и пожелание': 'Fill in your name and a message',
+  'Не удалось добавить подпись': 'Couldn’t add your signature',
+  'Открытки всей компанией': 'Group cards',
+  'Пока нет ни одной. Начните — ссылка «Собрать всей компанией» есть на главной.': 'None yet. Get started — the "Build it as a group" link is on the homepage.',
+  'Закрыта': 'Closed',
   'Достигнут лимит открыток': 'You\'ve reached the card limit',
   'Цветы ещё не добавлены': 'No flowers added yet',
   'Изменить цветы': 'Edit flowers',
@@ -701,7 +735,11 @@ function flowerHead(type, cx, cy, color, rot, scale){
 // пышность и заполняет "пустоты" между крупными цветами, как у настоящего
 // собранного флористом букета, а не просто у пары одиночных бутонов.
 function fillerSpray(cx, domeCenterY, domeR, n){
-  if(n <= 0) return '';
+  // При 1-2 цветках наполнителю (веточки/мелкие соцветия между головками)
+  // нечем замаскироваться — вместо фоновой текстуры он читается отдельным
+  // случайным пятном рядом с цветком. Есть смысл только когда самих цветов
+  // уже достаточно, чтобы наполнитель лёг именно между ними, а не сам по себе.
+  if(n < 3) return '';
   const count = Math.min(9, 4 + Math.round(n*0.9));
   const GOLDEN = 137.508 * Math.PI/180;
   let s = '';
@@ -1039,6 +1077,7 @@ function renderCreator(){
           <button class="btn btn-primary" onclick="saveAndShare()">${t('Создать ссылку')}</button>
           <button class="btn btn-ghost" onclick="randomizeBouquet()" style="display:inline-flex;align-items:center;gap:7px;">${diceIconSvg()}${t('Собрать наугад')}</button>
         </div>
+        <a href="#group-new" class="topbar-link" style="display:inline-block;margin-top:16px;">${t('Или соберите её всей компанией →')}</a>
       </div>
 
       <div class="col-preview">
@@ -1563,6 +1602,286 @@ function openView(url){
   if(data) openCardLink(data);
 }
 
+/* ====================== GROUP CARD (открытка всей компанией) ======================
+   Организатор (обязательно вошедший в аккаунт — см. server/routes/group.js)
+   задаёт только повод и вазу — сообщение и цветы приходят от участников по
+   ссылке-приглашению (/group/<id>), подписать может кто угодно без аккаунта.
+   Черновик живёт на сервере (см. server/db.js), поэтому у экрана два
+   состояния: "открыта для подписей" (форма добавления + список кто уже
+   подписал, и кнопка закрытия у организатора) и "закрыта" (просмотр, как
+   обычная открытка, но с несколькими сообщениями вместо одного). Закрывает
+   организатор сам, вручную, с любого устройства — не по заранее выбранному
+   сроку. v1: без модерации подписей. */
+
+const groupState = { to:'', occasion:'birthday', vase:'A' };
+
+function renderGroupCreate(){
+  // Создавать открытку "всей компанией" может только вошедший в аккаунт
+  // организатор (см. server/routes/group.js) — иначе закрыть её позже было бы
+  // просто неоткуда. Подписывать открытку по ссылке аккаунт по-прежнему не нужен.
+  if(!session.user){ pendingRoute = 'group-new'; location.hash = 'login'; return; }
+  setPageTitle(t('Собрать всей компанией'));
+  const occ = occasionById(groupState.occasion);
+  document.getElementById('app').innerHTML = `
+    ${topbarHtml()}
+    <div class="mine-wrap">
+      <div class="eyebrow">${t('вместе')}</div>
+      <h1 style="font-size:26px;margin-top:8px;">${t('Собрать открытку всей компанией')}</h1>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;line-height:1.6;">${t('Вы задаёте основу — повод и вазу. Дальше отправьте ссылку остальным: каждый добавит своё имя, пожелание и один цветок. Букет соберётся из цветов всех участников — вы сами закроете приём подписей, когда решите, что открытка готова.')}</p>
+
+      <div style="max-width:180px;margin:20px auto 0;text-align:center;">
+        <div class="preview-card" style="padding:16px 12px;" id="groupCreatePreview"></div>
+        <p style="opacity:.55;font-size:12px;margin-top:8px;line-height:1.5;">${t('Букет пока пуст — его наполнят цветами те, кто подпишет открытку')}</p>
+      </div>
+
+      <div class="panel" style="margin-top:24px;">
+        <span class="field-label">${t('Кому')}</span>
+        <input type="text" id="groupTo" maxlength="30" placeholder="${t('Имя получателя')}" value="${esc(groupState.to)}">
+      </div>
+
+      <div class="panel">
+        <span class="field-label">${t('Повод')}</span>
+        <div class="chip-row" id="groupOccasionChips"></div>
+      </div>
+
+      <div class="panel">
+        <span class="field-label">${t('Ваза')}</span>
+        <div class="vase-row" id="groupVaseChips"></div>
+      </div>
+
+      <div class="cta-row">
+        <button class="btn btn-primary" id="groupCreateBtn" onclick="createGroupCardSubmit()">${t('Создать ссылку-приглашение')}</button>
+      </div>
+      <div class="auth-error" id="groupCreateError"></div>
+    </div>
+    <footer class="site-footer">${footerHtml()}</footer>
+  `;
+
+  document.getElementById('groupTo').oninput = e => { groupState.to = e.target.value; };
+
+  document.getElementById('groupOccasionChips').innerHTML = OCCASIONS.map(o =>
+    `<div class="chip ${groupState.occasion===o.id?'active':''}" tabindex="0" role="button" aria-pressed="${groupState.occasion===o.id}" onclick="setGroupOccasion('${o.id}')" onkeydown="activateOnKey(event)">
+      <span class="chip-ic">${occasionIconSvg(o.id, groupState.occasion===o.id ? '#FAF3E7' : o.color)}</span>${tr(o.label)}
+    </div>`
+  ).join('');
+
+  document.getElementById('groupVaseChips').innerHTML = VASES.map(v =>
+    `<div class="vase-chip ${groupState.vase===v.id?'active':''}" tabindex="0" role="button" aria-pressed="${groupState.vase===v.id}" aria-label="${tr(v.label)}" onclick="setGroupVase('${v.id}')" onkeydown="activateOnKey(event)">
+      ${vaseThumbSvg(v.id)}<span>${tr(v.label)}</span>
+    </div>`
+  ).join('');
+
+  // Пустой букет (ещё без цветов от участников) — только чтобы организатор
+  // сразу видел выбранную вазу/ленту, а не гадал вслепую до самой отправки.
+  document.getElementById('groupCreatePreview').innerHTML = buildBouquetSVG({ flowers:{}, vase: groupState.vase, ribbon: occ.color }, 150);
+}
+function setGroupOccasion(id){ groupState.occasion=id; renderGroupCreate(); }
+function setGroupVase(id){ groupState.vase=id; renderGroupCreate(); }
+
+async function createGroupCardSubmit(){
+  const to = groupState.to.trim();
+  const errEl = document.getElementById('groupCreateError');
+  errEl.textContent = '';
+  if(!to){ errEl.textContent = t('Введите имя получателя'); return; }
+  const btn = document.getElementById('groupCreateBtn');
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/group', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Lang':uiLang},
+      body: JSON.stringify({ to, occasion: groupState.occasion, vase: groupState.vase })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось создать открытку'));
+    history.pushState(null, '', '/group/' + json.group.shortId);
+    renderRoute();
+  }catch(e){
+    errEl.textContent = e.message;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// Собирает cfg.flowers для buildBouquetSVG из подписей: у формата buildBouquetSVG
+// один цвет на тип цветка, а не на подпись — если двое выбрали один и тот же
+// тип разными цветами, в букете останется цвет последнего (упрощение для v1:
+// букет всё равно растёт с каждой подписью, просто не у каждого лепестка свой
+// оттенок при совпадении типа).
+function mergeGroupFlowers(contributions){
+  const flowers = {};
+  contributions.forEach(c => {
+    flowers[c.flowerType] = { color: c.flowerColor, count: (flowers[c.flowerType] ? flowers[c.flowerType].count : 0) + 1 };
+  });
+  return flowers;
+}
+
+const groupJoinPick = { name:'', message:'', flowerType: FLOWER_TYPES[0].id, flowerColor: FLOWER_TYPES[0].colors[0] };
+
+async function renderGroupPage(shortId){
+  setPageTitle(t('Открытка всей компанией'));
+  document.getElementById('app').innerHTML = `${topbarHtml()}<div class="mine-wrap" id="groupPageBody"><p style="opacity:.6;">${t('Загрузка…')}</p></div><footer class="site-footer">${footerHtml()}</footer>`;
+  try{
+    const res = await fetch('/api/group/' + encodeURIComponent(shortId));
+    if(!res.ok) throw new Error('not_found');
+    const json = await res.json();
+    renderGroupPageBody(shortId, json.group);
+  }catch(e){
+    const body = document.getElementById('groupPageBody');
+    if(body) body.innerHTML = `
+      <h1 style="font-size:22px;">${t('Открытка не найдена')}</h1>
+      <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или открытка уже удалена.')}</p>`;
+  }
+}
+
+function renderGroupPageBody(shortId, group){
+  const el = document.getElementById('groupPageBody');
+  if(!el) return; // ушли со страницы, пока грузился fetch
+  const occ = occasionById(group.occasion);
+  const bouquetSvg = buildBouquetSVG({ flowers: mergeGroupFlowers(group.contributions), vase: group.vase, ribbon: occ.color }, 260);
+
+  if(group.closed){
+    el.innerHTML = `
+      <div class="eyebrow" style="text-align:center;display:block;">${t('вместе')}</div>
+      <div style="text-align:center;">
+        <div class="view-occasion-band" style="background:${occ.color};color:var(--pale);">${tr(occ.stamp)}</div>
+      </div>
+      <h1 style="font-size:22px;margin-top:14px;text-align:center;">${esc(group.to)}</h1>
+      <div class="preview-card" style="max-width:260px;margin:16px auto 0;padding:18px;">${bouquetSvg}</div>
+      <p style="opacity:.6;font-size:13px;margin-top:10px;text-align:center;">${t('Приём подписей завершён')} · ${group.contributions.length} ${t('подписал(и)')}</p>
+      <div class="mine-list" style="margin-top:24px;">
+        ${group.contributions.map(c => `
+          <div class="mine-row" style="align-items:flex-start;">
+            <div class="mine-info">
+              <div class="mi-to" style="font-family:'Fraunces',serif;font-size:16px;white-space:pre-wrap;">${esc(c.message)}</div>
+              <div class="mi-date">— ${esc(c.name)}</div>
+            </div>
+          </div>`).join('') || `<p style="text-align:center;opacity:.6;">${t('Пока никто не подписал — станьте первым')}</p>`}
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="eyebrow" style="text-align:center;display:block;">${t('вместе')}</div>
+    <h1 style="font-size:24px;margin-top:8px;text-align:center;">${esc(group.to)}</h1>
+    <p style="opacity:.7;font-size:13px;margin-top:4px;text-align:center;">${t('Открыта для подписей')}</p>
+
+    <p style="text-align:center;font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.5;margin-top:22px;">${t('Букет')} · ${group.contributions.length} ${t('подписал(и)')}</p>
+    <div class="preview-card" style="max-width:220px;margin:8px auto 0;padding:16px;">${bouquetSvg}</div>
+    <p style="text-align:center;opacity:.6;font-size:13px;margin-top:8px;">
+      ${group.contributions.length ? group.contributions.map(c=>esc(c.name)).join(', ') : t('Пока никто не подписал — станьте первым')}
+    </p>
+
+    ${group.isOwner ? `
+    <div class="panel" style="margin-top:24px;">
+      <span class="panel-title" style="display:block;">${t('Вы организатор')}</span>
+      <p style="opacity:.65;font-size:13px;margin-top:8px;line-height:1.5;">${t('Когда открытка будет готова, закройте приём подписей — после этого добавить строку будет уже нельзя. Управлять этой открыткой можно и позже, из своего аккаунта.')}</p>
+      <button class="btn btn-ghost" style="width:100%;margin-top:14px;" id="groupCloseBtn" onclick="closeGroupCardSubmit('${shortId}')">${t('Закрыть приём подписей')}</button>
+    </div>` : ''}
+
+    <div class="panel" style="margin-top:${group.isOwner?'18':'24'}px;">
+      <button class="btn btn-ghost" style="width:100%;" onclick="copyGroupInviteLink('${shortId}')">${t('Скопировать ссылку-приглашение')}</button>
+    </div>
+
+    <div class="panel">
+      <span class="panel-title" style="display:block;margin-bottom:6px;">${t('Добавить свою подпись')}</span>
+      <p style="opacity:.6;font-size:12.5px;margin-bottom:14px;line-height:1.5;">${t('Каждый добавляет своё имя, пожелание и один цветок — вместе они и складываются в букет выше.')}</p>
+      <label class="sr-only" for="groupJoinName">${t('Ваше имя')}</label>
+      <input type="text" id="groupJoinName" maxlength="30" placeholder="${t('Ваше имя')}" value="${esc(groupJoinPick.name)}" style="margin-bottom:12px;">
+      <label class="sr-only" for="groupJoinMessage">${t('Ваше пожелание')}</label>
+      <textarea id="groupJoinMessage" maxlength="300" placeholder="${t('Ваше пожелание')}" style="margin-bottom:16px;">${esc(groupJoinPick.message)}</textarea>
+
+      <span class="field-label">${t('Выберите один цветок в букет')}</span>
+      <div class="vase-row" id="groupFlowerTypeChips"></div>
+      <div class="swatches" id="groupFlowerColorSwatches" style="margin-top:12px;"></div>
+
+      <button class="btn btn-primary" style="width:100%;margin-top:18px;" id="groupJoinBtn" onclick="submitGroupJoin('${shortId}')">${t('Добавить в открытку')}</button>
+      <div class="auth-error" id="groupJoinError"></div>
+    </div>
+  `;
+
+  document.getElementById('groupJoinName').oninput = e => { groupJoinPick.name = e.target.value; };
+  document.getElementById('groupJoinMessage').oninput = e => { groupJoinPick.message = e.target.value; };
+  renderGroupFlowerPicker(shortId);
+}
+
+async function closeGroupCardSubmit(shortId){
+  const btn = document.getElementById('groupCloseBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const res = await fetch('/api/group/' + encodeURIComponent(shortId) + '/close', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Lang':uiLang}
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось закрыть открытку'));
+    showToast(t('Приём подписей закрыт'));
+    renderGroupPageBody(shortId, json.group);
+  }catch(e){
+    showToast(e.message);
+    if(btn) btn.disabled = false;
+  }
+}
+
+function renderGroupFlowerPicker(shortId){
+  document.getElementById('groupFlowerTypeChips').innerHTML = FLOWER_TYPES.map(f =>
+    `<div class="vase-chip ${groupJoinPick.flowerType===f.id?'active':''}" tabindex="0" role="button" aria-pressed="${groupJoinPick.flowerType===f.id}" aria-label="${tr(f.label)}" onclick="setGroupJoinFlowerType('${shortId}','${f.id}')" onkeydown="activateOnKey(event)">
+      ${flowerThumbSvg(f.id, groupJoinPick.flowerType===f.id ? groupJoinPick.flowerColor : f.colors[0])}<span>${tr(f.label)}</span>
+    </div>`
+  ).join('');
+  const ft = FLOWER_TYPES.find(f=>f.id===groupJoinPick.flowerType);
+  document.getElementById('groupFlowerColorSwatches').innerHTML = ft.colors.map((c,i) =>
+    `<div class="swatch ${groupJoinPick.flowerColor===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} №${i+1}" aria-pressed="${groupJoinPick.flowerColor===c}" onclick="setGroupJoinFlowerColor('${shortId}','${c}')" onkeydown="activateOnKey(event)"></div>`
+  ).join('');
+}
+function setGroupJoinFlowerType(shortId, id){
+  groupJoinPick.flowerType = id;
+  groupJoinPick.flowerColor = FLOWER_TYPES.find(f=>f.id===id).colors[0];
+  renderGroupFlowerPicker(shortId);
+}
+function setGroupJoinFlowerColor(shortId, c){
+  groupJoinPick.flowerColor = c;
+  renderGroupFlowerPicker(shortId);
+}
+
+function copyGroupInviteLink(shortId){
+  const url = location.origin + '/group/' + shortId;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>showToast(t('Ссылка скопирована')));
+  } else {
+    showToast(url);
+  }
+}
+
+async function submitGroupJoin(shortId){
+  const name = groupJoinPick.name.trim();
+  const message = groupJoinPick.message.trim();
+  const errEl = document.getElementById('groupJoinError');
+  errEl.textContent = '';
+  if(!name || !message){
+    errEl.textContent = t('Заполните имя и пожелание');
+    return;
+  }
+  const btn = document.getElementById('groupJoinBtn');
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/group/' + encodeURIComponent(shortId) + '/join', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Lang':uiLang},
+      body: JSON.stringify({ name, message, flowerType: groupJoinPick.flowerType, flowerColor: groupJoinPick.flowerColor })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось добавить подпись'));
+    groupJoinPick.name = ''; groupJoinPick.message = '';
+    showToast(t('Спасибо! Ваша подпись добавлена.'));
+    renderGroupPageBody(shortId, json.group);
+  }catch(e){
+    errEl.textContent = e.message;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
 /* ====================== VIEWER ====================== */
 
 function renderCardNotFound(){
@@ -1793,6 +2112,10 @@ async function renderMyCards(){
         ? t('Открытки сохранены за вашим аккаунтом и доступны с любого устройства.')
         : `${t('Этот список хранится только в браузере на этом устройстве и пропадёт при очистке кэша.')} <a href="#login">${t('Войдите')}</a>, ${t('чтобы открытки сохранялись за вами навсегда.')}`}</div>
       <div class="mine-list" id="mineList"><p style="opacity:.6;">${t('Загрузка…')}</p></div>
+
+      ${session.user ? `
+      <h2 style="font-size:18px;margin-top:36px;font-family:'Fraunces',serif;font-weight:500;">${t('Открытки всей компанией')}</h2>
+      <div class="mine-list" id="groupMineList" style="margin-top:16px;"><p style="opacity:.6;">${t('Загрузка…')}</p></div>` : ''}
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
   `;
@@ -1809,28 +2132,82 @@ async function renderMyCards(){
   }
 
   const wrap = document.getElementById('mineList');
-  if(!wrap) return; // пользователь мог уйти со страницы, пока шёл запрос
-  if(!list.length){
-    wrap.innerHTML = `<div class="mine-empty">${t('Пока пусто. Соберите первую открытку — она появится здесь.')}</div>`;
+  if(wrap){
+    if(!list.length){
+      wrap.innerHTML = `<div class="mine-empty">${t('Пока пусто. Соберите первую открытку — она появится здесь.')}</div>`;
+    } else {
+      const dateLocale = uiLang === 'ru' ? 'ru-RU' : 'en-US';
+      wrap.innerHTML = list.map(item=>{
+        const occ = occasionById(item.occasion) || OCCASIONS[0];
+        const d = new Date(item.createdAt);
+        return `<div class="mine-row">
+          <div class="mine-dot" style="background:${occ.color}"></div>
+          <div class="mine-info">
+            <div class="mi-to">${item.to ? t('Для')+' '+esc(item.to) : tr(occ.label)}</div>
+            <div class="mi-date">${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long',year:'numeric'})}</div>
+          </div>
+          <div class="mine-actions">
+            <button onclick="openCardLink('${item.data}')">${t('Открыть')}</button>
+            <button onclick="copyMineLink('${item.data}', ${item.shortId ? `'${item.shortId}'` : 'null'})">${t('Ссылка')}</button>
+            <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'})">${t('Удалить')}</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  if(session.user) await renderMyGroupCards();
+}
+
+async function renderMyGroupCards(){
+  let groups = [];
+  try{
+    const res = await fetch('/api/group');
+    const json = await res.json();
+    groups = json.groups || [];
+  }catch(e){ groups = []; }
+
+  const wrap = document.getElementById('groupMineList');
+  if(!wrap) return; // ушли со страницы, пока шёл запрос
+  if(!groups.length){
+    wrap.innerHTML = `<div class="mine-empty">${t('Пока нет ни одной. Начните — ссылка «Собрать всей компанией» есть на главной.')}</div>`;
     return;
   }
   const dateLocale = uiLang === 'ru' ? 'ru-RU' : 'en-US';
-  wrap.innerHTML = list.map(item=>{
-    const occ = occasionById(item.occasion) || OCCASIONS[0];
-    const d = new Date(item.createdAt);
+  wrap.innerHTML = groups.map(g=>{
+    const occ = occasionById(g.occasion) || OCCASIONS[0];
+    const d = new Date(g.createdAt);
+    const status = g.closed ? t('Закрыта') : t('Открыта для подписей');
     return `<div class="mine-row">
       <div class="mine-dot" style="background:${occ.color}"></div>
       <div class="mine-info">
-        <div class="mi-to">${item.to ? t('Для')+' '+esc(item.to) : tr(occ.label)}</div>
-        <div class="mi-date">${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long',year:'numeric'})}</div>
+        <div class="mi-to">${t('Для')} ${esc(g.to)}</div>
+        <div class="mi-date">${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long',year:'numeric'})} · ${status} · ${g.contributions.length} ${t('подписал(и)')}</div>
       </div>
       <div class="mine-actions">
-        <button onclick="openCardLink('${item.data}')">${t('Открыть')}</button>
-        <button onclick="copyMineLink('${item.data}', ${item.shortId ? `'${item.shortId}'` : 'null'})">${t('Ссылка')}</button>
-        <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'})">${t('Удалить')}</button>
+        <button onclick="openGroupLink('${g.shortId}')">${t('Открыть')}</button>
+        ${!g.closed ? `<button onclick="closeGroupFromList('${g.shortId}')">${t('Закрыть приём подписей')}</button>` : ''}
       </div>
     </div>`;
   }).join('');
+}
+function openGroupLink(shortId){
+  history.pushState(null, '', '/group/' + shortId);
+  renderRoute();
+}
+async function closeGroupFromList(shortId){
+  try{
+    const res = await fetch('/api/group/' + encodeURIComponent(shortId) + '/close', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Lang':uiLang}
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось закрыть открытку'));
+    showToast(t('Приём подписей закрыт'));
+    renderMyGroupCards();
+  }catch(e){
+    showToast(e.message);
+  }
 }
 // Переход к своей же открытке без полной перезагрузки страницы: меняем
 // query-строку через history API (та же ссылка, что уходит адресату) и
@@ -2117,9 +2494,13 @@ function renderRoute(){
   if(hash.startsWith('#reset=')) return renderResetPassword(hash.slice(7));
   if(hash === '#privacy') return renderPrivacy();
   if(hash === '#terms') return renderTerms();
+  if(hash === '#group-new') return renderGroupCreate();
 
   const shortMatch = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
   if(shortMatch) return renderShortViewer(shortMatch[1]);
+
+  const groupMatch = location.pathname.match(/^\/group\/([A-Za-z0-9]+)$/);
+  if(groupMatch) return renderGroupPage(groupMatch[1]);
 
   const cardData = new URLSearchParams(location.search).get('data');
   if(cardData) return renderViewer(cardData);

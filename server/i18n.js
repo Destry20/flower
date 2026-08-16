@@ -20,6 +20,11 @@ const STRINGS = {
     cardInvalid: 'Некорректные данные открытки',
     cardNotFound: 'Открытка не найдена',
     cardLimitReached: 'Достигнут лимит в 10 открыток. Удалите одну из старых в разделе «Мои открытки», чтобы создать новую.',
+    groupInvalid: 'Некорректные данные',
+    groupNotFound: 'Открытка не найдена',
+    groupClosed: 'Приём подписей уже закрыт',
+    groupFull: 'В этой открытке уже максимум подписей',
+    groupForbidden: 'Закрыть эту открытку можете только вы, её организатор',
     mailSubject: 'Восстановление пароля — VivoRose',
     mailBodyText: (url) => `Чтобы задать новый пароль, перейдите по ссылке: ${url}\n\nЕсли вы не запрашивали сброс пароля, просто проигнорируйте это письмо.`,
     mailBodyHtml: (url) => `<p>Чтобы задать новый пароль, перейдите по ссылке:</p><p><a href="${url}">${url}</a></p><p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>`,
@@ -28,7 +33,8 @@ const STRINGS = {
       thanks: 'Спасибо тебе', congrats: 'Поздравляю', sorry: 'Я рядом', justbecause: 'Просто так'
     },
     shareTitle: (from) => `Вам открытка${from ? ' от ' + from : ''} 🌿`,
-    shareDescription: (stamp) => `${stamp}. Нажмите, чтобы открыть букет и пожелание.`
+    shareDescription: (stamp) => `${stamp}. Нажмите, чтобы открыть букет и пожелание.`,
+    groupInviteTitle: (to) => `Общая открытка для ${to} · VivoRose`
   },
   en: {
     invalidEmail: 'Enter a valid email',
@@ -45,6 +51,11 @@ const STRINGS = {
     cardInvalid: 'Invalid card data',
     cardNotFound: 'Card not found',
     cardLimitReached: 'You\'ve reached the 10-card limit. Delete an old one in "My cards" to create a new one.',
+    groupInvalid: 'Invalid data',
+    groupNotFound: 'Card not found',
+    groupClosed: 'Signatures are closed for this card',
+    groupFull: 'This card already has the maximum number of signatures',
+    groupForbidden: 'Only the organizer can close this card',
     mailSubject: 'Password reset — VivoRose',
     mailBodyText: (url) => `To set a new password, follow this link: ${url}\n\nIf you didn't request a password reset, just ignore this email.`,
     mailBodyHtml: (url) => `<p>To set a new password, follow this link:</p><p><a href="${url}">${url}</a></p><p>If you didn't request a password reset, just ignore this email.</p>`,
@@ -53,7 +64,8 @@ const STRINGS = {
       thanks: 'Thank you', congrats: 'Congratulations', sorry: "I'm here", justbecause: 'Just because'
     },
     shareTitle: (from) => `You've got a card${from ? ' from ' + from : ''} 🌿`,
-    shareDescription: (stamp) => `${stamp}. Tap to open the bouquet and the message.`
+    shareDescription: (stamp) => `${stamp}. Tap to open the bouquet and the message.`,
+    groupInviteTitle: (to) => `Group card for ${to} · VivoRose`
   }
 };
 

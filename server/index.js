@@ -11,6 +11,7 @@ const authRoutes = require('./routes/auth');
 const cardsRoutes = require('./routes/cards');
 const adminRoutes = require('./routes/admin');
 const shareRoutes = require('./routes/share');
+const groupRoutes = require('./routes/group');
 const db = require('./db');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
 const { tServer, pickLang } = require('./i18n');
@@ -57,11 +58,11 @@ app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
 app.use(attachUser);
 
-// Считаем "просмотр страницы" только для настоящих страниц сайта (/ и
-// /c/<id>) — раньше засчитывался вообще любой GET без расширения файла,
+// Считаем "просмотр страницы" только для настоящих страниц сайта (/, /c/<id>
+// и /group/<id>) — раньше засчитывался вообще любой GET без расширения файла,
 // из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
 // статистику и "Recent activity" в админке вперемешку с реальными визитами.
-const REAL_PAGE_RE = /^\/(c\/[A-Za-z0-9]+)?$/;
+const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+)?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path, req.get('user-agent'));
@@ -88,6 +89,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/api/group', groupRoutes);
 
 // Ссылка на открытку ("?data=...") сама по себе не грузит JS у ботов
 // мессенджеров (WhatsApp/Telegram и т.д. не выполняют JavaScript) — без этого
@@ -136,6 +138,25 @@ app.get('/c/:shortId([A-Za-z0-9]{7})', (req, res, next) => {
         .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${meta.description}$2`)
         .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
         .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
+    }
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(out);
+  });
+});
+
+// Открытка "всей компанией" — вида /group/AbC123. Без подстановки og:title
+// под конкретную открытку (данные не в URL/base64, как у обычных ссылок, а
+// накапливаются на сервере) — просто lang + заголовок вкладки с именем
+// получателя, если такая открытка вообще существует.
+app.get('/group/:shortId([A-Za-z0-9]{7})', (req, res, next) => {
+  const group = db.findGroupCardByShortId(req.params.shortId);
+  const lang = pickLang(req);
+  fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
+    if(err) return next();
+    let out = html.replace(/<html lang="[^"]*"/, `<html lang="${lang}"`);
+    if(group){
+      const title = escapeHtml(tServer(req, 'groupInviteTitle')(group.to));
+      out = out.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
     }
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(out);

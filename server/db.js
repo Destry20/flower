@@ -16,7 +16,7 @@ const TRAFFIC_RETENTION_DAYS = 90;
 
 function defaultData(){
   return {
-    users: [], cards: [],
+    users: [], cards: [], groupCards: [],
     meta: { siteEnabled: true },
     traffic: { byDay: {}, byDayBot: {}, recent: [] },
     errors: []
@@ -47,6 +47,7 @@ let data = load();
 // выше — не глубокое слияние, поле traffic целиком берётся из старого файла и byDayBot
 // в нём просто нет) — без этого recordVisit упал бы на "Cannot set properties of undefined".
 if(!data.traffic.byDayBot) data.traffic.byDayBot = {};
+if(!data.groupCards) data.groupCards = [];
 
 // Запись сериализуется через очередь промисов, чтобы параллельные запросы
 // не затирали файл друг другом (нет настоящих транзакций у JSON-файла).
@@ -157,6 +158,98 @@ function deleteCard(id, userId){
   const removed = data.cards.length !== before;
   if(removed) persist();
   return removed;
+}
+
+/* ---------------- group cards ---------------- */
+// Открытка "всей компанией": организатор задаёт базовый дизайн (повод, ваза),
+// дальше любой по ссылке-приглашению добавляет своё имя, сообщение и один
+// цветок — букет растёт по мере того как люди подписываются. Подписать может
+// кто угодно без аккаунта (это и есть смысл — друзей не заставляют
+// регистрироваться), а вот создать и закрыть открытку может только вошедший
+// в аккаунт организатор: привязка к userId (не к токену в localStorage,
+// как было в первой версии) означает, что закрыть открытку можно с любого
+// устройства, просто войдя в свой аккаунт — не только из того браузера,
+// где её создали.
+//
+// Закрывает приём подписей организатор сам, вручную, когда сочтёт нужным —
+// не по заранее выбранной дате (первая версия так и делала: жёсткий срок на
+// старте оказался неудобным, организатор не всегда знает заранее, сколько
+// нужно времени). closesAt в базе остаётся, но теперь это только страховка
+// от забытых черновиков (авто-закрытие через 30 дней), а не основной способ
+// закрыть.
+
+function genGroupShortId(len = 7){
+  let id;
+  do{
+    const bytes = crypto.randomBytes(len);
+    id = Array.from(bytes, b => SHORT_ID_CHARS[b % SHORT_ID_CHARS.length]).join('');
+  }while(data.groupCards.some(g => g.shortId === id));
+  return id;
+}
+
+// Мягкий потолок числа подписей на одну открытку — не UX-ограничение (никто
+// не увидит "лимит достигнут" в обычном сценарии), а страховка от того, что
+// кто-то один зальёт открытку тысячами записей: без модерации/аккаунтов это
+// единственная защита от накрутки одной ссылки.
+const MAX_CONTRIBUTIONS = 30;
+
+function createGroupCard({ to, occasion, vase, closesAt, userId }){
+  const group = {
+    id: uid(),
+    shortId: genGroupShortId(),
+    to: (to || '').slice(0, 30),
+    occasion: occasion || 'birthday',
+    vase: vase || 'A',
+    closesAt,
+    userId,
+    contributions: [],
+    createdAt: Date.now()
+  };
+  data.groupCards.unshift(group);
+  persist();
+  return group;
+}
+function findGroupCardByShortId(shortId){
+  return data.groupCards.find(g => g.shortId === shortId) || null;
+}
+function listGroupCardsByUser(userId){
+  return data.groupCards
+    .filter(g => g.userId === userId)
+    .sort((a,b) => b.createdAt - a.createdAt);
+}
+function isGroupCardClosed(group){
+  return !!group.closesAt && group.closesAt <= Date.now();
+}
+// Ручное закрытие организатором — просто переставляет closesAt на "сейчас",
+// вся остальная логика (isGroupCardClosed, форма подписи скрыта/показана)
+// уже умеет работать с этим полем, отдельный "closed"-флаг не нужен.
+function closeGroupCard(shortId, userId){
+  const group = findGroupCardByShortId(shortId);
+  if(!group) return { ok:false, reason:'not_found' };
+  if(!userId || group.userId !== userId) return { ok:false, reason:'forbidden' };
+  if(isGroupCardClosed(group)) return { ok:false, reason:'already_closed' };
+  group.closesAt = Date.now();
+  persist();
+  return { ok:true, group };
+}
+// Возвращает {ok:true, group} или {ok:false, reason:'closed'|'full'} — роут
+// сам решает, каким статусом/текстом это обернуть для клиента.
+function addGroupContribution(shortId, { name, message, flowerType, flowerColor }){
+  const group = findGroupCardByShortId(shortId);
+  if(!group) return { ok:false, reason:'not_found' };
+  if(isGroupCardClosed(group)) return { ok:false, reason:'closed' };
+  if(group.contributions.length >= MAX_CONTRIBUTIONS) return { ok:false, reason:'full' };
+  const entry = {
+    id: uid(),
+    name: (name || '').slice(0, 30),
+    message: (message || '').slice(0, 300),
+    flowerType,
+    flowerColor,
+    createdAt: Date.now()
+  };
+  group.contributions.push(entry);
+  persist();
+  return { ok:true, group };
 }
 
 /* ---------------- admin: site status ---------------- */
@@ -318,6 +411,7 @@ module.exports = {
   findUserByEmail, findUserById, createUser,
   setResetToken, findUserByResetTokenHash, updateUserPassword,
   listCardsByUser, createCard, deleteCard, findCardByShortId,
+  createGroupCard, findGroupCardByShortId, listGroupCardsByUser, isGroupCardClosed, addGroupContribution, closeGroupCard, MAX_CONTRIBUTIONS,
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors, deleteClientError,
