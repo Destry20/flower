@@ -376,8 +376,14 @@ function clearClientErrors(){
   persist();
 }
 
+// cards — общее число созданных открыток, гостевых и аккаунтных вместе
+// (cardsCreatedTotal, тот же счётчик, что и на публичной главной странице).
+// cardsSaved — отдельно только те, что реально сохранены за аккаунтом
+// (data.cards.length) — это раньше и показывалось в админке как "cards
+// created", хотя гостевые открытки (большинство трафика) в него не попадали
+// вообще, потому что никогда не долетают до сервера как данные.
 function getCounts(){
-  return { users: data.users.length, cards: data.cards.length };
+  return { users: data.users.length, cards: getCardsCreatedTotal(), cardsSaved: data.cards.length };
 }
 
 /* ---------------- public "cards created" counter ---------------- */

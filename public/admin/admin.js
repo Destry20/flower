@@ -26,6 +26,7 @@ function renderTraffic(traffic, counts){
   $('statTotal').textContent = traffic.total;
   $('statUsers').textContent = counts.users;
   $('statCards').textContent = counts.cards;
+  $('statCardsSaved').textContent = counts.cardsSaved;
   $('statBotToday').textContent = traffic.todayBot;
 
   const max = Math.max(1, ...traffic.last7Days.map(d => d.count));
