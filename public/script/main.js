@@ -1054,6 +1054,41 @@ window.activateOnKey = activateOnKey;
 
 function occasionById(id){ return OCCASIONS.find(o=>o.id===id) || OCCASIONS[0]; }
 
+// Русское склонение по числу — открытка/открытки/открыток. Ниже порога
+// показа (CARD_COUNT_DISPLAY_THRESHOLD) счётчик и не запрашивается настолько
+// точно, что там всегда 50+, но склонение всё равно нужно (51 — "открытка",
+// 52 — "открытки", 55 — "открыток"), не одна фиксированная форма.
+function pluralizeRu(n, one, few, many){
+  const mod10 = n % 10, mod100 = n % 100;
+  if(mod10===1 && mod100!==11) return one;
+  if(mod10>=2 && mod10<=4 && (mod100<10 || mod100>=20)) return few;
+  return many;
+}
+// Ниже этого числа счётчик на главной вообще не показываем — маленькое
+// честное число ("создано 3 открытки") подрывает доверие сильнее, чем его
+// отсутствие. Гостевые открытки раньше не считались вообще, так что счётчик
+// стартует с нуля по факту введения этой фичи, а не подделывает прошлое.
+const CARD_COUNT_DISPLAY_THRESHOLD = 50;
+async function fetchHeroCardCount(){
+  const el = document.getElementById('heroCardCount');
+  if(!el) return;
+  try{
+    const res = await fetch('/api/stats');
+    const json = await res.json();
+    const n = json.cardsCreated || 0;
+    if(n < CARD_COUNT_DISPLAY_THRESHOLD) return;
+    const count = n.toLocaleString(uiLang==='ru'?'ru-RU':'en-US');
+    const word = uiLang==='ru' ? pluralizeRu(n, 'открытка', 'открытки', 'открыток') : (n===1?'card':'cards');
+    el.textContent = uiLang==='ru' ? `Уже создано ${count} ${word}` : `${count} ${word} created so far`;
+  }catch(e){ /* тихо игнорируем — не критичная часть страницы */ }
+}
+// "Пинг" при успешном создании открытки — и гостевой, и сохранённой за
+// аккаунтом (см. saveAndShare) — не блокирует основной поток и не важен,
+// если не удался: это просто витринная цифра, а не часть сохранения открытки.
+function pingCardCreated(){
+  fetch('/api/stats/card-created', { method:'POST' }).catch(()=>{});
+}
+
 function renderCreator(){
   setPageTitle(t('Собрать открытку'));
   setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
@@ -1065,6 +1100,7 @@ function renderCreator(){
       <div>
         <h1>${t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
         <p>${t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
+        <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:10px;"></p>
       </div>
       <div class="hero-stamp">${tr(occ.stamp)}</div>
     </div>
@@ -1258,6 +1294,7 @@ function renderCreator(){
 
   renderPreviewBouquet();
   updatePreviewText();
+  fetchHeroCardCount();
 }
 
 function leafIcon(){
@@ -1611,6 +1648,10 @@ async function saveAndShare(){
 }
 
 function renderShareScreen(url){
+  // Единая точка для всех путей saveAndShare (аккаунт/гость/сетевой фолбэк на
+  // длинную ссылку) — открытка успешно собрана и готова к отправке, значит
+  // "создана" независимо от того, какой именно веткой сюда попали.
+  pingCardCreated();
   setPageTitle(t('Открытка готова'));
   const isLong = url.length > LINK_WARN_LENGTH;
   const isShortLink = /\/c\/[A-Za-z0-9]+$/.test(url);

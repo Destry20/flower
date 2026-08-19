@@ -48,6 +48,13 @@ let data = load();
 // в нём просто нет) — без этого recordVisit упал бы на "Cannot set properties of undefined".
 if(!data.traffic.byDayBot) data.traffic.byDayBot = {};
 if(!data.groupCards) data.groupCards = [];
+// Публичный счётчик "открыток создано" для главной — считает и гостевые
+// открытки тоже (см. incrementCardsCreated ниже), в отличие от data.cards
+// (там только сохранённые за аккаунтом). Гостевые никогда не хранились, так
+// что честно посчитать прошлые нечем — счётчик стартует с числа уже
+// сохранённых открыток и дальше растёт по факту новых, а не выдумывает
+// прошлое.
+if(data.meta.cardsCreatedTotal == null) data.meta.cardsCreatedTotal = data.cards.length;
 
 // Запись сериализуется через очередь промисов, чтобы параллельные запросы
 // не затирали файл друг другом (нет настоящих транзакций у JSON-файла).
@@ -372,6 +379,20 @@ function clearClientErrors(){
 function getCounts(){
   return { users: data.users.length, cards: data.cards.length };
 }
+
+/* ---------------- public "cards created" counter ---------------- */
+
+function getCardsCreatedTotal(){
+  return data.meta.cardsCreatedTotal || 0;
+}
+// Клиент зовёт это при успешном создании ЛЮБОЙ открытки — гостевой или
+// сохранённой за аккаунтом (см. server/routes/stats.js) — просто "пинг",
+// без данных самой открытки, поэтому гостевую приватность это не нарушает.
+function incrementCardsCreated(){
+  data.meta.cardsCreatedTotal = (data.meta.cardsCreatedTotal || 0) + 1;
+  persist();
+  return data.meta.cardsCreatedTotal;
+}
 function listRecentUsers(limit = 15){
   return [...data.users]
     .sort((a,b) => b.createdAt - a.createdAt)
@@ -415,5 +436,6 @@ module.exports = {
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors, deleteClientError,
-  getCounts, listRecentUsers, listRecentCards
+  getCounts, listRecentUsers, listRecentCards,
+  getCardsCreatedTotal, incrementCardsCreated
 };

@@ -12,6 +12,7 @@ const cardsRoutes = require('./routes/cards');
 const adminRoutes = require('./routes/admin');
 const shareRoutes = require('./routes/share');
 const groupRoutes = require('./routes/group');
+const statsRoutes = require('./routes/stats');
 const db = require('./db');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
 const { tServer, pickLang } = require('./i18n');
@@ -90,6 +91,7 @@ app.use('/api/cards', cardsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/share', shareRoutes);
 app.use('/api/group', groupRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Ссылка на открытку ("?data=...") сама по себе не грузит JS у ботов
 // мессенджеров (WhatsApp/Telegram и т.д. не выполняют JavaScript) — без этого
