@@ -157,6 +157,8 @@ const EN_STRINGS = {
   'Текст пожелания': 'Message text',
   'Дополнительно': 'Extras',
   'необязательные штрихи': 'optional touches',
+  'Подвеска на ленте': 'Charm on the ribbon',
+  'Форма и цвет — под ваш повод: сердце, звезда, лист…': 'Shape and color match your occasion: heart, star, leaf…',
   'Нежная мелодия при открытии': 'Gentle melody on opening',
   'Короткий сгенерированный перезвон, без сторонних файлов': 'A short generated chime, no external files',
   'Мелодия': 'Melody',
@@ -355,7 +357,8 @@ const VASES = [
   {id:'A', label:{ru:'Глиняная',en:'Clay'}},
   {id:'B', label:{ru:'Стеклянная',en:'Glass'}},
   {id:'C', label:{ru:'Крафтовая',en:'Kraft-wrapped'}},
-  {id:'D', label:{ru:'Мраморная',en:'Marble'}}
+  {id:'D', label:{ru:'Мраморная',en:'Marble'}},
+  {id:'E', label:{ru:'Плетёная корзина',en:'Wicker basket'}}
 ];
 
 const RIBBONS = ['#B98A4A','#C97B86','#4B2E3D','#8CA087','#F2E1C8','#7e4ab9'];
@@ -400,7 +403,8 @@ const state = {
   revealDate: '',
   revealTime: '10:00',
   envelope: 'classic',
-  background: 'cream'
+  background: 'cream',
+  charm: false
 };
 state.flowers.rose = {color:FLOWER_TYPES[0].colors[0], count:3};
 state.flowers.carnation = {color:FLOWER_TYPES[4].colors[0], count:2};
@@ -566,6 +570,7 @@ function sanitizeCardData(raw){
     from: typeof data.from === 'string' ? data.from.slice(0,30) : '',
     to: typeof data.to === 'string' ? data.to.slice(0,30) : '',
     music: !!data.music,
+    charm: !!data.charm,
     melody: MELODIES.some(m=>m.id===data.melody) ? data.melody : MELODIES[0].id,
     reveal: data.reveal && !isNaN(new Date(data.reveal).getTime()) ? data.reveal : null
   };
@@ -799,6 +804,22 @@ function vaseSvg(type, cx, topY){
       <path d="M ${cx-22} ${topY+8} L ${cx-16} ${topY+70}" stroke="#FFFFFF" stroke-width="3" opacity=".4" stroke-linecap="round"/>
       <ellipse cx="${cx}" cy="${topY}" rx="40" ry="8" fill="#F5F3ED" stroke="#B7B2A6" stroke-width="1"/>`;
   }
+  if(type==='E'){
+    // плетёная корзина — отдельно от карты цветов вверху (как и мраморная):
+    // это не гладкая заливка, а "полосы" плетения, изогнутые дугой, чтобы
+    // читаться как обхват вокруг круглой корзины, а не ряд прямых линий
+    const basket = '#C99A5B', basketDark = '#8F6B36', basketLight = lighten('#C99A5B', 20);
+    let weave = '';
+    for(let i=0;i<7;i++){
+      const yy = topY + 9 + i*11.5;
+      const wRatio = 1 - (i/7)*0.12; // корзина чуть сужается книзу — полосы тоже короче
+      weave += `<path d="M ${cx-39*wRatio} ${yy} Q ${cx} ${yy+3} ${cx+39*wRatio} ${yy}" fill="none" stroke="${basketDark}" stroke-width="2.6" opacity=".28" stroke-linecap="round"/>`;
+    }
+    return `<path d="M ${cx-40} ${topY+2} L ${cx-30} ${topY+90} L ${cx+30} ${topY+90} L ${cx+40} ${topY+2} Z" fill="${basket}" stroke="${basketDark}" stroke-width="1"/>
+      ${weave}
+      <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="${basketLight}" stroke="${basketDark}" stroke-width="1.5"/>
+      <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="none" stroke="${basketDark}" stroke-width=".7" opacity=".5"/>`;
+  }
   // крафтовая — складки бумаги и верхняя светлая полоса вместо ровного прямоугольника
   return `<rect x="${cx-38}" y="${topY-4}" width="76" height="88" rx="6" fill="${c.fill}" stroke="${c.dark}" stroke-width="1"/>
     <rect x="${cx-40}" y="${topY-16}" width="80" height="16" rx="4" fill="${lighten(c.fill,10)}" stroke="${c.dark}" stroke-width="1"/>
@@ -822,6 +843,64 @@ function ribbonBow(cx, y, color){
     <ellipse cx="${cx+9}" cy="${y-4}" rx="2.6" ry="1.4" fill="${lightc}" opacity=".55" transform="rotate(25 ${cx+9} ${y-4})"/>
     <circle cx="${cx}" cy="${y}" r="5.5" fill="${dark}"/>
     <circle cx="${cx}" cy="${y}" r="5.5" fill="none" stroke="${darken(color,50)}" stroke-width=".6"/>
+  </g>`;
+}
+
+// Подвеска на ленте — необязательный аксессуар (state.charm). Не пустое
+// украшение: форма и цвет берутся от самого повода (та же логика, что и у
+// иконок в шаге "Повод", см. OCCASION_ICON) — сердце для "Любви", звезда
+// для дня рождения и т.д., так что подвеска что-то значит, а не просто висит.
+const CHARM_SHAPE = {
+  love:'heart', foryou:'heart',
+  birthday:'star', congrats:'star',
+  thanks:'gift', sorry:'leaf', justbecause:'leaf'
+};
+function bouquetCharmSvg(cx, y, occasionId){
+  const occ = occasionById(occasionId);
+  const shape = CHARM_SHAPE[occ.id] || 'heart';
+  const color = occ.color, dark = darken(color, 30);
+  const stringColor = '#8F6B36';
+  // Металлическое колечко-крепление — тёплое золото, независимо от цвета
+  // самой подвески (как у настоящей бижутерии, где эмаль/камень одного
+  // цвета, а оправа/колечко — металл). Без этого штриха подвеска просто
+  // "прилеплена" к нитке, а не подвешена, как физический предмет.
+  const ringDark = '#8A6423';
+  // Тот же радиальный градиент, что и у лепестков цветов (petalGradient) —
+  // светлый блик со сдвигом к одному краю вместо плоской заливки, это и
+  // отличает объёмный предмет от силуэта-стикера.
+  const pg = petalGradient(color);
+  const filterId = 'charmShadow' + Math.random().toString(36).slice(2,8);
+  const tx = cx + 15, ty = y + 17; // чуть вбок и ниже узла, как будто подвязана отдельной нитью поверх хвостиков ленты
+  const highlight = `<ellipse cx="-2.2" cy="-2.4" rx="1.5" ry=".8" fill="#FFFFFF" opacity=".5" transform="rotate(-25)"/>`;
+  let body = '';
+  if(shape==='heart'){
+    body = `<path d="M0,7 C-8,0 -7,-8 0,-3 C7,-8 8,0 0,7 Z" fill="${pg.url}" stroke="${dark}" stroke-width="1"/>${highlight}`;
+  } else if(shape==='star'){
+    const pts = [];
+    for(let i=0;i<5;i++){
+      const a1 = -Math.PI/2 + i*(2*Math.PI/5);
+      const a2 = a1 + Math.PI/5;
+      pts.push(`${(7*Math.cos(a1)).toFixed(1)},${(7*Math.sin(a1)).toFixed(1)}`);
+      pts.push(`${(2.8*Math.cos(a2)).toFixed(1)},${(2.8*Math.sin(a2)).toFixed(1)}`);
+    }
+    body = `<polygon points="${pts.join(' ')}" fill="${pg.url}" stroke="${dark}" stroke-width="1"/>${highlight}`;
+  } else if(shape==='gift'){
+    body = `<rect x="-6" y="-5" width="12" height="10" rx="1.5" fill="${pg.url}" stroke="${dark}" stroke-width="1"/><rect x="-1" y="-5" width="2" height="10" fill="${dark}" opacity=".7"/><rect x="-6" y="-1.5" width="12" height="2" fill="${dark}" opacity=".7"/><ellipse cx="-3.2" cy="-3" rx="1.3" ry=".8" fill="#FFFFFF" opacity=".4"/>`;
+  } else { // leaf
+    body = `<path d="M0,7 C-6,4 -6,-4 0,-7 C6,-4 6,4 0,7 Z" fill="${pg.url}" stroke="${dark}" stroke-width="1"/><path d="M0,6 L0,-6" stroke="${dark}" stroke-width=".5" opacity=".5"/>${highlight}`;
+  }
+  return `<defs>
+    ${pg.defs}
+    <filter id="${filterId}" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#2F3B2A" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g>
+    <path d="M ${cx+2} ${y+3} Q ${cx+10} ${y+10} ${tx} ${ty-15}" stroke="${stringColor}" stroke-width=".9" fill="none" opacity=".8"/>
+    <g transform="translate(${tx} ${ty}) rotate(18)" filter="url(#${filterId})">
+      <ellipse cx="0" cy="-11" rx="2.6" ry="3.4" fill="none" stroke="${ringDark}" stroke-width="1.1"/>
+      ${body}
+    </g>
   </g>`;
 }
 
@@ -896,6 +975,7 @@ function buildBouquetSVG(cfg, size){
   const vase = vaseSvg(cfg.vase, cx, vaseTopY);
   const leaves = n > 0 ? leafSpray(cx, tieY) : '';
   const bow = ribbonBow(cx, vaseTopY-2, cfg.ribbon);
+  const charm = cfg.charm ? bouquetCharmSvg(cx, vaseTopY-2, cfg.occasion) : '';
   // мягкая тень под вазой — без неё композиция выглядела "приклеенной" к верху холста
   const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94}" rx="46" ry="7" fill="#000000" opacity=".08"/>`;
   // Мягкая тень под каждой головкой цветка — раньше светлые/кремовые лепестки
@@ -922,6 +1002,7 @@ function buildBouquetSVG(cfg, size){
     ${vase}
     ${leaves}
     ${bow}
+    ${charm}
   </svg>`;
 }
 
@@ -1024,6 +1105,13 @@ function renderCreator(){
           </div>
           <span class="field-label" id="ribbonLabel" style="margin-top:18px;">${t('Лента')}</span>
           <div class="swatches" id="ribbonSwatches" role="group" aria-labelledby="ribbonLabel"></div>
+          <div class="toggle-line" style="margin-top:18px; padding-top:18px; border-top:1px solid var(--line);">
+            <div>
+              <div style="font-size:14px;" id="charmLabel">${t('Подвеска на ленте')}</div>
+              <div style="font-size:12px;opacity:.6;">${t('Форма и цвет — под ваш повод: сердце, звезда, лист…')}</div>
+            </div>
+            <div class="switch ${state.charm?'on':''}" id="charmSwitch" tabindex="0" role="switch" aria-checked="${state.charm}" aria-labelledby="charmLabel" onclick="toggleCharm()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
+          </div>
         </div>
 
         <div class="panel">
@@ -1287,6 +1375,7 @@ function vaseThumbSvg(type){
   if(type==='A') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M6 6C4 18 6 32 17 32C28 32 30 18 28 6L23 3L11 3Z" fill="#C97B5A" stroke="#9B5738" stroke-width="1"/><ellipse cx="17" cy="6" rx="6" ry="1.6" fill="#E3A583"/></svg>`;
   if(type==='B') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M10 3L8 32L26 32L24 3Z" fill="#EDE7DA" opacity=".55" stroke="#B9AF9B" stroke-width="1"/><ellipse cx="17" cy="3" rx="7" ry="1.6" fill="#F5F1E6" stroke="#B9AF9B" stroke-width=".8"/></svg>`;
   if(type==='D') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#EDEBE4" stroke="#B7B2A6" stroke-width="1"/><path d="M10 14Q17 20 20 28" stroke="#C9C2B4" stroke-width="1" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#F5F3ED" stroke="#B7B2A6" stroke-width="1"/></svg>`;
+  if(type==='E') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#C99A5B" stroke="#8F6B36" stroke-width="1"/><path d="M8 15Q17 17.5 26 15" stroke="#8F6B36" stroke-width="1.2" opacity=".4" fill="none"/><path d="M7.3 22.5Q17 25 26.7 22.5" stroke="#8F6B36" stroke-width="1.2" opacity=".4" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#DDB876" stroke="#8F6B36" stroke-width="1"/></svg>`;
   return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="9" width="22" height="23" rx="3" fill="#DCC9A3" stroke="#B39B6D" stroke-width="1"/><rect x="5" y="4" width="24" height="7" rx="2" fill="#EAD9B0" stroke="#B39B6D" stroke-width="1"/></svg>`;
 }
 
@@ -1406,6 +1495,12 @@ function toggleMusic(){
   el.classList.toggle('on'); el.setAttribute('aria-checked', state.music);
   document.getElementById('melodyInline').classList.toggle('show');
 }
+function toggleCharm(){
+  state.charm=!state.charm;
+  const el = document.getElementById('charmSwitch');
+  el.classList.toggle('on'); el.setAttribute('aria-checked', state.charm);
+  renderPreviewBouquet(); // сама подвеска рисуется внутри букета — превью нужно перерисовать
+}
 function setMelody(id){
   state.melody = id;
   document.querySelectorAll('#melodyChips .chip').forEach(c=>{c.classList.remove('active'); c.setAttribute('aria-pressed','false');});
@@ -1422,6 +1517,7 @@ function toggleReveal(){
 function randomizeBouquet(){
   state.vase = VASES[Math.floor(Math.random()*VASES.length)].id;
   state.ribbon = RIBBONS[Math.floor(Math.random()*RIBBONS.length)];
+  state.charm = Math.random() < 0.4;
   state.flowers = {};
   const shuffled = [...FLOWER_TYPES].sort(()=>Math.random()-.5);
   const pickCount = 2 + Math.floor(Math.random()*2); // 2-3 types
@@ -1453,7 +1549,7 @@ async function saveAndShare(){
   const payload = {
     occasion: state.occasion, vase: state.vase, ribbon: state.ribbon,
     flowers: state.flowers, message: state.message, from: state.from, to: state.to,
-    music: state.music, melody: state.melody,
+    music: state.music, melody: state.melody, charm: state.charm,
     envelope: state.envelope, background: state.background,
     reveal: state.revealEnabled ? (state.revealDate ? (state.revealDate+'T'+(state.revealTime||'00:00')) : null) : null,
     createdAt: Date.now()
