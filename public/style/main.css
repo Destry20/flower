@@ -233,7 +233,14 @@ a{color:var(--accent);}
   padding:56px 0 36px;
   display:grid; grid-template-columns:1.1fr .9fr; gap:40px; align-items:end;
 }
-.hero h1{font-size:44px; line-height:1.14; letter-spacing:-.015em; color:var(--ink);}
+/* 44px/500 читался заметно тише заголовков конкурентов в этой же нише
+   (72px и 48px/700 у двух проверенных) — не копируем их масштаб один в
+   один (это не в духе спокойной редакционной подачи бренда), но поднимаем
+   и размер, и начертание настолько, чтобы первый экран не терялся рядом. */
+.hero h1{font-size:54px; font-weight:600; line-height:1.08; letter-spacing:-.015em; color:var(--ink);}
+@media (max-width:480px){
+  .hero h1{font-size:36px;}
+}
 .hero p{font-size:16px; color:var(--ink); opacity:.72; max-width:46ch; margin-top:14px; line-height:1.65;}
 .hero-stamp{
   justify-self:end;
@@ -542,8 +549,12 @@ input[type=date], input[type=time]{
 .mine-empty{text-align:center; padding:60px 20px; opacity:.6;}
 
 .cta-row{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;}
+/* font-weight не был задан вовсе — кнопки наследовали обычный текстовый вес
+   (400), тот же, что у обычного абзаца. Для кнопки-действия это читается
+   тише, чем стоило бы: у конкурентов такие кнопки заметно жирнее (500) и
+   крупнее (18px против прежних 14.5px здесь). */
 .btn{
-  border-radius:999px; padding:13px 26px; font-size:14.5px; cursor:pointer;
+  border-radius:999px; padding:13px 26px; font-size:15.5px; font-weight:600; cursor:pointer;
   border:1px solid var(--plum); transition:background-color .15s ease, transform .12s ease, box-shadow .15s ease;
 }
 .btn-primary{background:var(--plum); color:var(--pale); border-color:var(--plum); box-shadow:0 6px 16px -6px rgba(75,46,61,0.5);}
