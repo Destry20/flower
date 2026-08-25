@@ -78,6 +78,10 @@ function t(ru){
 }
 
 const EN_STRINGS = {
+  'Открытка хранится на сервере ограниченное время и будет автоматически удалена.': 'The card is stored on the server for a limited time and will be deleted automatically.',
+  'Ссылка временная: открытка будет автоматически удалена с сервера': 'This is a temporary link: the card will be automatically deleted from the server on',
+  'Это короткая ссылка: открытка временно хранится на сервере без привязки к аккаунту, а ссылка лишь указывает на неё.': 'This is a short link: the card is temporarily stored on the server without an account, and the link just points to it.',
+  'Войдите в аккаунт, чтобы открытка сохранялась без срока и не потерялась.': 'Log in to keep the card saved indefinitely so it doesn\'t get lost.',
   'Мои открытки': 'My cards',
   'Написать нам': 'Contact us',
   'Включить светлую тему': 'Switch to light theme',
@@ -1637,6 +1641,7 @@ async function saveAndShare(){
   }
 
   // гость — "Мои открытки" храним локально в этом браузере (localStorage)
+  // независимо от того, получится ли короткая ссылка ниже
   try{
     let list = [];
     try{ list = JSON.parse(localStorage.getItem('my-cards') || '[]'); }catch(e){ list = []; }
@@ -1644,17 +1649,61 @@ async function saveAndShare(){
     localStorage.setItem('my-cards', JSON.stringify(list.slice(0,50)));
   }catch(e){ /* не критично, если локальное хранилище недоступно */ }
 
+  // Короткая ссылка и для гостей — сервер хранит открытку временно, без
+  // привязки к аккаунту (см. server/routes/guestCards.js), и сам удалит её
+  // по истечении срока. Это удобство, не обещанная функция — если запрос не
+  // прошёл (лимит запросов, сеть недоступна), молча остаёмся на длинной
+  // самодостаточной ссылке, как и раньше.
+  try{
+    const res = await fetch('/api/guest-cards', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'X-Lang':uiLang},
+      body: JSON.stringify({ encodedData: encoded, occasion: state.occasion, to: state.to, from: state.from })
+    });
+    if(res.ok){
+      const json = await res.json();
+      if(json.card && json.card.shortId){
+        renderShareScreen(location.origin + '/c/' + json.card.shortId, json.card.expiresAt);
+        return;
+      }
+    }
+  }catch(e){ /* сеть недоступна — используем длинную ссылку как запасной вариант */ }
+
   renderShareScreen(longUrl);
 }
 
-function renderShareScreen(url){
+// Дату истечения гостевой ссылки форматируем на клиенте (а не шлём готовую
+// строку с сервера) — сервер уже локализует ошибки через X-Lang, но здесь
+// проще переиспользовать текущий uiLang напрямую, без похода на бэкенд.
+function guestExpiryText(expiresAt){
+  if(!expiresAt) return t('Открытка хранится на сервере ограниченное время и будет автоматически удалена.');
+  const dateStr = new Date(expiresAt).toLocaleDateString(uiLang === 'ru' ? 'ru-RU' : 'en-US', { day:'numeric', month:'long', year:'numeric' });
+  const trailingDot = dateStr.endsWith('.') ? '' : '.';
+  return t('Ссылка временная: открытка будет автоматически удалена с сервера') + ' ' + dateStr + trailingDot;
+}
+function shareFootnote(isShortLink, isGuestShortLink){
+  if(isShortLink && !isGuestShortLink){
+    return t('Это короткая ссылка: сама открытка хранится на сервере в вашем аккаунте, а ссылка лишь указывает на неё.')
+      + ' ' + t('Копия также сохранена в разделе «Мои открытки» вашего аккаунта.');
+  }
+  if(isGuestShortLink){
+    return t('Это короткая ссылка: открытка временно хранится на сервере без привязки к аккаунту, а ссылка лишь указывает на неё.')
+      + ' ' + t('Войдите в аккаунт, чтобы открытка сохранялась без срока и не потерялась.');
+  }
+  return t('Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.')
+    + (session.user ? '' : ' ' + t('Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.'));
+}
+function renderShareScreen(url, expiresAt){
   // Единая точка для всех путей saveAndShare (аккаунт/гость/сетевой фолбэк на
   // длинную ссылку) — открытка успешно собрана и готова к отправке, значит
   // "создана" независимо от того, какой именно веткой сюда попали.
+  // expiresAt приходит только для гостевой короткой ссылки (см. вызов в
+  // saveAndShare) — открытки за аккаунтом и длинные самодостаточные ссылки
+  // не истекают, поэтому для них он не передаётся.
   pingCardCreated();
   setPageTitle(t('Открытка готова'));
   const isLong = url.length > LINK_WARN_LENGTH;
   const isShortLink = /\/c\/[A-Za-z0-9]+$/.test(url);
+  const isGuestShortLink = isShortLink && !session.user;
   document.getElementById('app').innerHTML = `
     ${topbarHtml()}
     <div class="share-wrap">
@@ -1667,6 +1716,7 @@ function renderShareScreen(url){
         <button class="btn btn-primary" style="padding:9px 16px;" onclick="copyLink()">${t('Копировать')}</button>
       </div>
       ${isLong ? `<div class="link-warn">${t('Ссылка получилась длинной')} (${url.length} ${t('симв.')}) — ${t('некоторые мессенджеры или SMS могут обрезать её. Если получатель не сможет открыть, попробуйте отправить QR-код ниже или сократить текст пожелания.')}</div>` : ''}
+      ${isGuestShortLink ? `<div class="link-warn">${guestExpiryText(expiresAt)}</div>` : ''}
       ${shareChannelsHtml(url)}
       <div class="qr-box" id="qrBox">
         <div id="qrcode"></div>
@@ -1678,7 +1728,7 @@ function renderShareScreen(url){
         <button class="btn btn-ghost" onclick="renderCreator()">${t('Редактировать')}</button>
         <button class="btn btn-ghost" onclick="location.href=location.pathname">${t('Создать ещё одну')}</button>
       </div>
-      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${isShortLink ? t('Это короткая ссылка: сама открытка хранится на сервере в вашем аккаунте, а ссылка лишь указывает на неё.') : t('Ссылка полностью самодостаточна: вся открытка «зашита» в неё, отдельный сервер для её открытия не нужен.')}${session.user ? ' '+t('Копия также сохранена в разделе «Мои открытки» вашего аккаунта.') : ' '+t('Войдите в аккаунт, чтобы копия сохранялась и не терялась при очистке браузера.')}</p>
+      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${shareFootnote(isShortLink, isGuestShortLink)}</p>
     </div>
   `;
   try{

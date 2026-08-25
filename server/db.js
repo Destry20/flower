@@ -136,15 +136,40 @@ function genShortId(len = 7){
   return id;
 }
 
+// Открытки без аккаунта (userId === null, см. server/routes/guestCards.js)
+// хранятся на сервере временно, а не вечно, как открытки за аккаунтом — без
+// этого лимита анонимная запись росла бы бесконечно, и любой мог бы забить
+// базу без ограничений (у аккаунтных открыток есть MAX_CARDS_PER_USER,
+// у гостевых такого якоря нет — только автор знает свою ссылку). 30 дней —
+// та же цифра, что и авто-закрытие групповых открыток (closesAt в
+// createGroupCard) — уже привычный пользователю срок в этом продукте.
+const GUEST_CARD_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Ленивая чистка (как cutoff по traffic выше) — отдельного планировщика в
+// этом файловом хранилище нет, поэтому убираем просроченные гостевые
+// открытки по ходу дела, при каждом создании новой.
+function pruneExpiredCards(){
+  const now = Date.now();
+  const before = data.cards.length;
+  data.cards = data.cards.filter(c => !(c.expiresAt && c.expiresAt <= now));
+  if(data.cards.length !== before) persist();
+}
+
 function listCardsByUser(userId){
   return data.cards
     .filter(c => c.userId === userId)
     .sort((a,b) => b.createdAt - a.createdAt);
 }
 function findCardByShortId(shortId){
-  return data.cards.find(c => c.shortId === shortId) || null;
+  const card = data.cards.find(c => c.shortId === shortId) || null;
+  // Не полагаемся на то, что pruneExpiredCards уже успела убрать эту запись
+  // (она запускается только при создании новой открытки) — просроченную
+  // гостевую открытку считаем не найденной сразу же, по факту чтения.
+  if(card && card.expiresAt && card.expiresAt <= Date.now()) return null;
+  return card;
 }
 function createCard({ userId, encodedData, occasion, to, from }){
+  pruneExpiredCards();
   const card = {
     id: uid(),
     shortId: genShortId(),
@@ -153,7 +178,8 @@ function createCard({ userId, encodedData, occasion, to, from }){
     occasion: occasion || '',
     to: (to || '').slice(0, 30),
     from: (from || '').slice(0, 30),
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    expiresAt: userId ? null : Date.now() + GUEST_CARD_TTL_MS
   };
   data.cards.unshift(card);
   persist();
@@ -422,6 +448,7 @@ function listRecentCards(limit = 15){
         to: c.to,
         from: c.from,
         createdAt: c.createdAt,
+        expiresAt: c.expiresAt || null,
         ownerEmail: owner ? owner.email : null
       };
     });

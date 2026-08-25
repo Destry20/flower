@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 const { attachUser } = require('./auth');
 const authRoutes = require('./routes/auth');
 const cardsRoutes = require('./routes/cards');
+const guestCardsRoutes = require('./routes/guestCards');
 const adminRoutes = require('./routes/admin');
 const shareRoutes = require('./routes/share');
 const groupRoutes = require('./routes/group');
@@ -88,6 +89,7 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/cards', cardsRoutes);
+app.use('/api/guest-cards', guestCardsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/share', shareRoutes);
 app.use('/api/group', groupRoutes);
