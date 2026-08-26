@@ -1419,19 +1419,6 @@ function footerHtml(){
   return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a>`;
 }
 
-// Место под рекламные баннеры (Google AdSense / Яндекс.Директ). Сейчас — просто
-// подписанная заглушка; чтобы подключить реальный AdSense, нужно:
-//  1) добавить в index.html скрипт вида
-//     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
-//  2) заменить содержимое #adSlotBody на реальный <ins class="adsbygoogle">...</ins> и вызвать (adsbygoogle = window.adsbygoogle || []).push({})
-//  3) разрешить домены AdSense в CSP (server/index.js: scriptSrc/frameSrc/connectSrc) — сейчас там только свой домен и cdnjs.
-// Без пункта 1 у вас не будет ни publisher ID, ни одобренного AdSense-аккаунта — это нужно завести самостоятельно.
-function adSlotHtml(id){
-  return `<div class="ad-slot" aria-label="${t('Рекламный блок')}">
-    <div class="ad-slot-label">${t('Реклама')}</div>
-    <div class="ad-slot-body" id="${id}">${t('Место для рекламного баннера')}</div>
-  </div>`;
-}
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout'};
 function occasionIconSvg(id, color){

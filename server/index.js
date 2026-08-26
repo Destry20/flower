@@ -33,9 +33,18 @@ app.set('trust proxy', 1);
 // CSP разрешает ровно то, что реально грузит страница: свой JS/CSS, шрифты
 // Google Fonts, CDN qrcode.js для QR-кода и инлайн-стили (сайт строит вёрстку
 // через innerHTML со style="..." — это осознанный компромисс, а не дыра).
-// Когда подключите реальный AdSense/Яндекс.Директ (см. adSlotHtml в main.js),
-// сюда нужно будет добавить их домены в scriptSrc/frameSrc/connectSrc — иначе
-// CSP молча заблокирует показ баннеров.
+// Рекламные теги Adsterra сюда НЕ добавляем: такие "CPM"-сети дёргают ещё и
+// произвольные (в т.ч. явно рандомно сгенерированные — вида
+// kettledroopingcontinuation.com) домены для трекинга и подгрузки самого
+// объявления, вписать их все в allowlist нельзя. Ослаблять же connect-src/
+// scriptSrc всего сайта до https: ради рекламы — то же самое, что дать
+// любому XSS право слать данные куда угодно, а на сайте JWT-кука и данные
+// аккаунтов. Поэтому реклама изолирована в отдельных iframe-страницах
+// (public/x/*.html — путь специально без слова "ads": иначе блокировщики
+// режут такие URL по общему правилу, ещё до всякого CSP) со своей,
+// отдельной и более мягкой политикой — см.
+// AD_CSP ниже — а sandbox на самих <iframe> в index.html (без
+// allow-same-origin) не даёт им дотянуться до DOM/кук родительской страницы.
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -55,6 +64,18 @@ app.use(helmet({
     }
   }
 }));
+
+// Отдельная, куда более мягкая CSP только для рекламных iframe-страниц —
+// см. комментарий выше. Сами объявления мы не пишем и не контролируем,
+// поэтому запрещать им конкретные домены бессмысленно; изоляция от
+// остального сайта обеспечивается не этой политикой, а sandbox-атрибутом
+// на <iframe> в index.html.
+const AD_PAGE_PATHS = new Set(['/x/n1.html', '/x/n2.html']);
+const AD_CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https:; connect-src https:; img-src https: data:; style-src 'unsafe-inline'; frame-src https:";
+app.use((req, res, next) => {
+  if(AD_PAGE_PATHS.has(req.path)) res.setHeader('Content-Security-Policy', AD_CSP);
+  next();
+});
 
 app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
