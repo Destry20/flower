@@ -1153,6 +1153,7 @@ function renderCreator(){
   setPageTitle(t('Собрать открытку'));
   setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
   const occ = occasionById(state.occasion);
+  parkInlineAd();
   document.getElementById('app').innerHTML = `
   ${topbarHtml()}
   <div class="wrap">
@@ -1288,6 +1289,8 @@ function renderCreator(){
             <div class="envelope-row" id="envelopeChips" role="group" aria-labelledby="envLabel"></div>
           </div>
         </div>
+
+        <div class="promo-inline-slot" id="colPreviewAdSlot"></div>
       </div>
     </div>
 
@@ -1307,6 +1310,7 @@ function renderCreator(){
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
   `;
+  mountInlineAd('colPreviewAdSlot');
 
   document.getElementById('occasionChips').innerHTML = OCCASIONS.map(o =>
     `<div class="chip ${state.occasion===o.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.occasion===o.id}" onclick="setOccasion('${o.id}')" onkeydown="activateOnKey(event)">
@@ -1419,6 +1423,24 @@ function footerHtml(){
   return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a>`;
 }
 
+// Оба рекламных iframe (#inlineAdRow, см. index.html — нативный + баннер
+// 300x250 одной строкой) — живые узлы, которые переставляются между
+// скрытым #adPool и плейсхолдером внутри #app по мере рендеров, а не
+// пересоздаются: пересоздание перезагружало бы рекламу на каждый клик по
+// поводу/вазе/конверту/фону. parkInlineAd() зовём ПЕРЕД любым
+// app.innerHTML=... (иначе innerHTML уничтожит узлы вместе с остальным
+// поддеревом), mountInlineAd() — ПОСЛЕ, когда в новой разметке уже есть
+// куда их вставить.
+function parkInlineAd(){
+  const pool = document.getElementById('adPool');
+  const row = document.getElementById('inlineAdRow');
+  if(pool && row) pool.appendChild(row);
+}
+function mountInlineAd(slotId){
+  const slot = document.getElementById(slotId);
+  const row = document.getElementById('inlineAdRow');
+  if(slot && row) slot.appendChild(row);
+}
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout'};
 function occasionIconSvg(id, color){
@@ -2711,6 +2733,11 @@ function renderTerms(){
 /* ====================== ROUTER ====================== */
 
 function renderRoute(){
+  // Если рекламный узел сейчас вставлен в конструктор, а мы уходим на другой
+  // экран (логин, аккаунт и т.п.) — тамошний app.innerHTML=... не знает про
+  // #inlineAdBox и просто уничтожил бы его вместе с остальным. Паркуем
+  // заранее, renderCreator() сам поставит его на место при возврате.
+  parkInlineAd();
   // Хэш-маршруты — это внутренняя навигация по SPA, они всегда в приоритете.
   // ?data= (ссылка на открытку) смотрим только когда хэша нет — иначе клик по
   // "Мои открытки"/"Войти" на странице открытой открытки не сработал бы: сам

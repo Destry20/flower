@@ -425,6 +425,12 @@ a{color:var(--accent);}
   width:100%; margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
 }
 
+.promo-inline-slot{
+  width:100%; margin-top:22px;
+  display:flex; justify-content:center; min-height:1px;
+}
+.promo-inline-slot .promo-row{ margin-top:0; padding:0; }
+
 .bg-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
 .bg-chip{
   width:34px; height:34px; border-radius:50%; cursor:pointer;
@@ -570,12 +576,17 @@ input[type=date], input[type=time]{
 
 /* ---------- preview ---------- */
 .preview-stage{
-  position:sticky; top:24px;
   background:linear-gradient(180deg,var(--paper-deep),var(--paper));
   border:1px solid var(--line); border-radius:20px;
   box-shadow:0 30px 60px -36px rgba(47,59,42,0.4);
   padding:26px; display:flex; flex-direction:column; align-items:center;
 }
+/* Карточку раньше держали sticky (прилипала при скролле длинной формы).
+   После добавления рекламы под ней колонка превью сама стала не короче
+   формы, а то и длиннее — "прилипать" уже не к чему (sticky нужен запас
+   высоты у родителя, которого больше нет), и попытки его сохранить только
+   роняли рекламу под зависшую карточку. Поэтому карточка + реклама под ней
+   теперь просто обычный, не липнущий блок — скроллится вместе со страницей. */
 .preview-card{
   width:100%; max-width:360px; background:var(--paper);
   border:1px solid var(--line); border-radius:14px; overflow:hidden;

@@ -72,12 +72,19 @@
 
 <div id="app"><div class="boot-loading">Loading…</div></div>
 
-<!-- Рекламные блоки Adsterra — вынесены за пределы #app, чтобы SPA-рендер
-     (renderCreator() и т.п. перезаписывают #app.innerHTML почти на каждый
-     клик в конструкторе) их не пересоздавал: пересоздание баннера на каждый
-     чих означало бы постоянную перезагрузку и невалидный трафик в глазах
-     рекламной сети. Сам код объявлений живёт в public/x/*.html и грузится
-     через <iframe> — путь и классы ниже намеренно без слова "ad": блокировщики
+<!-- Оба рекламных блока Adsterra визуально стоят в конструкторе, под
+     карточкой превью открытки (в пустом месте справа от кнопок — колонка
+     превью короче колонки формы). Живут они здесь, вне #app: renderCreator()
+     перерисовывает #app через innerHTML на каждый "структурный" клик
+     (повод/ваза/конверт/фон/модалка цветов), и если бы iframe были прямо в
+     той разметке, каждый такой клик пересоздавал бы их — постоянная
+     перезагрузка баннера и невалидный трафик в глазах рекламной сети.
+     Вместо этого main.js физически переставляет (appendChild) эти же
+     DOM-узлы в плейсхолдер #colPreviewAdSlot после каждого рендера и
+     забирает обратно сюда перед следующим — iframe ни разу не
+     пересоздаётся, значит и не перезагружается (см. parkInlineAd/
+     mountInlineAd в main.js).
+     Путь /x/*.html и классы promo-* намеренно без слова "ad": блокировщики
      режут такие URL/классы по общему правилу ещё до всякого CSP (проверено:
      /ads/native.html блокировался как net::ERR_BLOCKED_BY_CLIENT). У страниц
      в /x/ своя, отдельная (более мягкая) CSP (см. server/index.js).
@@ -89,14 +96,16 @@
      равно httpOnly). allow-popups(-to-escape-sandbox) — чтобы клик по
      объявлению открывал страницу рекламодателя в новой вкладке; без
      allow-top-navigation — чтобы никто не мог редиректнуть саму открытку. -->
-<div class="promo-row">
-  <div class="promo-box" aria-label="Реклама">
-    <div class="promo-tag">Реклама</div>
-    <iframe src="/x/n1.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" title="Реклама" style="display:block; border:0; width:320px; max-width:100%; height:420px;"></iframe>
-  </div>
-  <div class="promo-box" aria-label="Реклама">
-    <div class="promo-tag">Реклама</div>
-    <iframe src="/x/n2.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="Реклама" style="display:block; border:0; width:300px; height:250px;"></iframe>
+<div id="adPool" style="display:none;">
+  <div class="promo-row" id="inlineAdRow">
+    <div class="promo-box" id="inlineAdNative" aria-label="Реклама">
+      <div class="promo-tag">Реклама</div>
+      <iframe src="/x/n1.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" title="Реклама" style="display:block; border:0; width:320px; max-width:100%; height:420px;"></iframe>
+    </div>
+    <div class="promo-box" id="inlineAdBanner" aria-label="Реклама">
+      <div class="promo-tag">Реклама</div>
+      <iframe src="/x/n2.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="Реклама" style="display:block; border:0; width:300px; height:250px;"></iframe>
+    </div>
   </div>
 </div>
 
