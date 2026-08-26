@@ -85,7 +85,7 @@ app.use(attachUser);
 // и /group/<id>) — раньше засчитывался вообще любой GET без расширения файла,
 // из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
 // статистику и "Recent activity" в админке вперемешку с реальными визитами.
-const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet)?$/;
+const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|blog\/(birthday-wishes|thank-you-messages|love-messages))?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path, req.get('user-agent'));
