@@ -134,6 +134,23 @@ const EN_STRINGS = {
   'Соберите букет и оставьте послание, которое захочется сохранить': 'Build a bouquet and leave a message worth keeping',
   'Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.':
     'Pick an occasion, arrange the flowers, add a few lines — and send it as a single link. It opens like a real card: unfolding and blooming.',
+
+  // Заголовки/подзаголовки для SEO-лендингов (SEO_LANDING_PAGES ниже) — текст
+  // подставляется вместо обычного hero <h1>/<p> на конкретных путях, чтобы
+  // страница отвечала на конкретный поисковый запрос, а не только на "VivoRose".
+  'Виртуальная открытка на день рождения с букетом цветов': 'A Virtual Birthday Card With a Blooming Bouquet',
+  'Соберите открытку на день рождения с букетом, который распускается прямо на экране, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов.':
+    'Build a birthday card with a bouquet that blooms right on screen, add a warm message, and send it as one link. No delivery, no wilting flowers.',
+  'Виртуальная открытка с букетом — признание в любви': 'A Virtual Love Card With a Bouquet',
+  'Соберите романтический букет, напишите то, что давно хотели сказать, и отправьте одной ссылкой. Открывается как настоящая открытка — с конвертом и цветением букета.':
+    'Build a romantic bouquet, write what you\'ve been meaning to say, and send it as one link. It opens like a real card — with an envelope and a blooming bouquet.',
+  'Виртуальная открытка «Спасибо» с букетом цветов': 'A Virtual Thank-You Card With a Bouquet',
+  'Скажите спасибо не просто текстом, а живой открыткой с букетом. Соберите её за пару минут и отправьте одной ссылкой — бесплатно, без регистрации.':
+    'Say thank you with more than plain text — send a living card with a bouquet. Build it in minutes and share it as one link, free, no sign-up.',
+  'Отправить виртуальный букет онлайн — бесплатно': 'Send a Virtual Bouquet Online, Free',
+  'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.':
+    'Build a bouquet from flowers, a ribbon, and a vase to your taste, add a short message, and send it as one link. The bouquet never wilts, and the recipient opens it like a real card.',
+
   'О сервисе': 'About the service',
   'VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.':
     'VivoRose is a simple way to send warm words not as plain text, but as a living card: build a bouquet from flowers, a ribbon and a vase to your taste, add a short message, and send it all as a single link. The recipient opens it like a real card — with an unfolding envelope and the bouquet blooming into view, no app install required.',
@@ -341,6 +358,20 @@ const OCCASIONS = [
   {id:'sorry', label:{ru:'Поддержка',en:'Support'}, color:'#8CA087', stamp:{ru:'Я рядом',en:"I'm here"}, placeholder:{ru:'Просто хочу, чтобы ты знал(а) — я рядом, что бы ни случилось.',en:"Just want you to know — I'm here, no matter what."}, anim:'petals'},
   {id:'justbecause', label:{ru:'Просто так',en:'Just because'}, color:'#C97B86', stamp:{ru:'Просто так',en:'Just because'}, placeholder:{ru:'Без повода. Просто подумал(а) о тебе сегодня.',en:'No reason. Just thought of you today.'}, anim:'petals'}
 ];
+
+// SEO-лендинги — реальные (не hash-) пути под конкретные поисковые запросы,
+// а не только под название бренда. Серверная часть (server/index.js,
+// SEO_PAGES) подставляет под них свои <title>/description до всякого JS —
+// держите оба списка путей в синхроне при добавлении новой страницы. Здесь —
+// какой hero-заголовок показать и какой повод подставить по умолчанию
+// (один раз, при первой загрузке — см. bootstrap()).
+const SEO_LANDING_PAGES = {
+  '/birthday-card': { occasion:'birthday', h1:'Виртуальная открытка на день рождения с букетом цветов', sub:'Соберите открытку на день рождения с букетом, который распускается прямо на экране, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов.' },
+  '/love-card': { occasion:'love', h1:'Виртуальная открытка с букетом — признание в любви', sub:'Соберите романтический букет, напишите то, что давно хотели сказать, и отправьте одной ссылкой. Открывается как настоящая открытка — с конвертом и цветением букета.' },
+  '/thank-you-card': { occasion:'thanks', h1:'Виртуальная открытка «Спасибо» с букетом цветов', sub:'Скажите спасибо не просто текстом, а живой открыткой с букетом. Соберите её за пару минут и отправьте одной ссылкой — бесплатно, без регистрации.' },
+  '/virtual-bouquet': { occasion:'foryou', h1:'Отправить виртуальный букет онлайн — бесплатно', sub:'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.' }
+};
+function seoLanding(){ return SEO_LANDING_PAGES[location.pathname] || null; }
 
 const FLOWER_TYPES = [
   {id:'rose', label:{ru:'Роза',en:'Rose'}, colors:['#C97B86','#E3B7BE','#B23A4E','#E6C88A']},
@@ -1150,8 +1181,13 @@ function pingCardCreated(){
 }
 
 function renderCreator(){
-  setPageTitle(t('Собрать открытку'));
-  setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
+  const landing = seoLanding();
+  // На SEO-лендинге заголовок/описание должны остаться теми же после
+  // рендера JS, что сервер уже отдал в исходном HTML (server/index.js,
+  // SEO_PAGES) — иначе Google, снявший снимок уже после выполнения JS,
+  // увидит везде один и тот же общий заголовок вместо целевого запроса.
+  setPageTitle(landing ? t(landing.h1) : t('Собрать открытку'));
+  setMeta(landing ? t(landing.h1) : `${BRAND} — ${t('соберите открытку с букетом')}`, landing ? t(landing.sub) : siteDescription());
   const occ = occasionById(state.occasion);
   parkInlineAd();
   document.getElementById('app').innerHTML = `
@@ -1159,8 +1195,8 @@ function renderCreator(){
   <div class="wrap">
     <div class="hero">
       <div>
-        <h1>${t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
-        <p>${t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
+        <h1>${landing ? t(landing.h1) : t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
+        <p>${landing ? t(landing.sub) : t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
         <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:10px;"></p>
       </div>
       <div class="hero-stamp">${tr(occ.stamp)}</div>
@@ -2776,6 +2812,11 @@ function goHome(){
 async function bootstrap(){
   document.documentElement.lang = uiLang; // статичный <html lang> в index.html — только запасной вариант до этой строки
   applyTheme();
+  // Повод подставляем на SEO-лендинге только один раз, до первого рендера —
+  // иначе renderCreator() откатывал бы выбор пользователя обратно при каждом
+  // клике по чужому поводу (setOccasion сам же и вызывает renderCreator()).
+  const landing = seoLanding();
+  if(landing) state.occasion = landing.occasion;
   await loadMe();
   window.addEventListener('hashchange', renderRoute);
   window.addEventListener('popstate', renderRoute); // кнопки назад/вперёд для ?data=-ссылок

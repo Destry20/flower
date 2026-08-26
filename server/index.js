@@ -85,7 +85,7 @@ app.use(attachUser);
 // и /group/<id>) — раньше засчитывался вообще любой GET без расширения файла,
 // из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
 // статистику и "Recent activity" в админке вперемешку с реальными визитами.
-const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+)?$/;
+const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet)?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path, req.get('user-agent'));
@@ -183,6 +183,55 @@ app.get('/group/:shortId([A-Za-z0-9]{7})', (req, res, next) => {
       const title = escapeHtml(tServer(req, 'groupInviteTitle')(group.to));
       out = out.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
     }
+    res.set('Cache-Control', 'no-cache');
+    res.type('html').send(out);
+  });
+});
+
+// SEO-лендинги под конкретные поисковые запросы (не просто "VivoRose") —
+// список путей и текст в паре с public/script/main.js (SEO_LANDING_PAGES,
+// там же выбор повода и подмена hero-заголовка). В отличие от / и /c/:id,
+// у которых canonical нарочно всегда указывает на главную (см. комментарий
+// у <link rel="canonical"> в index.html — открытки не должны конкурировать
+// с ней в индексации), эти страницы как раз ДОЛЖНЫ индексироваться отдельно
+// от главной, поэтому canonical здесь подставляем на себя же.
+const SEO_PAGES = {
+  '/birthday-card': {
+    ru: { title: 'Виртуальная открытка на день рождения с букетом · VivoRose', description: 'Соберите открытку на день рождения с букетом, который распускается на экране, и отправьте одной ссылкой. Бесплатно, без регистрации.' },
+    en: { title: 'Free Virtual Birthday Card With a Blooming Bouquet · VivoRose', description: 'Build a birthday card with a bouquet that blooms on screen and send it as one link. Free, no sign-up, ready in minutes.' }
+  },
+  '/love-card': {
+    ru: { title: 'Виртуальная открытка с букетом — признание в любви · VivoRose', description: 'Соберите романтический букет и отправьте признание одной ссылкой. Открывается как настоящая открытка — с конвертом и цветением букета.' },
+    en: { title: 'Free Virtual Love Card With a Bouquet · VivoRose', description: 'Build a romantic bouquet and send it as one link. It opens like a real card — with an envelope and a blooming bouquet.' }
+  },
+  '/thank-you-card': {
+    ru: { title: 'Виртуальная открытка «Спасибо» с букетом · VivoRose', description: 'Скажите спасибо живой открыткой с букетом вместо простого текста. Соберите за пару минут, отправьте одной ссылкой — бесплатно.' },
+    en: { title: 'Free Virtual Thank-You Card With a Bouquet · VivoRose', description: 'Say thank you with a living card and a bouquet instead of plain text. Build it in minutes and share it as one link, free.' }
+  },
+  '/virtual-bouquet': {
+    ru: { title: 'Отправить виртуальный букет онлайн бесплатно · VivoRose', description: 'Соберите букет из цветов, ленты и вазы на свой вкус и отправьте одной ссылкой. Букет не завянет — это виртуальная открытка.' },
+    en: { title: 'Send a Virtual Bouquet Online, Free · VivoRose', description: 'Build a bouquet from flowers, a ribbon, and a vase, then send it as one link. The bouquet never wilts — it\'s a virtual card.' }
+  }
+};
+app.get(Object.keys(SEO_PAGES), (req, res, next) => {
+  const page = SEO_PAGES[req.path];
+  const lang = pickLang(req);
+  const meta = page[lang];
+  fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
+    if(err) return next();
+    const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.path);
+    const title = escapeHtml(meta.title);
+    const description = escapeHtml(meta.description);
+    const out = html
+      .replace(/<html lang="[^"]*"/, `<html lang="${lang}"`)
+      .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
+      .replace(/(<meta name="description" content=")[^"]*(")/, `$1${description}$2`)
+      .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${title}$2`)
+      .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${title}$2`)
+      .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${description}$2`)
+      .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${description}$2`)
+      .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`)
+      .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${fullUrl}$2`);
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(out);
   });

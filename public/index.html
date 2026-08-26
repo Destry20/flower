@@ -34,6 +34,43 @@
 }
 </script>
 
+<!-- FAQPage: те же три вопроса/ответа, что в блоке "About the service" на
+     странице (см. renderCreator() -> #about в public/script/main.js) — текст
+     здесь должен совпадать с тем, что реально видно на странице, иначе
+     Google просто проигнорирует разметку (или хуже — расценит как спам). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do I need to register?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No — you can build and send a card without an account, the whole card fits inside the link itself. An account is only useful if you want your list of cards saved and available from any device."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is it free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, completely. All flowers, vases, ribbons, envelopes and backgrounds are free — the service runs on ad banners, not paid subscriptions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What occasions does it fit?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Birthdays, love confessions, thank-yous, congratulations, or just a card \"because you thought of someone\" — each occasion gets its own set of flowers, ribbon color, and card tone."
+      }
+    }
+  ]
+}
+</script>
+
 <!-- Favicon: реальный PNG-файл первым (Google Search рекомендует именно
      файл, кратный 48px, для показа иконки в выдаче — inline data-URI как
      единственный источник он не всегда корректно подхватывает), SVG вторым
