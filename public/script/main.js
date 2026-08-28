@@ -829,36 +829,12 @@ function flowerHead(type, cx, cy, color, rot, scale){
   return `<defs>${pg.defs}</defs><g transform="translate(${cx} ${cy}) rotate(${rot}) scale(${scale})">${g}</g>`;
 }
 
-// Наполнитель букета: мелкая зелень и веточки гипсофилы (белые "облачка" из
-// точек), разбросанные между основными цветами золотым углом (та же
-// закономерность, что и у самих голов букета в buildBouquetSVG) — придаёт
-// пышность и заполняет "пустоты" между крупными цветами, как у настоящего
-// собранного флористом букета, а не просто у пары одиночных бутонов.
-function fillerSpray(cx, domeCenterY, domeR, n){
-  // При 1-2 цветках наполнителю (веточки/мелкие соцветия между головками)
-  // нечем замаскироваться — вместо фоновой текстуры он читается отдельным
-  // случайным пятном рядом с цветком. Есть смысл только когда самих цветов
-  // уже достаточно, чтобы наполнитель лёг именно между ними, а не сам по себе.
-  if(n < 3) return '';
-  const count = Math.min(9, 4 + Math.round(n*0.9));
-  const GOLDEN = 137.508 * Math.PI/180;
-  let s = '';
-  for(let i=0;i<count;i++){
-    const r = domeR * (0.1 + 0.62*((i+0.5)/count));
-    const a = i*GOLDEN + 2.4; // сдвиг фазы — чтобы не совпадать с точками самих цветов
-    const x = cx + r*Math.cos(a);
-    const y = domeCenterY + r*Math.sin(a)*0.85 - 3;
-    if(i%2===0){
-      const rot = (a*180/Math.PI) % 360;
-      s += `<g transform="translate(${x} ${y}) rotate(${rot})"><path d="M0,2 C-3.4,-2 -3.2,-8 0,-12 C3.2,-8 3.4,-2 0,2 Z" fill="#7C9A6B" stroke="#4F6B45" stroke-width=".4"/></g>`;
-    } else {
-      [[-2,-1],[2.2,-2.4],[0,-5.4],[-1.4,1.2]].forEach(([dx,dy])=>{
-        s += `<circle cx="${x+dx}" cy="${y+dy}" r="1.4" fill="#FBF6EA" stroke="#DFCBA0" stroke-width=".3"/>`;
-      });
-    }
-  }
-  return s;
-}
+// Раньше здесь был "наполнитель" букета: мелкие листики и крапинки гипсофилы,
+// раскиданные между цветами золотым углом, как и сами головы букета в
+// buildBouquetSVG. Убран по фидбеку — при небольшом числе цветов (когда
+// вокруг мало что может его "спрятать") расчётная точка часто попадала в
+// пустой промежуток без цветка или стебля рядом, и листик/крапинка читались
+// случайным, ничем не объяснённым фрагментом, а не частью букета.
 
 // пара небольших листьев у горлышка вазы — лёгкий штрих зелени, который делает
 // букет собранным, а не "цветы воткнули в вазу"
@@ -1056,8 +1032,6 @@ function buildBouquetSVG(cfg, size){
     stemsSvg += `<path d="${stemPath(cx, tieY, p.x, p.y, bow)}" fill="none" stroke="#5C7457" stroke-width="1.6" opacity=".85"/>`;
   });
 
-  const filler = fillerSpray(cx, domeCenterY, domeR, n);
-
   // головки цветов — от дальних (верх купола) к ближним (низ купола), чтобы передние перекрывали задние
   pts.slice().sort((a,b)=>a.y-b.y).forEach(p=>{
     const rot = (p.x-cx)*0.3;
@@ -1093,7 +1067,7 @@ function buildBouquetSVG(cfg, size){
     </defs>
     ${shadow}
     ${stemsSvg}
-    <g filter="url(#${headsFilterId})">${filler}${headsSvg}</g>
+    <g filter="url(#${headsFilterId})">${headsSvg}</g>
     ${vase}
     ${leaves}
     ${bow}
