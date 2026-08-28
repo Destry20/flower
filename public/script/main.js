@@ -233,8 +233,8 @@ const EN_STRINGS = {
   'эта открытка ждёт своего момента': 'this card is waiting for its moment',
   'Загляните сюда чуть позже — и получите свой букет': 'Come back a little later to get your bouquet',
   'Нажмите, чтобы открыть': 'Tap to open',
-  'Открытка создана в': 'This card was made with',
-  'соберите свою за пару минут': 'build your own in a couple of minutes',
+  'Создать свою открытку': 'Create your own card',
+  'Бесплатно, за пару минут — на': 'Free, takes a couple of minutes — on',
 
   'на этом устройстве': 'on this device',
   'в вашем аккаунте': 'in your account',
@@ -2247,7 +2247,10 @@ function renderViewer(encodedData){
           <div class="view-bouquet-wrap" id="viewBouquet">${buildBouquetSVG(data, 300)}</div>
           <div class="view-msg" id="viewMsg">${esc(data.message)}</div>
           <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
-          <div class="view-footer">${t('Открытка создана в')} <a href="#" onclick="goHome();return false;">${BRAND}</a> — ${t('соберите свою за пару минут')}</div>
+          <div class="view-footer">
+            <button class="btn btn-primary" onclick="goHome()">${t('Создать свою открытку')}</button>
+            <p class="view-footer-note">${t('Бесплатно, за пару минут — на')} <a href="#" onclick="goHome();return false;">${BRAND}</a></p>
+          </div>
         </div>
       </div>
     </div>

@@ -683,21 +683,35 @@ input[type=date], input[type=time]{
 .view-msg.show{opacity:1;}
 .view-from{margin-top:16px; font-size:13px; color:var(--ink); opacity:0; transition:opacity 1s ease .3s;}
 .view-from.show{opacity:.65;}
+/* Раньше это была одна строка мелкого приглушённого текста (13px, 60%
+   непрозрачности) со ссылкой на бренд внутри — та самая "кнопка создать
+   свою" терялась внизу открытки, получатели её не замечали. Теперь это
+   настоящая кнопка (тот же .btn.btn-primary, что и на экране "Открытка
+   готова"), а мелкий текст — только пояснение под ней, не единственный
+   носитель призыва к действию. */
 .view-footer{
-  margin-top:44px; padding-top:22px; border-top:1px solid var(--line);
-  font-size:13px; color:var(--ink); opacity:.6;
+  margin-top:44px; padding-top:26px; border-top:1px solid var(--line);
+  text-align:center;
 }
-.view-footer a{font-family:'Fraunces',serif; font-style:italic;}
+.view-footer-note{
+  margin-top:14px; font-size:13px; color:var(--ink); opacity:.6;
+}
+.view-footer-note a{font-family:'Fraunces',serif; font-style:italic;}
 .lock-screen{text-align:center; padding:60px 20px;}
 .lock-screen .num{font-family:'Fraunces',serif; font-size:15px; color:var(--rose);}
 
 .view-stage.stage-dark .view-open-hint,
 .view-stage.stage-dark .view-msg,
 .view-stage.stage-dark .view-from,
-.view-stage.stage-dark .view-footer,
+.view-stage.stage-dark .view-footer-note,
 .view-stage.stage-dark .lock-screen h1,
 .view-stage.stage-dark .lock-screen .eyebrow{ color:#F3EEE3; }
 .view-stage.stage-dark .view-footer{ border-top-color:rgba(243,238,227,0.25); }
+/* Ссылка внутри примечания наследует общий a{color:var(--accent)} (тёмный
+   сливовый) — на тёмном фоне сцены "Ночь" это давало почти нечитаемый текст
+   тем же цветом, что и сам тёмный фон. Обнаружено попутно при переделке
+   .view-footer в кнопку, существовало и раньше. */
+.view-stage.stage-dark .view-footer-note a{ color:#F3EEE3; }
 .view-stage.stage-dark .view-from.show{ opacity:.75; }
 
 .hidden{display:none !important;}
