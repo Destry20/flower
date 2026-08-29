@@ -1304,9 +1304,9 @@ function renderCreator(){
             <div class="envelope-row" id="envelopeChips" role="group" aria-labelledby="envLabel"></div>
           </div>
         </div>
-
-        <div class="promo-inline-slot" id="colPreviewAdSlot"></div>
       </div>
+
+      <div class="promo-inline-slot" id="colPreviewAdSlot"></div>
     </div>
 
     <div class="legal-wrap" id="about" style="padding-top:10px; scroll-margin-top:24px;">
@@ -1454,7 +1454,17 @@ function parkInlineAd(){
 function mountInlineAd(slotId){
   const slot = document.getElementById(slotId);
   const row = document.getElementById('inlineAdRow');
-  if(slot && row) slot.appendChild(row);
+  if(slot && row){
+    slot.appendChild(row);
+    // "Реклама" в index.html — статичная разметка вне #app, поэтому обычный
+    // рендер через t() её не подхватывает и она всегда оставалась русской
+    // даже при выбранном английском интерфейсе. Подставляем перевод здесь —
+    // mountInlineAd и так вызывается заново на каждый renderCreator(),
+    // включая смену языка (setLang → renderRoute), так что не расходится.
+    row.querySelectorAll('.promo-tag').forEach(el => { el.textContent = t('РЕКЛАМА'); });
+    row.querySelectorAll('[aria-label="Реклама"]').forEach(el => { el.setAttribute('aria-label', t('РЕКЛАМА')); });
+    row.querySelectorAll('iframe[title="Реклама"]').forEach(el => { el.setAttribute('title', t('РЕКЛАМА')); });
+  }
 }
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout'};

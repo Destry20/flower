@@ -425,8 +425,19 @@ a{color:var(--accent);}
   width:100%; margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
 }
 
+/* Раньше слот сидел внутри .col-preview (одной из двух колонок .builder,
+   ~400-536px в зависимости от ширины окна) — этой ширины никогда не
+   хватало на оба рекламных блока (320+300+отступ ⩾ 620px), поэтому
+   .promo-row переносил второй блок на новую строку, и они всегда стояли
+   друг под другом. grid-column:1/-1 растягивает слот на всю ширину сетки
+   .builder (обе колонки + зазор между ними, до ~1108px) — там места
+   достаточно, и тот же flex-wrap в .promo-row уже сам ставит блоки в ряд,
+   когда они помещаются, вместо того чтобы городить отдельную раскладку.
+   Из-за grid-column этот div должен быть прямым потомком .builder (не
+   вложен в .col-preview) — см. разметку в main.js. */
 .promo-inline-slot{
-  width:100%; margin-top:22px;
+  grid-column: 1 / -1;
+  width:100%;
   display:flex; justify-content:center; min-height:1px;
 }
 .promo-inline-slot .promo-row{ margin-top:0; padding:0; }
