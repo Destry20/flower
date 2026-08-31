@@ -85,7 +85,7 @@ app.use(attachUser);
 // и /group/<id>) — раньше засчитывался вообще любой GET без расширения файла,
 // из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
 // статистику и "Recent activity" в админке вперемешку с реальными визитами.
-const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|blog\/(birthday-wishes|thank-you-messages|love-messages))?$/;
+const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|congrats-card|support-card|just-because-card|blog\/(en\/)?(birthday-wishes|thank-you-messages|love-messages))?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path, req.get('user-agent'));
@@ -211,6 +211,18 @@ const SEO_PAGES = {
   '/virtual-bouquet': {
     ru: { title: 'Отправить виртуальный букет онлайн бесплатно · VivoRose', description: 'Соберите букет из цветов, ленты и вазы на свой вкус и отправьте одной ссылкой. Букет не завянет — это виртуальная открытка.' },
     en: { title: 'Send a Virtual Bouquet Online, Free · VivoRose', description: 'Build a bouquet from flowers, a ribbon, and a vase, then send it as one link. The bouquet never wilts — it\'s a virtual card.' }
+  },
+  '/congrats-card': {
+    ru: { title: 'Виртуальная открытка с поздравлением и букетом · VivoRose', description: 'Соберите открытку с поздравлением и живым на вид букетом, отправьте одной ссылкой. Бесплатно, без регистрации.' },
+    en: { title: 'Free Virtual Congratulations Card With a Bouquet · VivoRose', description: 'Build a congratulations card with a real-looking bouquet and send it as one link. Free, no sign-up, ready in minutes.' }
+  },
+  '/support-card': {
+    ru: { title: 'Виртуальная открытка со словами поддержки · VivoRose', description: 'Покажите, что вы рядом — соберите открытку с букетом и тёплыми словами, отправьте одной ссылкой. Бесплатно.' },
+    en: { title: 'Free Virtual Support Card With a Bouquet · VivoRose', description: 'Show someone you\'re there for them — build a card with a bouquet and send it as one link. Free, no sign-up.' }
+  },
+  '/just-because-card': {
+    ru: { title: 'Виртуальная открытка просто так, без повода · VivoRose', description: 'Отправьте открытку с букетом просто потому что вспомнили о человеке — без повода, бесплатно, без регистрации.' },
+    en: { title: 'Free "Just Because" Virtual Card With a Bouquet · VivoRose', description: 'Send a card with a bouquet just because — no occasion needed, free, no sign-up.' }
   }
 };
 app.get(Object.keys(SEO_PAGES), (req, res, next) => {

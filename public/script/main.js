@@ -150,6 +150,18 @@ const EN_STRINGS = {
   'Отправить виртуальный букет онлайн — бесплатно': 'Send a Virtual Bouquet Online, Free',
   'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.':
     'Build a bouquet from flowers, a ribbon, and a vase to your taste, add a short message, and send it as one link. The bouquet never wilts, and the recipient opens it like a real card.',
+  'Виртуальная открытка с поздравлением и букетом': 'A Virtual Congratulations Card With a Bouquet',
+  'Соберите открытку с поздравлением и живым на вид букетом, добавьте несколько слов — и отправьте одной ссылкой. Бесплатно, без регистрации.':
+    'Build a congratulations card with a real-looking bouquet, add a few words, and send it as one link. Free, no sign-up.',
+  'Виртуальная открытка со словами поддержки': 'A Virtual Support Card With a Bouquet',
+  'Покажите, что вы рядом — соберите открытку с букетом и тёплыми словами и отправьте одной ссылкой. Бесплатно, без регистрации.':
+    'Show someone you\'re there for them — build a card with a bouquet and a few warm words, and send it as one link. Free, no sign-up.',
+  'Виртуальная открытка просто так, без повода': 'A Virtual "Just Because" Card With a Bouquet',
+  'Соберите букет и отправьте открытку просто потому что вспомнили о человеке — без повода, без регистрации, бесплатно.':
+    'Build a bouquet and send a card just because you thought of someone — no occasion needed, free, no sign-up.',
+  'Не знаете, что написать? 30 готовых пожеланий →': 'Not sure what to write? 30 ready-made wishes →',
+  'Не знаете, что написать? 26 нежных слов →': 'Not sure what to write? 26 tender words →',
+  'Не знаете, что написать? 26 слов благодарности →': 'Not sure what to write? 26 thank-you messages →',
 
   'О сервисе': 'About the service',
   'VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.':
@@ -167,7 +179,14 @@ const EN_STRINGS = {
   'Открытка на день рождения': 'Birthday card',
   'Открытка с признанием в любви': 'Love card',
   'Открытка «Спасибо»': 'Thank-you card',
+  'Открытка с поздравлением': 'Congratulations card',
+  'Открытка со словами поддержки': 'Support card',
+  'Открытка просто так': '"Just because" card',
   'Просто виртуальный букет': 'Just a virtual bouquet',
+  'Не знаете, что написать?': 'Not sure what to write?',
+  'пожелания на день рождения': 'birthday wishes',
+  'нежные слова о любви': 'tender love words',
+  'слова благодарности': 'thank-you messages',
   'Повод': 'Occasion',
   'задаёт тон открытки': 'sets the tone of the card',
   'Букет': 'Bouquet',
@@ -370,15 +389,18 @@ const OCCASIONS = [
 // держите оба списка путей в синхроне при добавлении новой страницы. Здесь —
 // какой hero-заголовок показать и какой повод подставить по умолчанию
 // (один раз, при первой загрузке — см. bootstrap()).
-// blogSlug — ссылка на статью в public/blog/*.html с готовыми фразами под
-// этот повод (см. cross-link в hero ниже). Статьи пока только на русском,
-// поэтому ссылку показываем только при uiLang==='ru' — иначе англоязычного
-// посетителя привели бы на страницу, которую он не прочитает.
+// blogSlug — ссылка на статью в public/blog/<slug>.html (ru) /
+// public/blog/en/<slug>.html (en) с готовыми фразами под этот повод (см.
+// cross-link в hero ниже) — путь собирается по uiLang в самом рендере,
+// blogSlug тут просто общее имя файла, одинаковое для обеих версий.
 const SEO_LANDING_PAGES = {
   '/birthday-card': { occasion:'birthday', h1:'Виртуальная открытка на день рождения с букетом цветов', sub:'Соберите открытку на день рождения с букетом, который распускается прямо на экране, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов.', blogSlug:'birthday-wishes', blogLabel:'Не знаете, что написать? 30 готовых пожеланий →' },
   '/love-card': { occasion:'love', h1:'Виртуальная открытка с букетом — признание в любви', sub:'Соберите романтический букет, напишите то, что давно хотели сказать, и отправьте одной ссылкой. Открывается как настоящая открытка — с конвертом и цветением букета.', blogSlug:'love-messages', blogLabel:'Не знаете, что написать? 26 нежных слов →' },
   '/thank-you-card': { occasion:'thanks', h1:'Виртуальная открытка «Спасибо» с букетом цветов', sub:'Скажите спасибо не просто текстом, а живой открыткой с букетом. Соберите её за пару минут и отправьте одной ссылкой — бесплатно, без регистрации.', blogSlug:'thank-you-messages', blogLabel:'Не знаете, что написать? 26 слов благодарности →' },
-  '/virtual-bouquet': { occasion:'foryou', h1:'Отправить виртуальный букет онлайн — бесплатно', sub:'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.' }
+  '/virtual-bouquet': { occasion:'foryou', h1:'Отправить виртуальный букет онлайн — бесплатно', sub:'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.' },
+  '/congrats-card': { occasion:'congrats', h1:'Виртуальная открытка с поздравлением и букетом', sub:'Соберите открытку с поздравлением и живым на вид букетом, добавьте несколько слов — и отправьте одной ссылкой. Бесплатно, без регистрации.' },
+  '/support-card': { occasion:'sorry', h1:'Виртуальная открытка со словами поддержки', sub:'Покажите, что вы рядом — соберите открытку с букетом и тёплыми словами и отправьте одной ссылкой. Бесплатно, без регистрации.' },
+  '/just-because-card': { occasion:'justbecause', h1:'Виртуальная открытка просто так, без повода', sub:'Соберите букет и отправьте открытку просто потому что вспомнили о человеке — без повода, без регистрации, бесплатно.' }
 };
 function seoLanding(){ return SEO_LANDING_PAGES[location.pathname] || null; }
 
@@ -1180,7 +1202,7 @@ function renderCreator(){
       <div>
         <h1>${landing ? t(landing.h1) : t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
         <p>${landing ? t(landing.sub) : t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
-        ${landing && landing.blogSlug && uiLang==='ru' ? `<a href="/blog/${landing.blogSlug}" class="topbar-link" style="display:inline-block;margin-top:14px;">${landing.blogLabel}</a>` : ''}
+        ${landing && landing.blogSlug ? `<a href="/blog/${uiLang==='ru'?'':'en/'}${landing.blogSlug}" class="topbar-link" style="display:inline-block;margin-top:14px;">${t(landing.blogLabel)}</a>` : ''}
         <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:10px;"></p>
       </div>
       <div class="hero-stamp">${tr(occ.stamp)}</div>
@@ -1332,15 +1354,17 @@ function renderCreator(){
         <a href="/birthday-card">${t('Открытка на день рождения')}</a> ·
         <a href="/love-card">${t('Открытка с признанием в любви')}</a> ·
         <a href="/thank-you-card">${t('Открытка «Спасибо»')}</a> ·
+        <a href="/congrats-card">${t('Открытка с поздравлением')}</a> ·
+        <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
+        <a href="/just-because-card">${t('Открытка просто так')}</a> ·
         <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
       </p>
-      ${uiLang==='ru' ? `
       <p style="margin-top:10px;">
         ${t('Не знаете, что написать?')}
-        <a href="/blog/birthday-wishes">${t('пожелания на день рождения')}</a> ·
-        <a href="/blog/love-messages">${t('нежные слова о любви')}</a> ·
-        <a href="/blog/thank-you-messages">${t('слова благодарности')}</a>
-      </p>` : ''}
+        <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a>
+      </p>
     </div>
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
