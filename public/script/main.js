@@ -163,6 +163,11 @@ const EN_STRINGS = {
   'Для каких поводов': 'What occasions it fits',
   'Дни рождения, признания в любви, слова благодарности, поздравления или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.':
     'Birthdays, love confessions, thank-yous, congratulations, or just a card "because you thought of someone" — each occasion gets its own set of flowers, ribbon color, and card tone.',
+  'Быстрые ссылки': 'Quick links',
+  'Открытка на день рождения': 'Birthday card',
+  'Открытка с признанием в любви': 'Love card',
+  'Открытка «Спасибо»': 'Thank-you card',
+  'Просто виртуальный букет': 'Just a virtual bouquet',
   'Повод': 'Occasion',
   'задаёт тон открытки': 'sets the tone of the card',
   'Букет': 'Bouquet',
@@ -1321,6 +1326,21 @@ function renderCreator(){
 
       <h2>${t('Для каких поводов')}</h2>
       <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
+
+      <h2>${t('Быстрые ссылки')}</h2>
+      <p>
+        <a href="/birthday-card">${t('Открытка на день рождения')}</a> ·
+        <a href="/love-card">${t('Открытка с признанием в любви')}</a> ·
+        <a href="/thank-you-card">${t('Открытка «Спасибо»')}</a> ·
+        <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
+      </p>
+      ${uiLang==='ru' ? `
+      <p style="margin-top:10px;">
+        ${t('Не знаете, что написать?')}
+        <a href="/blog/birthday-wishes">${t('пожелания на день рождения')}</a> ·
+        <a href="/blog/love-messages">${t('нежные слова о любви')}</a> ·
+        <a href="/blog/thank-you-messages">${t('слова благодарности')}</a>
+      </p>` : ''}
     </div>
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
