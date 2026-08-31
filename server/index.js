@@ -265,6 +265,21 @@ app.use(express.static(PUBLIC_DIR, {
 
 app.use('/api', (req, res) => res.status(404).json({ error: tServer(req, 'notFound') }));
 
+// Любой другой нераспознанный GET (опечатка в адресе, обрезанная при
+// пересылке ссылка на открытку вроде /c/short, старая/битая ссылка) — без
+// этого обработчика Express отвечал бы голым "Cannot GET /...", без стилей
+// и брендинга. Отдаём тот же index.html (с правильным <html lang>, но
+// стандартными title/description сайта) и статус 404, чтобы поисковики не
+// индексировали такие адреса как настоящий контент.
+app.get('*', (req, res, next) => {
+  const lang = pickLang(req);
+  fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
+    if(err) return next();
+    const out = html.replace(/<html lang="[^"]*"/, `<html lang="${lang}"`);
+    res.status(404).set('Cache-Control', 'no-cache').type('html').send(out);
+  });
+});
+
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: tServer(req, 'serverError') });
