@@ -30,7 +30,8 @@ const STRINGS = {
     mailBodyHtml: (url) => `<p>Чтобы задать новый пароль, перейдите по ссылке:</p><p><a href="${url}">${url}</a></p><p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>`,
     occasionStamps: {
       foryou: 'Для тебя', birthday: 'С днём рождения', love: 'С любовью',
-      thanks: 'Спасибо тебе', congrats: 'Поздравляю', sorry: 'Я рядом', justbecause: 'Просто так'
+      thanks: 'Спасибо тебе', congrats: 'Поздравляю', sorry: 'Я рядом', justbecause: 'Просто так',
+      sympathy: 'Соболезную'
     },
     shareTitle: (from) => `Вам открытка${from ? ' от ' + from : ''} 🌿`,
     shareDescription: (stamp) => `${stamp}. Нажмите, чтобы открыть букет и пожелание.`,
@@ -61,7 +62,8 @@ const STRINGS = {
     mailBodyHtml: (url) => `<p>To set a new password, follow this link:</p><p><a href="${url}">${url}</a></p><p>If you didn't request a password reset, just ignore this email.</p>`,
     occasionStamps: {
       foryou: 'For you', birthday: 'Happy Birthday', love: 'With love',
-      thanks: 'Thank you', congrats: 'Congratulations', sorry: "I'm here", justbecause: 'Just because'
+      thanks: 'Thank you', congrats: 'Congratulations', sorry: "I'm here", justbecause: 'Just because',
+      sympathy: 'With sympathy'
     },
     shareTitle: (from) => `You've got a card${from ? ' from ' + from : ''} 🌿`,
     shareDescription: (stamp) => `${stamp}. Tap to open the bouquet and the message.`,

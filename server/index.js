@@ -85,7 +85,7 @@ app.use(attachUser);
 // и /group/<id>) — раньше засчитывался вообще любой GET без расширения файла,
 // из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
 // статистику и "Recent activity" в админке вперемешку с реальными визитами.
-const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|congrats-card|support-card|just-because-card|blog\/(en\/)?(birthday-wishes|thank-you-messages|love-messages))?$/;
+const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|congrats-card|support-card|just-because-card|sympathy-card|blog\/(en\/)?(birthday-wishes|thank-you-messages|love-messages|sympathy-messages))?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path, req.get('user-agent'));
@@ -223,6 +223,10 @@ const SEO_PAGES = {
   '/just-because-card': {
     ru: { title: 'Виртуальная открытка просто так, без повода · VivoRose', description: 'Отправьте открытку с букетом просто потому что вспомнили о человеке — без повода, бесплатно, без регистрации.' },
     en: { title: 'Free "Just Because" Virtual Card With a Bouquet · VivoRose', description: 'Send a card with a bouquet just because — no occasion needed, free, no sign-up.' }
+  },
+  '/sympathy-card': {
+    ru: { title: 'Открытка с соболезнованиями и букетом · VivoRose', description: 'Соберите открытку с соболезнованиями и мягким на вид букетом, добавьте несколько тёплых слов — и отправьте одной ссылкой. Бесплатно, без регистрации.' },
+    en: { title: 'A Sympathy Card With a Bouquet · VivoRose', description: 'Build a sympathy card with a gentle bouquet and a few kind words, and send it as one link. Free, no sign-up.' }
   }
 };
 app.get(Object.keys(SEO_PAGES), (req, res, next) => {

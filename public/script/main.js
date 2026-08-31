@@ -162,6 +162,10 @@ const EN_STRINGS = {
   'Не знаете, что написать? 30 готовых пожеланий →': 'Not sure what to write? 30 ready-made wishes →',
   'Не знаете, что написать? 26 нежных слов →': 'Not sure what to write? 26 tender words →',
   'Не знаете, что написать? 26 слов благодарности →': 'Not sure what to write? 26 thank-you messages →',
+  'Не знаете, что написать? 24 слова соболезнования →': 'Not sure what to write? 24 words of sympathy →',
+  'Открытка с соболезнованиями и букетом': 'A Sympathy Card With a Bouquet',
+  'Когда трудно подобрать слова — соберите открытку с мягким букетом и тёплыми словами поддержки и отправьте её одной ссылкой.':
+    'When words are hard to find, build a card with a gentle bouquet and a few kind words, and send it as one link.',
 
   'О сервисе': 'About the service',
   'VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.':
@@ -173,8 +177,8 @@ const EN_STRINGS = {
   'Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.':
     'Yes, completely. All flowers, vases, ribbons, envelopes and backgrounds are free — the service runs on ad banners, not paid subscriptions.',
   'Для каких поводов': 'What occasions it fits',
-  'Дни рождения, признания в любви, слова благодарности, поздравления или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.':
-    'Birthdays, love confessions, thank-yous, congratulations, or just a card "because you thought of someone" — each occasion gets its own set of flowers, ribbon color, and card tone.',
+  'Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.':
+    'Birthdays, love confessions, thank-yous, congratulations, words of comfort or sympathy, or just a card "because you thought of someone" — each occasion gets its own set of flowers, ribbon color, and card tone.',
   'Быстрые ссылки': 'Quick links',
   'Открытка на день рождения': 'Birthday card',
   'Открытка с признанием в любви': 'Love card',
@@ -182,11 +186,13 @@ const EN_STRINGS = {
   'Открытка с поздравлением': 'Congratulations card',
   'Открытка со словами поддержки': 'Support card',
   'Открытка просто так': '"Just because" card',
+  'Открытка с соболезнованиями': 'Sympathy card',
   'Просто виртуальный букет': 'Just a virtual bouquet',
   'Не знаете, что написать?': 'Not sure what to write?',
   'пожелания на день рождения': 'birthday wishes',
   'нежные слова о любви': 'tender love words',
   'слова благодарности': 'thank-you messages',
+  'слова соболезнования': 'words of sympathy',
   'Повод': 'Occasion',
   'задаёт тон открытки': 'sets the tone of the card',
   'Букет': 'Bouquet',
@@ -241,6 +247,11 @@ const EN_STRINGS = {
   'Поделиться': 'Share',
   'Редактировать': 'Edit',
   'Создать ещё одну': 'Create another',
+  'Напомнить в следующем году': 'Remind me next year',
+  'Скачается файл-напоминание — откройте его, и он сам добавится в ваш календарь: через год в этот день придёт обычное напоминание собрать открытку снова.':
+    'This downloads a small reminder file — open it and it adds itself to your calendar: a year from now, on this day, you\'ll get a normal reminder to make another card.',
+  'Самое время собрать новую открытку с букетом на VivoRose.': 'Time to build a new card with a bouquet on VivoRose.',
+  'Файл-напоминание скачан — добавьте его в свой календарь': 'Reminder file downloaded — add it to your calendar',
   'Ссылка скопирована': 'Link copied',
   'Скопируйте ссылку вручную': 'Copy the link manually',
   'Добавьте текст пожелания': 'Add a message first',
@@ -380,7 +391,8 @@ const OCCASIONS = [
   {id:'thanks', label:{ru:'Спасибо',en:'Thank you'}, color:'#B98A4A', stamp:{ru:'Спасибо тебе',en:'Thank you'}, placeholder:{ru:'Хочу, чтобы ты знал(а), как я ценю тебя...',en:'I want you to know how much I appreciate you...'}, anim:'petals'},
   {id:'congrats', label:{ru:'Поздравляю',en:'Congrats'}, color:'#5C7457', stamp:{ru:'Поздравляю',en:'Congratulations'}, placeholder:{ru:'Ты это заслужил(а). Горжусь тобой!',en:'You earned this. So proud of you!'}, anim:'confetti'},
   {id:'sorry', label:{ru:'Поддержка',en:'Support'}, color:'#8CA087', stamp:{ru:'Я рядом',en:"I'm here"}, placeholder:{ru:'Просто хочу, чтобы ты знал(а) — я рядом, что бы ни случилось.',en:"Just want you to know — I'm here, no matter what."}, anim:'petals'},
-  {id:'justbecause', label:{ru:'Просто так',en:'Just because'}, color:'#C97B86', stamp:{ru:'Просто так',en:'Just because'}, placeholder:{ru:'Без повода. Просто подумал(а) о тебе сегодня.',en:'No reason. Just thought of you today.'}, anim:'petals'}
+  {id:'justbecause', label:{ru:'Просто так',en:'Just because'}, color:'#C97B86', stamp:{ru:'Просто так',en:'Just because'}, placeholder:{ru:'Без повода. Просто подумал(а) о тебе сегодня.',en:'No reason. Just thought of you today.'}, anim:'petals'},
+  {id:'sympathy', label:{ru:'Соболезнования',en:'Sympathy'}, color:'#8B93A0', stamp:{ru:'Соболезную',en:'With sympathy'}, placeholder:{ru:'Мыслями с тобой в эти трудные дни. Я рядом, если понадоблюсь.',en:"Thinking of you during this difficult time. I'm here if you need anything."}, anim:'petals'}
 ];
 
 // SEO-лендинги — реальные (не hash-) пути под конкретные поисковые запросы,
@@ -400,7 +412,8 @@ const SEO_LANDING_PAGES = {
   '/virtual-bouquet': { occasion:'foryou', h1:'Отправить виртуальный букет онлайн — бесплатно', sub:'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.' },
   '/congrats-card': { occasion:'congrats', h1:'Виртуальная открытка с поздравлением и букетом', sub:'Соберите открытку с поздравлением и живым на вид букетом, добавьте несколько слов — и отправьте одной ссылкой. Бесплатно, без регистрации.' },
   '/support-card': { occasion:'sorry', h1:'Виртуальная открытка со словами поддержки', sub:'Покажите, что вы рядом — соберите открытку с букетом и тёплыми словами и отправьте одной ссылкой. Бесплатно, без регистрации.' },
-  '/just-because-card': { occasion:'justbecause', h1:'Виртуальная открытка просто так, без повода', sub:'Соберите букет и отправьте открытку просто потому что вспомнили о человеке — без повода, без регистрации, бесплатно.' }
+  '/just-because-card': { occasion:'justbecause', h1:'Виртуальная открытка просто так, без повода', sub:'Соберите букет и отправьте открытку просто потому что вспомнили о человеке — без повода, без регистрации, бесплатно.' },
+  '/sympathy-card': { occasion:'sympathy', h1:'Открытка с соболезнованиями и букетом', sub:'Когда трудно подобрать слова — соберите открытку с мягким букетом и тёплыми словами поддержки и отправьте её одной ссылкой.', blogSlug:'sympathy-messages', blogLabel:'Не знаете, что написать? 24 слова соболезнования →' }
 };
 function seoLanding(){ return SEO_LANDING_PAGES[location.pathname] || null; }
 
@@ -1347,7 +1360,7 @@ function renderCreator(){
       <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
 
       <h2>${t('Для каких поводов')}</h2>
-      <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
+      <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
 
       <h2>${t('Быстрые ссылки')}</h2>
       <p>
@@ -1357,13 +1370,15 @@ function renderCreator(){
         <a href="/congrats-card">${t('Открытка с поздравлением')}</a> ·
         <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
         <a href="/just-because-card">${t('Открытка просто так')}</a> ·
+        <a href="/sympathy-card">${t('Открытка с соболезнованиями')}</a> ·
         <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
       </p>
       <p style="margin-top:10px;">
         ${t('Не знаете, что написать?')}
         <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
         <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
-        <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a>
+        <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}sympathy-messages">${t('слова соболезнования')}</a>
       </p>
     </div>
   </div>
@@ -1511,7 +1526,7 @@ function mountInlineAd(slotId){
   }
 }
 
-const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout'};
+const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout', sympathy:'leaf'};
 function occasionIconSvg(id, color){
   const name = OCCASION_ICON[id];
   const paths = {
@@ -1522,7 +1537,8 @@ function occasionIconSvg(id, color){
     star:`<path d="M8 1.4L9.3 6.1L14 6.4L10.3 9.2L11.6 13.8L8 11L4.4 13.8L5.7 9.2L2 6.4L6.7 6.1Z" fill="${color}"/>`,
     you:`<circle cx="8" cy="4.2" r="2.3" fill="${color}"/><path d="M8 6.8C5.2 6.8 3.5 9 3.8 12.5L4.6 15L11.4 15L12.2 12.5C12.5 9 10.8 6.8 8 6.8Z" fill="${color}"/>`,
     feather:`<path d="M13 2.2C9.4 3 5.6 6.6 3.4 12.6M13 2.2C11.2 5 9.4 6.8 6.6 8.6M13 2.2C10.4 4 8.4 5 5.6 5.8" fill="none" stroke="${color}" stroke-width="1.1" stroke-linecap="round"/>`,
-    sprout:`<circle cx="8" cy="8" r="1.6" fill="#B98A4A"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="${8+Math.cos(a*Math.PI/180)*4.2}" cy="${8+Math.sin(a*Math.PI/180)*4.2}" rx="2.6" ry="1.7" fill="${color}" transform="rotate(${a} ${8+Math.cos(a*Math.PI/180)*4.2} ${8+Math.sin(a*Math.PI/180)*4.2})"/>`).join('')}`
+    sprout:`<circle cx="8" cy="8" r="1.6" fill="#B98A4A"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="${8+Math.cos(a*Math.PI/180)*4.2}" cy="${8+Math.sin(a*Math.PI/180)*4.2}" rx="2.6" ry="1.7" fill="${color}" transform="rotate(${a} ${8+Math.cos(a*Math.PI/180)*4.2} ${8+Math.sin(a*Math.PI/180)*4.2})"/>`).join('')}`,
+    leaf:`<path d="M8 13.6C4 13.2 2.3 9.4 3.4 5C5 5.4 6.8 6.6 8 9C8 5.8 9.7 3.8 12.7 2.4C14.5 6.6 13 12.2 8.4 13.5C8.3 13.55 8.15 13.58 8 13.6Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 13C8 9.6 8.4 6.8 12 3" fill="none" stroke="${color}" stroke-width="1" stroke-linecap="round" opacity=".55"/>`
   };
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${paths[name]}</svg>`;
 }
@@ -1861,7 +1877,9 @@ function renderShareScreen(url, expiresAt){
         <button class="btn btn-ghost" id="shareBtn" onclick="shareLink('${url}')">${t('Поделиться')}</button>
         <button class="btn btn-ghost" onclick="renderCreator()">${t('Редактировать')}</button>
         <button class="btn btn-ghost" onclick="location.href=location.pathname">${t('Создать ещё одну')}</button>
+        ${state.occasion !== 'sympathy' ? `<button class="btn btn-ghost" onclick="downloadReminderIcs()">${t('Напомнить в следующем году')}</button>` : ''}
       </div>
+      ${state.occasion !== 'sympathy' ? `<p style="font-size:12.5px;opacity:.6;margin-top:10px;text-align:center;">${t('Скачается файл-напоминание — откройте его, и он сам добавится в ваш календарь: через год в этот день придёт обычное напоминание собрать открытку снова.')}</p>` : ''}
       <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${shareFootnote(isShortLink, isGuestShortLink)}</p>
     </div>
   `;
@@ -1884,6 +1902,42 @@ function renderShareScreen(url, expiresAt){
     }
   }catch(e){ document.getElementById('qrBox').style.display='none'; }
   if(!navigator.share) document.getElementById('shareBtn').style.display='none';
+}
+
+// Генерируем .ics прямо в браузере (без похода на сервер) — календарь сам
+// напомнит через год собрать новую открытку тому же человеку. Дата — ровно
+// через год от сегодня, а не от state.reveal: напоминание про следующий раз,
+// а не про отложенное открытие уже созданной открытки.
+function icsEscape(s){
+  return String(s == null ? '' : s).replace(/[\\;,]/g, m => '\\'+m).replace(/\n/g, '\\n');
+}
+function downloadReminderIcs(){
+  const occ = occasionById(state.occasion);
+  const now = new Date();
+  const next = new Date(now.getFullYear()+1, now.getMonth(), now.getDate());
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = `${next.getFullYear()}${pad(next.getMonth()+1)}${pad(next.getDate())}`;
+  const stampNow = now.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const uid = 'vivorose-' + now.getTime() + '-' + Math.random().toString(36).slice(2) + '@vivorose.com';
+  const summary = t('Собрать открытку') + (state.to ? ': ' + state.to : ` (${tr(occ.label)})`);
+  const description = t('Самое время собрать новую открытку с букетом на VivoRose.') + ' ' + location.origin;
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VivoRose//Card Reminder//EN','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stampNow}`,
+    `DTSTART;VALUE=DATE:${dateStr}`,
+    `SUMMARY:${icsEscape(summary)}`,
+    `DESCRIPTION:${icsEscape(description)}`,
+    'END:VEVENT','END:VCALENDAR',''
+  ].join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl; a.download = 'vivorose-reminder.ics';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(blobUrl), 4000);
+  showToast(t('Файл-напоминание скачан — добавьте его в свой календарь'));
 }
 function copyLink(){
   const el = document.getElementById('shareUrl');
