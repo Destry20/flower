@@ -19,7 +19,7 @@
   button.secondary{ background:transparent; color:var(--ink); border:1px solid var(--border); }
   button.danger{ background:var(--danger); }
   button:disabled{ opacity:.5; cursor:not-allowed; }
-  input[type=password]{ font:inherit; padding:10px 12px; border:1px solid var(--border); border-radius:6px; width:100%; max-width:280px; }
+  input[type=password], #totpInput{ font:inherit; padding:10px 12px; border:1px solid var(--border); border-radius:6px; width:100%; max-width:280px; margin-bottom:10px; }
   #loginScreen{ max-width:340px; margin:15vh auto; text-align:center; }
   #loginScreen .card{ text-align:left; }
   #loginError{ color:var(--danger); font-size:14px; min-height:20px; }
@@ -52,6 +52,19 @@
   .tag-bot{ background:#efe6e6; color:#8a7b6a; }
   .tag-visitor{ background:#e9f0e6; color:#4a8a5c; }
   .tag-suspicious{ background:#f7e6d0; color:#a3691a; }
+  .tag-google{ background:#e6edf7; color:#3a5f8a; }
+  td.del{ width:1%; white-space:nowrap; }
+  td.del button{ background:none; border:1px solid var(--border); color:#8a7b6a; padding:4px 10px; font-size:12px; border-radius:6px; }
+  td.del button:hover{ border-color:var(--danger); color:var(--danger); }
+  .search-row{ display:flex; gap:8px; margin-bottom:16px; }
+  .search-row input{ font:inherit; padding:8px 12px; border:1px solid var(--border); border-radius:6px; flex:1; max-width:320px; }
+  .search-row .hint{ font-size:12px; color:#8a7b6a; align-self:center; }
+  .totp-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .totp-setup{ margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+  .totp-setup img, .totp-setup #totpQr{ background:#fff; padding:8px; border-radius:8px; display:inline-block; }
+  .totp-secret{ font-family:monospace; font-size:13px; background:var(--bg); padding:6px 10px; border-radius:6px; display:inline-block; margin:8px 0; word-break:break-all; }
+  .field-row{ display:flex; gap:8px; align-items:center; margin-top:10px; }
+  .field-row input[type=text]{ font:inherit; padding:8px 12px; border:1px solid var(--border); border-radius:6px; width:120px; }
 </style>
 </head>
 <body>
@@ -71,6 +84,7 @@
       <h2>Log in</h2>
       <form id="loginForm">
         <input type="password" id="passwordInput" placeholder="Admin password" autocomplete="current-password" required>
+        <input type="text" id="totpInput" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code" style="display:none;">
         <div id="loginError"></div>
         <button type="submit">Log in</button>
       </form>
@@ -107,6 +121,18 @@
     </div>
 
     <div class="card">
+      <div class="row-between">
+        <h2>Search</h2>
+        <span class="hint" style="font-size:12px;color:#8a7b6a;">Searches signups, cards and group cards below</span>
+      </div>
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Email, name, recipient, occasion, or link id…">
+        <button id="searchBtn" class="secondary">Search</button>
+        <button id="searchClearBtn" class="secondary" style="display:none;">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Recent signups</h2>
       <div id="usersList"></div>
     </div>
@@ -114,6 +140,37 @@
     <div class="card">
       <h2>Recent cards</h2>
       <div id="cardsList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Recent group cards</h2>
+      <div id="groupsList"></div>
+    </div>
+
+    <div class="card">
+      <h2>Two-factor authentication</h2>
+      <div id="totpEnabledBlock" style="display:none;">
+        <div class="totp-row">
+          <span>✓ 2FA is enabled — a code from your authenticator app is required to log in.</span>
+          <button id="totpDisableBtn" class="danger">Disable 2FA</button>
+        </div>
+      </div>
+      <div id="totpDisabledBlock" style="display:none;">
+        <div class="totp-row">
+          <span>2FA is off — logging in only needs the admin password.</span>
+          <button id="totpStartBtn" class="secondary">Set up 2FA</button>
+        </div>
+        <div id="totpSetupBlock" class="totp-setup" style="display:none;">
+          <p style="font-size:13px;">Scan this in Google Authenticator, Authy, or any TOTP app, then enter the 6-digit code it shows to confirm.</p>
+          <div id="totpQr"></div>
+          <div>Can't scan? Enter this key manually: <span class="totp-secret" id="totpSecretText"></span></div>
+          <div class="field-row">
+            <input type="text" id="totpConfirmInput" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code">
+            <button id="totpConfirmBtn">Confirm</button>
+          </div>
+          <div id="totpSetupError" style="color:var(--danger);font-size:13px;margin-top:6px;"></div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -126,6 +183,7 @@
   </div>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

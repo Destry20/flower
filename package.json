@@ -20,6 +20,7 @@
     "google-auth-library": "^9.15.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^9.0.5"
+    "nodemailer": "^9.0.5",
+    "otplib": "^13.5.0"
   }
 }

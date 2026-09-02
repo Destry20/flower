@@ -431,33 +431,72 @@ function incrementCardsCreated(){
   persist();
   return data.meta.cardsCreatedTotal;
 }
-function listRecentUsers(limit = 15){
-  return [...data.users]
-    .sort((a,b) => b.createdAt - a.createdAt)
-    .slice(0, limit)
-    .map(u => ({ id: u.id, email: u.email, name: u.name, createdAt: u.createdAt }));
+// query — необязательный поиск по email/имени (регистронезависимо, простое
+// includes, не полнотекстовый поиск — база маленькая, до сотен записей,
+// усложнять незачем). Без query — как раньше, последние limit по дате.
+// С query — лимит намеренно выше (см. вызов из routes/admin.js): "последние
+// 15" достаточно для ленты, но искать конкретного человека только среди
+// последних 15 бессмысленно.
+function listRecentUsers(limit = 15, query = ''){
+  let list = [...data.users].sort((a,b) => b.createdAt - a.createdAt);
+  const q = String(query || '').trim().toLowerCase();
+  if(q){
+    list = list.filter(u => u.email.toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q));
+  }
+  return list.slice(0, limit).map(u => ({ id: u.id, email: u.email, name: u.name, provider: u.provider || 'password', createdAt: u.createdAt }));
 }
 // Для панели администратора — раньше счётчик "cards created" был, а самого
 // списка открыток не было нигде, поэтому не было способа увидеть, что и когда
 // реально создавалось. encodedData (содержимое открытки) намеренно не отдаём —
 // админке для обзора достаточно метаданных, а не текста чужого пожелания.
-function listRecentCards(limit = 15){
-  return [...data.cards]
-    .sort((a,b) => b.createdAt - a.createdAt)
-    .slice(0, limit)
-    .map(c => {
-      const owner = findUserById(c.userId);
-      return {
-        id: c.id,
-        shortId: c.shortId,
-        occasion: c.occasion,
-        to: c.to,
-        from: c.from,
-        createdAt: c.createdAt,
-        expiresAt: c.expiresAt || null,
-        ownerEmail: owner ? owner.email : null
-      };
-    });
+// query ищет по получателю/отправителю/поводу/email владельца/shortId —
+// см. комментарий у listRecentUsers про смысл этого параметра.
+function listRecentCards(limit = 15, query = ''){
+  let list = [...data.cards].sort((a,b) => b.createdAt - a.createdAt);
+  const mapped = list.map(c => {
+    const owner = findUserById(c.userId);
+    return {
+      id: c.id,
+      shortId: c.shortId,
+      occasion: c.occasion,
+      to: c.to,
+      from: c.from,
+      createdAt: c.createdAt,
+      expiresAt: c.expiresAt || null,
+      ownerEmail: owner ? owner.email : null
+    };
+  });
+  const q = String(query || '').trim().toLowerCase();
+  const filtered = q
+    ? mapped.filter(c => [c.to, c.from, c.occasion, c.shortId, c.ownerEmail].some(v => v && v.toLowerCase().includes(q)))
+    : mapped;
+  return filtered.slice(0, limit);
+}
+// Групповые открытки ("всей компанией") раньше нигде не показывались в
+// админке — отдельная коллекция data.groupCards, до которой ни один из
+// list*-геттеров выше не дотягивался. contributions отдаём только числом
+// (сколько человек подписали), не сам текст — та же логика приватности, что
+// и у encodedData обычных открыток выше.
+function listRecentGroupCards(limit = 15, query = ''){
+  let list = [...data.groupCards].sort((a,b) => b.createdAt - a.createdAt);
+  const mapped = list.map(g => {
+    const owner = findUserById(g.userId);
+    return {
+      id: g.id,
+      shortId: g.shortId,
+      occasion: g.occasion,
+      to: g.to,
+      createdAt: g.createdAt,
+      closed: isGroupCardClosed(g),
+      contributionsCount: g.contributions.length,
+      ownerEmail: owner ? owner.email : null
+    };
+  });
+  const q = String(query || '').trim().toLowerCase();
+  const filtered = q
+    ? mapped.filter(g => [g.to, g.occasion, g.shortId, g.ownerEmail].some(v => v && v.toLowerCase().includes(q)))
+    : mapped;
+  return filtered.slice(0, limit);
 }
 function deleteClientError(id){
   const before = data.errors.length;
@@ -465,6 +504,71 @@ function deleteClientError(id){
   const removed = data.errors.length !== before;
   if(removed) persist();
   return removed;
+}
+
+/* ---------------- admin: модерация ---------------- */
+// Обычный deleteCard (см. выше, в разделе cards) требует совпадения userId —
+// это защита владельца открытки от чужого удаления через публичное API, и
+// она же не даёт удалить гостевую открытку (userId===null) вообще никому,
+// потому что ни один настоящий пользователь не аутентифицирован как null.
+// Админу нужно ровно обратное — снести любую открытку по одному только id,
+// независимо от владельца (в том числе гостевую), поэтому это отдельная
+// функция, а не тот же deleteCard с обходом проверки.
+function adminDeleteCard(id){
+  const before = data.cards.length;
+  data.cards = data.cards.filter(c => c.id !== id);
+  const removed = data.cards.length !== before;
+  if(removed) persist();
+  return removed;
+}
+function adminDeleteGroupCard(shortId){
+  const before = data.groupCards.length;
+  data.groupCards = data.groupCards.filter(g => g.shortId !== shortId);
+  const removed = data.groupCards.length !== before;
+  if(removed) persist();
+  return removed;
+}
+// Удаление аккаунта — например спам-регистрация — каскадно чистит и то, что
+// было создано под этим аккаунтом (сохранённые открытки, открытки "всей
+// компанией"), а не только саму запись users: иначе спам остался бы висеть
+// в базе с оборванной ссылкой на несуществующего owner.
+function adminDeleteUser(id){
+  const before = data.users.length;
+  data.users = data.users.filter(u => u.id !== id);
+  const removed = data.users.length !== before;
+  if(removed){
+    data.cards = data.cards.filter(c => c.userId !== id);
+    data.groupCards = data.groupCards.filter(g => g.userId !== id);
+    persist();
+  }
+  return removed;
+}
+
+/* ---------------- admin: двухфакторная аутентификация ---------------- */
+// TOTP-секрет (совместим с Google Authenticator/Authy и т.п.) хранится в
+// самой базе (data.meta.adminTotp), а не в переменной окружения — чтобы
+// включить 2FA можно было прямо из панели, без редеплоя. pending — секрет
+// сгенерирован, но код ещё ни разу не подтверждён (см. POST /totp/setup в
+// routes/admin.js) — до подтверждения он не участвует в входе, чтобы админ
+// не мог случайно заблокировать сам себя, не проверив, что приложение-
+// аутентификатор реально считает верные коды.
+function getAdminTotp(){
+  return data.meta.adminTotp || { secret: null, pending: false, enabled: false };
+}
+function setAdminTotpPending(secret){
+  data.meta.adminTotp = { secret, pending: true, enabled: false };
+  persist();
+}
+function confirmAdminTotp(){
+  if(!data.meta.adminTotp) return false;
+  data.meta.adminTotp.pending = false;
+  data.meta.adminTotp.enabled = true;
+  persist();
+  return true;
+}
+function disableAdminTotp(){
+  data.meta.adminTotp = { secret: null, pending: false, enabled: false };
+  persist();
 }
 
 module.exports = {
@@ -475,6 +579,8 @@ module.exports = {
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors, deleteClientError,
-  getCounts, listRecentUsers, listRecentCards,
+  getCounts, listRecentUsers, listRecentCards, listRecentGroupCards,
+  adminDeleteCard, adminDeleteGroupCard, adminDeleteUser,
+  getAdminTotp, setAdminTotpPending, confirmAdminTotp, disableAdminTotp,
   getCardsCreatedTotal, incrementCardsCreated
 };

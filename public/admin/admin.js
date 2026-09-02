@@ -9,7 +9,7 @@ async function api(path, options){
   });
   let body = null;
   try{ body = await res.json(); }catch(e){ /* no body */ }
-  if(!res.ok) throw new Error((body && body.error) || ('HTTP ' + res.status));
+  if(!res.ok) throw Object.assign(new Error((body && body.error) || ('HTTP ' + res.status)), { body });
   return body;
 }
 
@@ -92,40 +92,98 @@ function renderRecent(recent){
   }</tbody></table>`;
 }
 
+// Кнопка удаления — общий паттерн для users/cards/groups ниже: подтверждение,
+// DELETE-запрос по указанному пути, перезагрузка всего дашборда после успеха
+// (проще, чем точечно убирать одну строку из трёх разных списков — счётчики
+// вверху тоже должны обновиться).
+function bindDeleteButtons(container, pathPrefix, confirmMsg){
+  container.querySelectorAll('td.del button').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!confirm(confirmMsg)) return;
+      btn.disabled = true;
+      try{ await api(pathPrefix + encodeURIComponent(btn.dataset.id), { method: 'DELETE' }); await loadDashboard(); }
+      catch(e){ btn.disabled = false; alert(e.message); }
+    });
+  });
+}
+
 function renderUsers(users){
   const el = $('usersList');
   if(!users.length){
-    el.innerHTML = '<div class="empty">No accounts yet.</div>';
+    el.innerHTML = '<div class="empty">No accounts found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Signed up</th><th>Email</th><th>Name</th></tr></thead><tbody>${
-    users.map(u => `<tr><td>${fmtTime(u.createdAt)}</td><td class="msg">${escapeHtml(u.email)}</td><td class="msg">${escapeHtml(u.name || '—')}</td></tr>`).join('')
+  el.innerHTML = `<table><thead><tr><th>Signed up</th><th>Email</th><th>Name</th><th></th><th></th></tr></thead><tbody>${
+    users.map(u => `<tr>
+      <td>${fmtTime(u.createdAt)}</td>
+      <td class="msg">${escapeHtml(u.email)}</td>
+      <td class="msg">${escapeHtml(u.name || '—')}</td>
+      <td>${u.provider === 'google' ? '<span class="tag tag-google">Google</span>' : ''}</td>
+      <td class="del"><button data-id="${u.id}">Delete</button></td>
+    </tr>`).join('')
   }</tbody></table>`;
+  bindDeleteButtons(el, '/users/', 'Delete this account? This also removes any cards saved under it. This cannot be undone.');
 }
 
 function renderCards(cards){
   const el = $('cardsList');
   if(!cards.length){
-    el.innerHTML = '<div class="empty">No cards created yet.</div>';
+    el.innerHTML = '<div class="empty">No cards found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>Link</th></tr></thead><tbody>${
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>Link</th><th></th></tr></thead><tbody>${
     cards.map(c => `<tr>
       <td>${fmtTime(c.createdAt)}</td>
-      <td class="msg">${escapeHtml(c.ownerEmail || '—')}</td>
+      <td class="msg">${escapeHtml(c.ownerEmail || 'guest')}</td>
       <td class="msg">${escapeHtml(c.occasion || '—')}</td>
       <td class="msg">${escapeHtml(c.to || '—')}</td>
       <td><a href="/c/${encodeURIComponent(c.shortId)}" target="_blank" rel="noopener">/c/${escapeHtml(c.shortId)}</a></td>
+      <td class="del"><button data-id="${c.id}">Delete</button></td>
     </tr>`).join('')
   }</tbody></table>`;
+  bindDeleteButtons(el, '/cards/', 'Delete this card? This cannot be undone.');
+}
+
+// Открытки "всей компанией" — раньше нигде не были видны в панели (см.
+// listRecentGroupCards в db.js). closed берём уже посчитанным с сервера
+// (isGroupCardClosed), а не пересчитываем closesAt здесь — источник истины
+// один, на сервере.
+function renderGroups(groups){
+  const el = $('groupsList');
+  if(!groups.length){
+    el.innerHTML = '<div class="empty">No group cards found.</div>';
+    return;
+  }
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>Organizer</th><th>Occasion</th><th>To</th><th>Signed</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>${
+    groups.map(g => `<tr>
+      <td>${fmtTime(g.createdAt)}</td>
+      <td class="msg">${escapeHtml(g.ownerEmail || '—')}</td>
+      <td class="msg">${escapeHtml(g.occasion || '—')}</td>
+      <td class="msg">${escapeHtml(g.to || '—')}</td>
+      <td>${g.contributionsCount}</td>
+      <td>${g.closed ? '<span class="tag tag-bot">closed</span>' : '<span class="tag tag-visitor">open</span>'}</td>
+      <td><a href="/group/${encodeURIComponent(g.shortId)}" target="_blank" rel="noopener">/group/${escapeHtml(g.shortId)}</a></td>
+      <td class="del"><button data-id="${g.shortId}">Delete</button></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+  bindDeleteButtons(el, '/groups/', 'Delete this group card? This cannot be undone.');
 }
 
 let currentSiteEnabled = true;
 let refreshTimer = null;
 const AUTO_REFRESH_MS = 60000;
 
+// searchQuery — общий для users/cards/groups (см. .search-row в index.html):
+// один запрос сразу фильтрует все три списка, а не три отдельных поля —
+// проще для того единственного сценария, для которого это вообще нужно
+// ("найти конкретного человека/открытку"), не три разных.
+let searchQuery = '';
+
 async function loadDashboard(){
-  const [stats, errorsRes, usersRes, cardsRes] = await Promise.all([api('/stats'), api('/errors'), api('/users'), api('/cards')]);
+  const q = searchQuery ? '?q=' + encodeURIComponent(searchQuery) : '';
+  const [stats, errorsRes, usersRes, cardsRes, groupsRes] = await Promise.all([
+    api('/stats'), api('/errors'), api('/users' + q), api('/cards' + q), api('/groups' + q)
+  ]);
   currentSiteEnabled = stats.siteEnabled;
   renderTraffic(stats.traffic, stats.counts);
   renderStatus(stats.siteEnabled);
@@ -133,7 +191,16 @@ async function loadDashboard(){
   renderErrors(errorsRes.errors);
   renderUsers(usersRes.users);
   renderCards(cardsRes.cards);
+  renderGroups(groupsRes.groups);
   $('updatedAt').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+async function loadTotpStatus(){
+  const status = await api('/totp-status');
+  $('totpEnabledBlock').style.display = status.enabled ? '' : 'none';
+  $('totpDisabledBlock').style.display = status.enabled ? 'none' : '';
+  if(status.enabled) $('totpSetupBlock').style.display = 'none';
+  return status.enabled;
 }
 
 function showDashboard(){
@@ -142,27 +209,39 @@ function showDashboard(){
   $('logoutBtn').style.display = '';
   $('refreshBtn').style.display = '';
   loadDashboard().catch(err => console.error(err));
+  loadTotpStatus().catch(err => console.error(err));
   if(refreshTimer) clearInterval(refreshTimer);
   refreshTimer = setInterval(() => loadDashboard().catch(err => console.error(err)), AUTO_REFRESH_MS);
 }
 
-function showLogin(){
+// Поле кода показываем на форме входа, только если 2FA вообще когда-либо
+// включалась — иначе на каждый обычный вход (пока 2FA выключена) пришлось бы
+// либо всегда держать лишнее поле, либо запрашивать статус уже после
+// неудачной попытки. totp-status публичный и ничего чувствительного не
+// раскрывает (см. комментарий в routes/admin.js).
+async function showLogin(){
   $('loginScreen').style.display = '';
   $('dashboard').style.display = 'none';
   $('logoutBtn').style.display = 'none';
   $('refreshBtn').style.display = 'none';
   if(refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
+  try{
+    const status = await api('/totp-status');
+    $('totpInput').style.display = status.enabled ? '' : 'none';
+  }catch(e){ /* форма входа и так работает без этого — не блокируем */ }
 }
 
 $('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('loginError').textContent = '';
   try{
-    await api('/login', { method: 'POST', body: JSON.stringify({ password: $('passwordInput').value }) });
+    await api('/login', { method: 'POST', body: JSON.stringify({ password: $('passwordInput').value, code: $('totpInput').value }) });
     $('passwordInput').value = '';
+    $('totpInput').value = '';
     showDashboard();
   }catch(err){
-    $('loginError').textContent = 'Wrong password.';
+    if(err.body && err.body.needsTotp) $('totpInput').style.display = '';
+    $('loginError').textContent = (err.body && err.body.error) || 'Wrong password.';
   }
 });
 
@@ -190,6 +269,44 @@ $('clearErrorsBtn').addEventListener('click', async () => {
   if(!confirm('Clear the error log?')) return;
   await api('/errors/clear', { method: 'POST' });
   renderErrors([]);
+});
+
+function runSearch(){
+  searchQuery = $('searchInput').value.trim();
+  $('searchClearBtn').style.display = searchQuery ? '' : 'none';
+  loadDashboard().catch(err => console.error(err));
+}
+$('searchBtn').addEventListener('click', runSearch);
+$('searchInput').addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); runSearch(); } });
+$('searchClearBtn').addEventListener('click', () => {
+  $('searchInput').value = '';
+  runSearch();
+});
+
+// --- 2FA setup flow ---
+$('totpStartBtn').addEventListener('click', async () => {
+  $('totpSetupError').textContent = '';
+  const res = await api('/totp/setup', { method: 'POST' });
+  $('totpSecretText').textContent = res.secret;
+  $('totpQr').innerHTML = '';
+  new QRCode($('totpQr'), { text: res.otpauth, width: 180, height: 180 });
+  $('totpSetupBlock').style.display = '';
+  $('totpConfirmInput').value = '';
+  $('totpConfirmInput').focus();
+});
+$('totpConfirmBtn').addEventListener('click', async () => {
+  $('totpSetupError').textContent = '';
+  try{
+    await api('/totp/confirm', { method: 'POST', body: JSON.stringify({ code: $('totpConfirmInput').value }) });
+    await loadTotpStatus();
+  }catch(err){
+    $('totpSetupError').textContent = err.message;
+  }
+});
+$('totpDisableBtn').addEventListener('click', async () => {
+  if(!confirm('Disable 2FA? Logging in will only need the admin password again.')) return;
+  await api('/totp/disable', { method: 'POST' });
+  await loadTotpStatus();
 });
 
 api('/me').then(r => r.authenticated ? showDashboard() : showLogin()).catch(() => showLogin());
