@@ -72,7 +72,16 @@ app.use(helmet({
       objectSrc: ["'none'"],
       baseUri: ["'self'"]
     }
-  }
+  },
+  // helmet по умолчанию ставит Cross-Origin-Opener-Policy: same-origin — это
+  // рвёт именно всплывающее окно входа Google (Identity Services открывает
+  // popup на accounts.google.com и общается с ним через ссылку window.opener/
+  // postMessage; same-origin эту связь обрывает, и popup зависает пустым
+  // белым окном на экране выбора аккаунта, так и не передав результат назад).
+  // same-origin-allow-popups — тот же общий COOP-барьер против чужих окон,
+  // но с явным исключением для окон, открытых нами самими через window.open
+  // (в том числе Google-попап).
+  crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 
 // Отдельная, куда более мягкая CSP только для рекламных iframe-страниц —

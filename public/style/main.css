@@ -747,7 +747,18 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 }
 
 /* ---------- auth forms (login / register) ---------- */
-.auth-wrap{max-width:420px; margin:70px auto; padding:0 20px;}
+/* Раньше был просто отступ 70px сверху — по горизонтали блок и так стоял по
+   центру (max-width + margin:auto), но по вертикали "приклеен" к шапке, а не
+   к центру экрана: на высоком окне под формой оставалась пустая нижняя
+   половина страницы. min-height здесь — высота вьюпорта за вычетом шапки
+   (топбар ~90px: padding 22px сверху/снизу + сама кнопка входа), а
+   flex+justify-content центрирует содержимое внутри этой высоты, а не
+   держит его у верхнего края. */
+.auth-wrap{
+  max-width:420px; margin:0 auto; padding:40px 20px;
+  min-height:calc(100vh - 90px);
+  display:flex; flex-direction:column; justify-content:center;
+}
 .auth-form{display:flex; flex-direction:column; gap:12px; margin-top:22px;}
 .auth-form input[type=email], .auth-form input[type=password], .auth-form input[type=text]{height:44px;}
 .auth-error{color:var(--rose); font-size:13px; min-height:1px;}
