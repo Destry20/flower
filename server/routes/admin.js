@@ -2,7 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
-const otplib = require('otplib');
+const totpLib = require('../totp');
 const db = require('../db');
 
 const router = express.Router();
@@ -24,21 +24,6 @@ function passwordMatches(candidate){
   const a = crypto.createHash('sha256').update(String(candidate || '')).digest();
   const b = crypto.createHash('sha256').update(ADMIN_PASSWORD).digest();
   return crypto.timingSafeEqual(a, b);
-}
-
-// otplib v13 — функциональный API (generateSecret/generateURI/verify), не
-// класс-синглтон authenticator, как в более старых версиях (важно, если
-// когда-нибудь смотреть примеры из старой документации otplib — они не
-// совпадают с этим кодом). verify() асинхронный и возвращает объект
-// {valid, delta, ...}, а не просто true/false — оборачиваем в один хелпер,
-// чтобы остальной код мог просто спросить "да/нет" и не думать про форму
-// ответа и про то, что и generateSecret тоже async.
-async function verifyTotp(token, secret){
-  if(!token || !secret) return false;
-  try{
-    const result = await otplib.verify({ token: String(token).trim(), secret });
-    return !!(result && result.valid);
-  }catch(e){ return false; }
 }
 
 const loginLimiter = rateLimit({
@@ -77,15 +62,14 @@ router.get('/totp-status', (req, res) => {
   res.json({ enabled: !!db.getAdminTotp().enabled });
 });
 
-router.post('/login', loginLimiter, async (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { password, code } = req.body || {};
   if(!passwordMatches(password)){
     return res.status(401).json({ error: 'Wrong password' });
   }
-  const totp = db.getAdminTotp();
-  if(totp.enabled){
-    const ok = await verifyTotp(code, totp.secret);
-    if(!ok) return res.status(401).json({ error: 'Missing or invalid 2FA code', needsTotp: true });
+  const totpState = db.getAdminTotp();
+  if(totpState.enabled){
+    if(!totpLib.verifyTotp(code, totpState.secret)) return res.status(401).json({ error: 'Missing or invalid 2FA code', needsTotp: true });
   }
   const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: ADMIN_TOKEN_TTL });
   res.cookie(ADMIN_COOKIE_NAME, token, {
@@ -115,20 +99,19 @@ router.get('/me', (req, res) => {
 
 // --- 2FA: настройка (требует уже открытой сессии — пароль без 2FA, пока она
 // не подтверждена подтверждающим кодом, см. confirmAdminTotp в db.js) ---
-router.post('/totp/setup', requireAdmin, async (req, res) => {
-  const secret = await otplib.generateSecret();
+router.post('/totp/setup', requireAdmin, (req, res) => {
+  const secret = totpLib.randomBase32Secret();
   db.setAdminTotpPending(secret);
-  const otpauth = otplib.generateURI({ issuer: 'VivoRose', label: 'admin', secret });
+  const otpauth = totpLib.keyUri(secret, 'VivoRose', 'admin');
   res.json({ secret, otpauth });
 });
-router.post('/totp/confirm', requireAdmin, async (req, res) => {
+router.post('/totp/confirm', requireAdmin, (req, res) => {
   const { code } = req.body || {};
-  const totp = db.getAdminTotp();
-  if(!totp.secret || !totp.pending){
+  const totpState = db.getAdminTotp();
+  if(!totpState.secret || !totpState.pending){
     return res.status(400).json({ error: 'No 2FA setup in progress' });
   }
-  const ok = await verifyTotp(code, totp.secret);
-  if(!ok) return res.status(400).json({ error: 'Wrong code — check your authenticator app and try again' });
+  if(!totpLib.verifyTotp(code, totpState.secret)) return res.status(400).json({ error: 'Wrong code — check your authenticator app and try again' });
   db.confirmAdminTotp();
   res.json({ ok: true });
 });
