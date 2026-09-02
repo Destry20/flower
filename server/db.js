@@ -81,12 +81,18 @@ function findUserByEmail(email){
 function findUserById(id){
   return data.users.find(u => u.id === id) || null;
 }
-function createUser({ email, passwordHash, name }){
+// provider — 'password' (обычная регистрация) или 'google' (см.
+// server/routes/auth.js, POST /google). Ни на что в логике сейчас не влияет
+// (Google-аккаунт всё равно получает обычный passwordHash — случайный,
+// недогадываемый, просто чтобы поле не оставалось пустым для остального
+// кода) — только для будущей отладки/админки, откуда пришёл пользователь.
+function createUser({ email, passwordHash, name, provider }){
   const user = {
     id: uid(),
     email: String(email).trim().toLowerCase(),
     passwordHash,
     name: (name || '').slice(0, 60),
+    provider: provider === 'google' ? 'google' : 'password',
     createdAt: Date.now(),
     resetTokenHash: null,
     resetTokenExpiresAt: null

@@ -757,6 +757,18 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 }
 .auth-switch{margin-top:18px; font-size:13.5px; opacity:.75; text-align:center;}
 
+/* Кнопка "Войти через Google" (см. renderGoogleButton в main.js) рисует
+   сама библиотека Google внутрь этого контейнера — тут только его размер и
+   центрирование, не сам вид кнопки. min-height держит место, пока сама
+   кнопка ещё не отрисовалась (после запроса /api/config и загрузки внешнего
+   скрипта — доля секунды, но без брони под неё контент дёргался бы). */
+.google-btn-slot{display:flex; justify-content:center; min-height:44px; margin-top:22px;}
+.auth-divider{
+  display:flex; align-items:center; gap:12px; margin-top:18px;
+  font-size:12.5px; color:var(--ink); opacity:.5; text-transform:uppercase; letter-spacing:.04em;
+}
+.auth-divider::before, .auth-divider::after{content:''; flex:1; height:1px; background:var(--line);}
+
 /* ---------- рекламные блоки (Adsterra) ----------
    Классы намеренно без слова "ad": generic-фильтры блокировщиков рекламы
    скрывают/режут по подстроке "ad-"/"ads" в классах и путях. */

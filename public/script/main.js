@@ -78,6 +78,8 @@ function t(ru){
 }
 
 const EN_STRINGS = {
+  'или': 'or',
+  'Не удалось войти через Google': 'Couldn\'t sign in with Google',
   'Открытка хранится на сервере ограниченное время и будет автоматически удалена.': 'The card is stored on the server for a limited time and will be deleted automatically.',
   'Ссылка временная: открытка будет автоматически удалена с сервера': 'This is a temporary link: the card will be automatically deleted from the server on',
   'Это короткая ссылка: открытка временно хранится на сервере без привязки к аккаунту, а ссылка лишь указывает на неё.': 'This is a short link: the card is temporarily stored on the server without an account, and the link just points to it.',
@@ -290,7 +292,7 @@ const EN_STRINGS = {
   'Забыли пароль?': 'Forgot your password?',
   'Восстановить': 'Reset it',
   'Регистрация': 'Sign up',
-  'Займёт полминуты. Пароль — не короче 8 символов.': 'Takes half a minute. Password must be at least 8 characters.',
+  'Чтобы открытки сохранялись за вами и были доступны с любого устройства — без аккаунта они живут только в этом браузере. Займёт полминуты.': 'So your cards are saved to you and available from any device — without an account they only live in this browser. Takes half a minute.',
   'Имя (необязательно)': 'Name (optional)',
   'Создать аккаунт': 'Create account',
   'Уже есть аккаунт?': 'Already have an account?',
@@ -505,6 +507,19 @@ async function loadMe(){
     const json = await res.json();
     session.user = json.user || null;
   }catch(e){ session.user = null; }
+}
+
+// Публичная конфигурация с сервера (см. GET /api/config) — сейчас только
+// googleClientId. null, пока владелец сайта не задал GOOGLE_CLIENT_ID в
+// .env — тогда renderGoogleButton() ниже просто ничего не рисует, вместо
+// нерабочей кнопки.
+const appConfig = { googleClientId: null };
+async function loadConfig(){
+  try{
+    const res = await fetch('/api/config');
+    const json = await res.json();
+    appConfig.googleClientId = json.googleClientId || null;
+  }catch(e){ appConfig.googleClientId = null; }
 }
 
 /* ====================== HELPERS ====================== */
@@ -2622,6 +2637,84 @@ async function deleteMineCard(id, isServer){
 
 /* ====================== АККАУНТ (вход/регистрация/профиль) ====================== */
 
+// Google Identity Services грузится не тегом <script> в index.html, а по
+// требованию отсюда — только когда appConfig.googleClientId реально задан
+// (см. loadConfig). Так страница не тянет лишний внешний скрипт впустую,
+// пока владелец сайта не завёл OAuth-клиент в Google Cloud Console, и не
+// плодит кнопку, которая не может ничего сделать.
+let googleScriptPromise = null;
+function loadGoogleScript(){
+  if(window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
+  if(googleScriptPromise) return googleScriptPromise;
+  googleScriptPromise = new Promise((resolve, reject) => {
+    // hl в самом URL скрипта, а не только renderButton({locale}) ниже — на
+    // практике только так язык кнопки надёжно совпадает с текущим языком
+    // сайта на первой отрисовке; renderButton({locale}) один его не всегда
+    // переопределяет. Сам скрипт грузится один раз за сеанс SPA (см.
+    // googleScriptPromise) — если пользователь переключит язык сайта уже
+    // после первого захода на страницу входа/регистрации, кнопка Google
+    // останется на языке того первого захода, а не догонит переключение
+    // на лету. Не идеально, но кнопка Google рисуется библиотекой Google не
+    // под нашим контролем — это её ограничение, а не наше.
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client?hl=' + encodeURIComponent(uiLang);
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { googleScriptPromise = null; reject(new Error('gsi load failed')); };
+    document.head.appendChild(s);
+  });
+  return googleScriptPromise;
+}
+
+// Рисует официальную кнопку Google в контейнере containerId — форма/размер
+// задаёт сама библиотека (не наша вёрстка), это осознанно: пользователи
+// узнают эту кнопку по виду, самодельная копия только вызвала бы недоверие.
+// Тихо ничего не делает, если Google ещё не настроен на сервере (см.
+// appConfig.googleClientId) или скрипт не загрузился (например, заблокирован
+// адблокером) — обычная email/пароль форма рядом работает в любом случае.
+let googleInitialized = false;
+async function renderGoogleButton(containerId){
+  if(!appConfig.googleClientId) return;
+  try{
+    await loadGoogleScript();
+    // initialize() один раз на страницу — вызывается заново при каждом
+    // renderLogin()/renderRegister() (пользователь мог зайти на страницу,
+    // уйти и вернуться в течение того же сеанса SPA), а сама библиотека на
+    // повторный вызов с теми же client_id/callback честно предупреждает в
+    // консоль, что учтётся только последний — раз конфиг не меняется, просто
+    // не вызываем второй раз.
+    if(!googleInitialized){
+      google.accounts.id.initialize({ client_id: appConfig.googleClientId, callback: onGoogleCredential });
+      googleInitialized = true;
+    }
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    google.accounts.id.renderButton(el, {
+      type: 'standard', theme: 'outline', size: 'large',
+      text: 'continue_with', shape: 'rectangular', logo_alignment: 'left',
+      width: 320, locale: uiLang
+    });
+  }catch(e){ /* тихо — обычная форма остаётся рабочим способом войти */ }
+}
+
+async function onGoogleCredential(response){
+  try{
+    const res = await fetch('/api/auth/google', {
+      method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang},
+      body: JSON.stringify({ credential: response.credential })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось войти через Google'));
+    session.user = json.user;
+    showToast(t('Добро пожаловать!'));
+    const dest = pendingRoute; pendingRoute = null;
+    location.hash = dest || '';
+    renderRoute();
+  }catch(err){
+    showToast(err.message);
+  }
+}
+
 function renderLogin(){
   if(session.user){ goHome(); return; }
   setPageTitle(t('Вход'));
@@ -2631,6 +2724,7 @@ function renderLogin(){
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Вход')}</h1>
       <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Чтобы открытки сохранялись за вами, а не только в этом браузере.')}</p>
+      ${appConfig.googleClientId ? `<div id="googleBtnLogin" class="google-btn-slot"></div><div class="auth-divider"><span>${t('или')}</span></div>` : ''}
       <form id="loginForm" class="auth-form">
         <label class="sr-only" for="loginEmail">${t('Email')}</label>
         <input type="email" id="loginEmail" placeholder="${t('Email')}" required autocomplete="username">
@@ -2643,6 +2737,7 @@ function renderLogin(){
       <p class="auth-switch">${t('Забыли пароль?')} <a href="#forgot">${t('Восстановить')}</a></p>
     </div>
   `;
+  if(appConfig.googleClientId) renderGoogleButton('googleBtnLogin');
   document.getElementById('loginForm').onsubmit = async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value.trim();
@@ -2672,7 +2767,8 @@ function renderRegister(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Регистрация')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Займёт полминуты. Пароль — не короче 8 символов.')}</p>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Чтобы открытки сохранялись за вами и были доступны с любого устройства — без аккаунта они живут только в этом браузере. Займёт полминуты.')}</p>
+      ${appConfig.googleClientId ? `<div id="googleBtnRegister" class="google-btn-slot"></div><div class="auth-divider"><span>${t('или')}</span></div>` : ''}
       <form id="registerForm" class="auth-form">
         <label class="sr-only" for="regName">${t('Имя')}</label>
         <input type="text" id="regName" placeholder="${t('Имя (необязательно)')}" maxlength="60" autocomplete="name">
@@ -2687,6 +2783,7 @@ function renderRegister(){
       <p class="auth-switch">${t('Уже есть аккаунт?')} <a href="#login">${t('Войти')}</a></p>
     </div>
   `;
+  if(appConfig.googleClientId) renderGoogleButton('googleBtnRegister');
   document.getElementById('registerForm').onsubmit = async (e) => {
     e.preventDefault();
     const name = document.getElementById('regName').value.trim();
@@ -2907,7 +3004,7 @@ async function bootstrap(){
   // клике по чужому поводу (setOccasion сам же и вызывает renderCreator()).
   const landing = seoLanding();
   if(landing) state.occasion = landing.occasion;
-  await loadMe();
+  await Promise.all([loadMe(), loadConfig()]);
   window.addEventListener('hashchange', renderRoute);
   window.addEventListener('popstate', renderRoute); // кнопки назад/вперёд для ?data=-ссылок
   renderRoute();

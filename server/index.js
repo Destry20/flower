@@ -49,16 +49,26 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
+      // accounts.google.com — кнопка "Войти через Google" (Google Identity
+      // Services): scriptSrc грузит их клиентскую библиотеку, connectSrc — её
+      // сетевые запросы, frameSrc — сам виджет кнопки/One Tap рисуется у них
+      // же во вложенном iframe (без этой директивы список сузился бы до
+      // defaultSrc, то есть только self, и Google просто не смог бы
+      // отрисоваться). Добавлено только когда реально понадобилось — до этого
+      // тут стоял один cdnjs (шрифт-иконки QR-кода).
+      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com'],
       // Вся вёрстка строится через onclick="..." в шаблонах (унаследовано от
       // исходного сайта) — без unsafe-inline здесь браузер молча блокирует
       // каждый клик. scriptSrc при этом остаётся строгим: внешний <script>
-      // можно подключить только с самого сайта или с cdnjs.
+      // можно подключить только с самого сайта, cdnjs или accounts.google.com.
       scriptSrcAttr: ["'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      // accounts.google.com — сама кнопка Google подгружает свой CSS
+      // (gsi/style) отдельно от скрипта, тем же запросом, что рисует виджет.
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", 'https://accounts.google.com'],
+      frameSrc: ["'self'", 'https://accounts.google.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"]
     }
@@ -106,6 +116,15 @@ app.use((req, res, next) => {
     ? '<!doctype html><html lang="ru"><meta charset="utf-8"><title>VivoRose — техническое обслуживание</title><body style="font-family:sans-serif;text-align:center;padding:80px 20px;color:#4B2E3D"><h1>Сайт временно недоступен</h1><p>Мы скоро вернёмся. Загляните чуть позже.</p></body></html>'
     : '<!doctype html><html lang="en"><meta charset="utf-8"><title>VivoRose — under maintenance</title><body style="font-family:sans-serif;text-align:center;padding:80px 20px;color:#4B2E3D"><h1>Site temporarily unavailable</h1><p>We\'ll be back shortly. Please check back soon.</p></body></html>';
   res.status(503).set('Cache-Control', 'no-store').type('html').send(html);
+});
+
+// Публичная, нечувствительная конфигурация для клиента — сейчас только
+// googleClientId (id клиента, не секрет — Google Client ID и так виден в
+// каждом запросе OAuth-виджета, прятать его незачем). Пусто/null, пока
+// владелец сайта не задаст GOOGLE_CLIENT_ID в .env — тогда клиент просто не
+// показывает кнопку "Войти через Google", а не рендерит нерабочую.
+app.get('/api/config', (req, res) => {
+  res.set('Cache-Control', 'no-store').json({ googleClientId: process.env.GOOGLE_CLIENT_ID || null });
 });
 
 app.use('/api/auth', authRoutes);

@@ -1,5 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const db = require('../db');
 const auth = require('../auth');
 const { sendPasswordResetEmail } = require('../mailer');
@@ -7,6 +9,14 @@ const { tServer, pickLang } = require('../i18n');
 
 const router = express.Router();
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 час
+
+// GOOGLE_CLIENT_ID не задан, пока владелец сайта не заведёт OAuth-клиент в
+// Google Cloud Console — до этого /google просто отвечает "не настроено", а
+// сама кнопка на клиенте не рендерится вовсе (см. GET /api/config в
+// server/index.js и renderGoogleButton в public/script/main.js), так что
+// это не "битая" кнопка, а отсутствующая.
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -52,6 +62,46 @@ router.post('/login', (req, res) => {
   const user = typeof email === 'string' ? db.findUserByEmail(email) : null;
   if(!user || !auth.verifyPassword(String(password || ''), user.passwordHash)){
     return res.status(401).json({ error: tServer(req, 'invalidLogin') });
+  }
+  const token = auth.signToken(user);
+  auth.setAuthCookie(res, token);
+  res.json({ user: auth.publicUser(user) });
+});
+
+// Кнопка "Войти через Google" на клиенте (Google Identity Services) отдаёт
+// не пароль, а подписанный Google-ом JWT ("credential") с уже проверенным
+// email пользователя — от нас требуется только проверить его подлинность
+// (через google-auth-library, официальную библиотеку для этого — вручную
+// сверять подпись/JWKS самим было бы лишним риском для кода, отвечающего
+// за вход в аккаунт) и завести/найти пользователя по email. Пароль такому
+// аккаунту не нужен, но поле passwordHash в остальном коде считается
+// обязательным — ставим случайный, никому не известный хеш вместо него.
+router.post('/google', async (req, res) => {
+  if(!googleClient){
+    return res.status(503).json({ error: tServer(req, 'googleNotConfigured') });
+  }
+  const { credential } = req.body || {};
+  if(typeof credential !== 'string' || !credential){
+    return res.status(400).json({ error: tServer(req, 'invalidLogin') });
+  }
+  let payload;
+  try{
+    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: GOOGLE_CLIENT_ID });
+    payload = ticket.getPayload();
+  }catch(e){
+    return res.status(401).json({ error: tServer(req, 'invalidLogin') });
+  }
+  if(!payload || !payload.email || payload.email_verified !== true){
+    return res.status(401).json({ error: tServer(req, 'invalidLogin') });
+  }
+  let user = db.findUserByEmail(payload.email);
+  if(!user){
+    user = db.createUser({
+      email: payload.email,
+      passwordHash: auth.hashPassword(crypto.randomBytes(24).toString('hex')),
+      name: payload.name || '',
+      provider: 'google'
+    });
   }
   const token = auth.signToken(user);
   auth.setAuthCookie(res, token);
