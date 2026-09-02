@@ -79,6 +79,10 @@ function t(ru){
 
 const EN_STRINGS = {
   'или': 'or',
+  'Повторите пароль': 'Confirm password',
+  'Пароли не совпадают': 'Passwords don\'t match',
+  'Показать пароль': 'Show password',
+  'Скрыть пароль': 'Hide password',
   'Не удалось войти через Google': 'Couldn\'t sign in with Google',
   'Открытка хранится на сервере ограниченное время и будет автоматически удалена.': 'The card is stored on the server for a limited time and will be deleted automatically.',
   'Ссылка временная: открытка будет автоматически удалена с сервера': 'This is a temporary link: the card will be automatically deleted from the server on',
@@ -1557,6 +1561,31 @@ function occasionIconSvg(id, color){
   };
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${paths[name]}</svg>`;
 }
+// crossedOut=false — глаз (пароль сейчас скрыт, клик покажет), true — глаз
+// с чертой (пароль сейчас показан, клик снова скроет). См. passwordFieldHtml.
+function eyeIconSvg(crossedOut){
+  return `<svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M1.5 10C1.5 10 4.5 4 10 4C15.5 4 18.5 10 18.5 10C18.5 10 15.5 16 10 16C4.5 16 1.5 10 1.5 10Z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.4"/>${crossedOut ? '<line x1="3" y1="17" x2="17" y2="3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' : ''}</svg>`;
+}
+// Единая разметка для поля пароля с кнопкой "показать/скрыть" — переиспользуется
+// на входе, регистрации (пароль и повтор) и сбросе пароля, чтобы не дублировать
+// разметку+обработчик в четырёх местах. minlength/required/autocomplete
+// параметризованы, а не зашиты — у "повтора пароля" на регистрации, например,
+// нет смысла в отдельном autocomplete=new-password (браузер и так предложит то
+// же значение, что и в первом поле).
+function passwordFieldHtml(id, placeholder, autocomplete){
+  return `<div class="password-field">
+    <input type="password" id="${id}" placeholder="${placeholder}" required minlength="8" autocomplete="${autocomplete}">
+    <button type="button" class="password-toggle" aria-label="${t('Показать пароль')}" onclick="togglePasswordVisibility('${id}', this)">${eyeIconSvg(false)}</button>
+  </div>`;
+}
+function togglePasswordVisibility(id, btn){
+  const input = document.getElementById(id);
+  const willShow = input.type === 'password';
+  input.type = willShow ? 'text' : 'password';
+  btn.innerHTML = eyeIconSvg(willShow);
+  btn.setAttribute('aria-label', willShow ? t('Скрыть пароль') : t('Показать пароль'));
+}
+
 function plusIconSvg(){
   return `<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2V14M2 8H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
 }
@@ -2729,7 +2758,7 @@ function renderLogin(){
         <label class="sr-only" for="loginEmail">${t('Email')}</label>
         <input type="email" id="loginEmail" placeholder="${t('Email')}" required autocomplete="username">
         <label class="sr-only" for="loginPassword">${t('Пароль')}</label>
-        <input type="password" id="loginPassword" placeholder="${t('Пароль')}" required autocomplete="current-password">
+        ${passwordFieldHtml('loginPassword', t('Пароль'), 'current-password')}
         <div class="auth-error" id="loginError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Войти')}</button>
       </form>
@@ -2775,7 +2804,9 @@ function renderRegister(){
         <label class="sr-only" for="regEmail">${t('Email')}</label>
         <input type="email" id="regEmail" placeholder="${t('Email')}" required autocomplete="username">
         <label class="sr-only" for="regPassword">${t('Пароль')}</label>
-        <input type="password" id="regPassword" placeholder="${t('Пароль')}" required minlength="8" autocomplete="new-password">
+        ${passwordFieldHtml('regPassword', t('Пароль'), 'new-password')}
+        <label class="sr-only" for="regPasswordConfirm">${t('Повторите пароль')}</label>
+        ${passwordFieldHtml('regPasswordConfirm', t('Повторите пароль'), 'new-password')}
         <input type="text" id="regWebsite" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
         <div class="auth-error" id="registerError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Создать аккаунт')}</button>
@@ -2789,9 +2820,14 @@ function renderRegister(){
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
+    const passwordConfirm = document.getElementById('regPasswordConfirm').value;
     const website = document.getElementById('regWebsite').value;
     const errEl = document.getElementById('registerError');
     errEl.textContent = '';
+    if(password !== passwordConfirm){
+      errEl.textContent = t('Пароли не совпадают');
+      return;
+    }
     try{
       const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password, name, website }) });
       const json = await res.json();
@@ -2859,7 +2895,9 @@ function renderResetPassword(token){
       <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Придумайте новый пароль — не короче 8 символов.')}</p>
       <form id="resetForm" class="auth-form">
         <label class="sr-only" for="resetPassword">${t('Новый пароль')}</label>
-        <input type="password" id="resetPassword" placeholder="${t('Новый пароль')}" required minlength="8" autocomplete="new-password">
+        ${passwordFieldHtml('resetPassword', t('Новый пароль'), 'new-password')}
+        <label class="sr-only" for="resetPasswordConfirm">${t('Повторите пароль')}</label>
+        ${passwordFieldHtml('resetPasswordConfirm', t('Повторите пароль'), 'new-password')}
         <div class="auth-error" id="resetError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Сохранить пароль')}</button>
       </form>
@@ -2868,8 +2906,13 @@ function renderResetPassword(token){
   document.getElementById('resetForm').onsubmit = async (e) => {
     e.preventDefault();
     const password = document.getElementById('resetPassword').value;
+    const passwordConfirm = document.getElementById('resetPasswordConfirm').value;
     const errEl = document.getElementById('resetError');
     errEl.textContent = '';
+    if(password !== passwordConfirm){
+      errEl.textContent = t('Пароли не совпадают');
+      return;
+    }
     try{
       const res = await fetch('/api/auth/reset-password', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ token, password }) });
       const json = await res.json();

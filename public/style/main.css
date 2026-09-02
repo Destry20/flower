@@ -761,6 +761,19 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 }
 .auth-form{display:flex; flex-direction:column; gap:12px; margin-top:22px;}
 .auth-form input[type=email], .auth-form input[type=password], .auth-form input[type=text]{height:44px;}
+/* Обёртка поля пароля (см. passwordFieldHtml в main.js) — input тот же, что
+   и остальные поля формы (высота/бордер/т.д. наследуются от общих правил
+   выше), просто с запасом справа под кнопку-глаз и самой кнопкой поверх,
+   абсолютным позиционированием по центру высоты поля. */
+.password-field{position:relative;}
+.password-field input{width:100%; padding-right:44px;}
+.password-toggle{
+  position:absolute; right:4px; top:50%; transform:translateY(-50%);
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer; color:var(--ink); opacity:.45; padding:0;
+  transition:opacity .15s ease;
+}
+.password-toggle:hover{opacity:.8;}
 .auth-error{color:var(--rose); font-size:13px; min-height:1px;}
 .auth-note{
   color:var(--sage-dark); font-size:13.5px; background:var(--paper-deep);
