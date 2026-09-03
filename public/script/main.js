@@ -1287,9 +1287,15 @@ const EXAMPLES = [
     flowers:{ rose:{color:'#E6C88A', count:3}, daisy:{color:'#E3B7BE', count:4} },
     to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:2.5, lift:-10,
     textOverride:{ru:'Ты это заслужила. Горжусь тобой!',en:'You earned this. So proud of you!'} },
-  { id:'sympathy', occasion:'sympathy', vase:'A', ribbon:'#F2E1C8', envelope:'classic', background:'sage', charm:false,
-    flowers:{ daisy:{color:'#FFFFFF', count:4}, carnation:{color:'#F0C9D6', count:3} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:-2, lift:8 },
+  // occ.color у 'justbecause' буквально совпадает с 'birthday' (#C97B86 —
+  // общий цвет в самих OCCASIONS, тут не трогаем) — лента фиолетовая и фон
+  // кремовый (у дня рождения — румяна), а не в цвет повода, специально
+  // чтобы две карточки не читались близнецами несмотря на одинаковую ленту-
+  // заголовок.
+  { id:'justbecause', occasion:'justbecause', vase:'A', ribbon:'#7e4ab9', envelope:'classic', background:'cream', charm:true,
+    flowers:{ peony:{color:'#F0C9D6', count:4}, tulip:{color:'#E8A03A', count:3} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:-2, lift:8,
+    textOverride:{ru:'Без повода. Просто подумал о тебе сегодня.',en:'No reason. Just thought of you today.'} },
   { id:'sorry', occasion:'sorry', vase:'B', ribbon:'#8CA087', envelope:'classic', background:'blush', charm:false,
     flowers:{ orchid:{color:'#E8D5F0', count:4}, daisy:{color:'#E3B7BE', count:3} },
     to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:4, lift:-6,
