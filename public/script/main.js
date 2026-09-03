@@ -78,6 +78,23 @@ function t(ru){
 }
 
 const EN_STRINGS = {
+  'Открытка с виртуальным букетом': 'A Card With a Virtual Bouquet',
+  'Открытка, которая распускается прямо на экране': 'A card that blooms right on the screen',
+  'Соберите букет из живых на вид цветов, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов, без установки приложений.': 'Build a bouquet from real-looking flowers, add warm words, and send it as one link. No delivery, no wilting, no app to install.',
+  'Смотреть примеры': 'See examples',
+  '· смахните, чтобы увидеть все →': '· swipe to see them all →',
+  'Примеры открыток': 'Card examples',
+  'Нажмите на понравившуюся — мы соберём такой же букет, а вы допишете своё послание': 'Tap one you like — we\'ll set up the same bouquet, and you just add your own words',
+  'Собрать такую': 'Use this',
+  'Собрать такую открытку': 'Use this card',
+  'Как это работает': 'How it works',
+  'Выберите повод': 'Choose an occasion',
+  'День рождения, любовь, спасибо, поддержка — под каждый свой тон и набор цветов.': 'Birthday, love, thanks, support — each with its own tone and set of flowers.',
+  'Соберите букет': 'Build the bouquet',
+  'Ваза, цветы, лента, конверт и фон — на свой вкус, за пару минут.': 'Vase, flowers, ribbon, envelope, and background — however you like, in a couple of minutes.',
+  'Отправьте ссылкой': 'Send it as a link',
+  'Получатель откроет её как настоящую открытку — с разворотом и цветением, без установки приложений.': 'The recipient opens it like a real card — with an unfolding envelope and a blooming bouquet, no app required.',
+  'Готовы отправить что-то красивое?': 'Ready to send something beautiful?',
   'или': 'or',
   'Повторите пароль': 'Confirm password',
   'Пароли не совпадают': 'Passwords don\'t match',
@@ -1217,6 +1234,242 @@ function pingCardCreated(){
   fetch('/api/stats/card-created', { method:'POST' }).catch(()=>{});
 }
 
+/* ====================== ГОТОВЫЕ ПРИМЕРЫ ======================
+   Набор готовых сочетаний повод+ваза+цветы+лента для витрины на главной
+   (renderHome) — по образцу открыточных/инвайт-сервисов (Evite, Punchbowl
+   и т.п.), где на входе показывают готовые образцы, а не пустую форму.
+   to/from/text — только для показа на самой карточке (иллюстрация готовой
+   открытки), в состояние конструктора не попадают: applyExample трогает
+   только визуальную часть (ваза/цветы/лента/конверт/фон), а имена и текст
+   послания человек всегда пишет сам — переносить туда чужие "Насти/Максим"
+   было бы странно.
+
+   Палитра каждой карточки подобрана как единая история — лента и хотя бы
+   один из цветов совпадают (или явно перекликаются) с цветом самого повода
+   (occ.color здесь не меняем — это цвет ленты-заголовка), а не собраны "для
+   разнообразия": разномастный букет на несочетающейся ленте выглядит
+   случайным, а не витриной сервиса. 'love' — "якорь" ряда (см. featured в
+   homeExampleCardHtml), крупнее остальных и почти без наклона; фон нарочно
+   светлый (blush), а не тёмный — раньше стояла "Ночь", но тёмная карточка
+   слишком выбивалась из общего светлого ряда, а не просто выделялась. */
+// featured — крупная "якорная" карточка ряда (см. homeExampleCardHtml). tilt/
+// lift подобраны вручную, а не формулой — небольшая волна вверх-вниз ±10px
+// (не лестница по нарастающей: та тянула бы взгляд по диагонали вниз, а не
+// читалась как веер) плюс чередующийся наклон, по образцу карточек на
+// витрине Papier/Minted.
+// to/from — одна и та же пара имён на всех карточках (не разные люди на
+// каждой): читается как один и тот же человек отправляет открытки на разные
+// поводы, а не случайная витрина чужих переписок.
+// textOverride — у 'thanks'/'congrats'/'sorry' стандартный occ.placeholder
+// написан в нейтральной форме "знал(а)"/"заслужил(а)" (в самом конструкторе
+// пол получателя не известен заранее). Здесь получатель у всех карточек —
+// конкретное имя "Насти" (женское), поэтому нейтральную форму меняем на
+// прямую женскую — иначе скобки откровенно читаются как незаполненный шаблон.
+const EXAMPLES = [
+  // occasion остаётся 'love' — от него берутся цвет ленты/иконка/узор на
+  // самой карточке, менять внешний вид не просили. applyOccasion — то, что
+  // реально уйдёт в state.occasion при клике (см. applyExample): человек
+  // должен попасть в конструктор с выбранным поводом "Для тебя" (его же
+  // текст стоит на карточке), а не "Любовь".
+  { id:'love', occasion:'love', applyOccasion:'foryou', vase:'D', ribbon:'#4B2E3D', envelope:'gold', background:'blush', charm:true,
+    flowers:{ rose:{color:'#B23A4E', count:5}, peony:{color:'#D98CAE', count:3} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'},
+    labelOverride:{ru:'Для тебя',en:'For you'}, stampOverride:{ru:'Для тебя',en:'For you'},
+    featured:true, tilt:-1, lift:0 },
+  { id:'birthday', occasion:'birthday', vase:'B', ribbon:'#C97B86', envelope:'seal', background:'blush', charm:true,
+    flowers:{ tulip:{color:'#D65B4A', count:4}, rose:{color:'#E3B7BE', count:3} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:3, lift:-8 },
+  { id:'thanks', occasion:'thanks', vase:'C', ribbon:'#B98A4A', envelope:'kraft', background:'cream', charm:false,
+    flowers:{ sunflower:{color:'#F2C94C', count:4}, daisy:{color:'#E6C88A', count:3} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:-3.5, lift:6,
+    textOverride:{ru:'Хочу, чтобы ты знала, как я ценю тебя',en:'I want you to know how much I appreciate you'} },
+  { id:'congrats', occasion:'congrats', vase:'E', ribbon:'#B98A4A', envelope:'pattern', background:'sage', charm:true,
+    flowers:{ rose:{color:'#E6C88A', count:3}, daisy:{color:'#E3B7BE', count:4} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:2.5, lift:-10,
+    textOverride:{ru:'Ты это заслужила. Горжусь тобой!',en:'You earned this. So proud of you!'} },
+  { id:'sympathy', occasion:'sympathy', vase:'A', ribbon:'#F2E1C8', envelope:'classic', background:'sage', charm:false,
+    flowers:{ daisy:{color:'#FFFFFF', count:4}, carnation:{color:'#F0C9D6', count:3} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:-2, lift:8 },
+  { id:'sorry', occasion:'sorry', vase:'B', ribbon:'#8CA087', envelope:'classic', background:'blush', charm:false,
+    flowers:{ orchid:{color:'#E8D5F0', count:4}, daisy:{color:'#E3B7BE', count:3} },
+    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:4, lift:-6,
+    textOverride:{ru:'Просто хочу, чтобы ты знала — я рядом, что бы ни случилось.',en:"Just want you to know — I'm here, no matter what."} }
+];
+
+// Применяет визуальный пресет и переводит на конструктор (#create) — сама
+// сборка происходит уже там, после смены хэша (см. renderRoute), а не здесь:
+// иначе пришлось бы делать двойной renderCreator() — один сразу, другой
+// повторно из-за hashchange.
+function applyExample(id){
+  const ex = EXAMPLES.find(e=>e.id===id);
+  if(!ex) return;
+  // applyOccasion — если задан, в конструктор уходит другой повод, чем тот,
+  // что определяет внешний вид самой карточки (см. комментарий у EXAMPLES).
+  state.occasion = ex.applyOccasion || ex.occasion;
+  state.vase = ex.vase;
+  state.ribbon = ex.ribbon;
+  state.flowers = JSON.parse(JSON.stringify(ex.flowers));
+  state.envelope = ex.envelope;
+  state.background = ex.background;
+  state.charm = ex.charm;
+  location.hash = 'create';
+  renderRoute();
+}
+
+/* ====================== ГЛАВНАЯ (МАРКЕТИНГОВЫЙ ЛЕНДИНГ) ======================
+   Отдельная страница-витрина на "/": обложка + крупные примеры готовых
+   открыток (с текстом, а не только цветами) + "как это работает" + тот же
+   блок "О сервисе"/FAQ, что раньше был внутри конструктора — aboutSectionHtml
+   переиспользуется и здесь, и в renderCreator, потому что текст FAQPage
+   JSON-LD в index.html завязан на то, что реально видно на странице, а
+   SEO-лендинги (/birthday-card и т.п.) по-прежнему ведут прямо в конструктор,
+   минуя эту страницу. Сам конструктор теперь живёт на #create — см. renderRoute. */
+function aboutSectionHtml(){
+  return `<div class="legal-wrap" id="about" style="padding-top:10px; scroll-margin-top:24px;">
+    <h2>${t('О сервисе')}</h2>
+    <p>${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
+
+    <h2>${t('Нужна ли регистрация')}</h2>
+    <p>${t('Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.')}</p>
+
+    <h2>${t('Это бесплатно?')}</h2>
+    <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
+
+    <h2>${t('Для каких поводов')}</h2>
+    <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
+
+    <h2>${t('Быстрые ссылки')}</h2>
+    <p>
+      <a href="/birthday-card">${t('Открытка на день рождения')}</a> ·
+      <a href="/love-card">${t('Открытка с признанием в любви')}</a> ·
+      <a href="/thank-you-card">${t('Открытка «Спасибо»')}</a> ·
+      <a href="/congrats-card">${t('Открытка с поздравлением')}</a> ·
+      <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
+      <a href="/just-because-card">${t('Открытка просто так')}</a> ·
+      <a href="/sympathy-card">${t('Открытка с соболезнованиями')}</a> ·
+      <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
+    </p>
+    <p style="margin-top:10px;">
+      ${t('Не знаете, что написать?')}
+      <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
+      <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
+      <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a> ·
+      <a href="/blog/${uiLang==='ru'?'':'en/'}sympathy-messages">${t('слова соболезнования')}</a>
+    </p>
+  </div>`;
+}
+
+// Крупная карточка-пример на витрине — в отличие от превью в самом
+// конструкторе, здесь показан текст готовой открытки (получатель/от кого/
+// сама фраза), а не только букет: цель — дать посетителю представление о
+// готовом результате, а не голый набор цветов.
+// Карточка сделана в двух слоях, как настоящий предпросмотр в конструкторе
+// (.preview-stage + .preview-card) — сцена с фоном открытки снаружи, белая
+// "бумажная" карточка внутри. Это не случайное совпадение стилей: цель —
+// чтобы витрина выглядела как честный кадр из самого сервиса, а не как
+// отдельный маркетинговый рисунок, который потом не подтвердится в
+// конструкторе.
+// Ряд карточек внахлёст (см. .home-examples-row) — по образцу веера открыток
+// на витринах открыточных сервисов (Papier, Minted и т.п.): каждая частично
+// перекрывает соседнюю, у каждой свой наклон (ex.tilt) и вертикальное
+// смещение (ex.lift), первая (ex.featured) — крупнее и служит "якорем" ряда.
+// z-index растёт слева направо (later cards on top), при hover/focus
+// карточка выпрыгивает поверх соседей — см. .home-card:hover в CSS.
+function homeExampleCardHtml(ex, i){
+  const occ = occasionById(ex.occasion);
+  const bg = BACKGROUNDS.find(b=>b.id===ex.background);
+  const line = ex.textOverride ? tr(ex.textOverride) : tr(occ.placeholder).replace(/\.\.\.$/, '');
+  const size = ex.featured ? 366 : 298;
+  // labelText/stampText — своя надпись на конкретной карточке (сейчас только
+  // у 'love': "Для тебя" вместо стандартного "Любовь"), при этом ex.occasion
+  // остаётся настоящим поводом 'love' — именно он уходит в applyExample при
+  // клике, определяет цвет ленты/иконку внизу и т.д. Меняется только текст,
+  // который человек читает на карточке, а не сам повод под капотом.
+  const labelText = ex.labelOverride ? tr(ex.labelOverride) : tr(occ.label);
+  const stampText = ex.stampOverride ? tr(ex.stampOverride) : tr(occ.stamp);
+  // Узор светлее фона на тёмной сцене ("Ночь" — сердечки светятся, как звёзды
+  // на небе) и цветом самого повода на светлых сценах (тон-в-тон с лентой
+  // заголовка, а не случайный цвет).
+  const patternColor = bg.dark ? '#F3EEE3' : occ.color;
+  const patternOpacity = bg.dark ? 0.3 : 0.22;
+  return `<div class="home-card ${ex.featured?'featured':''}" style="--tilt:${ex.tilt}deg; --lift:${ex.lift}px; z-index:${i+1};" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${labelText}" onclick="applyExample('${ex.id}')" onkeydown="activateOnKey(event)">
+    <div class="home-card-stage" style="background:${bg.css}">
+      ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity)}
+      <div class="home-card-inner">
+        <div class="home-card-band" style="background:${occ.color}">${stampText}</div>
+        <div class="home-card-bouquet">${buildBouquetSVG(ex, size)}</div>
+        <div class="home-card-msg">
+          <div class="to">${t('Для')} ${esc(tr(ex.to))}</div>
+          <div class="text">${esc(line)}</div>
+          <div class="from">— ${esc(tr(ex.from))}</div>
+        </div>
+      </div>
+    </div>
+    <div class="home-card-foot">
+      <span class="home-card-icon">${occasionIconSvg(ex.occasion, occ.color)}</span>
+      <span class="home-card-label">${labelText}</span>
+      <span class="home-card-cta">${t('Собрать такую')} →</span>
+    </div>
+  </div>`;
+}
+
+function renderHome(){
+  setPageTitle(t('Открытка с виртуальным букетом'));
+  setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
+  document.getElementById('app').innerHTML = `
+  ${topbarHtml()}
+  <div class="wrap">
+    <div class="home-hero">
+      <h1>${t('Открытка, которая распускается прямо на экране')}</h1>
+      <p>${t('Соберите букет из живых на вид цветов, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов, без установки приложений.')}</p>
+      <div class="home-hero-ctas">
+        <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
+        <a class="btn btn-ghost" href="#examples" onclick="event.preventDefault(); document.getElementById('examples').scrollIntoView({behavior:'smooth',block:'start'})">${t('Смотреть примеры')}</a>
+      </div>
+      <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:14px;"></p>
+    </div>
+
+    <div class="home-examples" id="examples">
+      <h2>${t('Примеры открыток')}</h2>
+      <p class="examples-sub">${t('Нажмите на понравившуюся — мы соберём такой же букет, а вы допишете своё послание')} <span class="examples-swipe-hint">${t('· смахните, чтобы увидеть все →')}</span></p>
+    </div>
+    <div class="home-examples-row-wrap">
+      <div class="home-examples-row">${EXAMPLES.map(homeExampleCardHtml).join('')}</div>
+    </div>
+
+    <div class="home-how">
+      <h2>${t('Как это работает')}</h2>
+      <div class="home-how-grid">
+        <div class="home-how-step">
+          <span class="home-how-num">01</span>
+          <div class="home-how-title">${t('Выберите повод')}</div>
+          <div class="home-how-text">${t('День рождения, любовь, спасибо, поддержка — под каждый свой тон и набор цветов.')}</div>
+        </div>
+        <div class="home-how-step">
+          <span class="home-how-num">02</span>
+          <div class="home-how-title">${t('Соберите букет')}</div>
+          <div class="home-how-text">${t('Ваза, цветы, лента, конверт и фон — на свой вкус, за пару минут.')}</div>
+        </div>
+        <div class="home-how-step">
+          <span class="home-how-num">03</span>
+          <div class="home-how-title">${t('Отправьте ссылкой')}</div>
+          <div class="home-how-text">${t('Получатель откроет её как настоящую открытку — с разворотом и цветением, без установки приложений.')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-final-cta">
+      <h2>${t('Готовы отправить что-то красивое?')}</h2>
+      <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
+    </div>
+
+    ${aboutSectionHtml()}
+  </div>
+  <footer class="site-footer">${footerHtml()}</footer>
+  `;
+  fetchHeroCardCount();
+}
+
 function renderCreator(){
   const landing = seoLanding();
   // На SEO-лендинге заголовок/описание должны остаться теми же после
@@ -1368,38 +1621,7 @@ function renderCreator(){
       <div class="promo-inline-slot" id="colPreviewAdSlot"></div>
     </div>
 
-    <div class="legal-wrap" id="about" style="padding-top:10px; scroll-margin-top:24px;">
-      <h2>${t('О сервисе')}</h2>
-      <p>${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
-
-      <h2>${t('Нужна ли регистрация')}</h2>
-      <p>${t('Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.')}</p>
-
-      <h2>${t('Это бесплатно?')}</h2>
-      <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
-
-      <h2>${t('Для каких поводов')}</h2>
-      <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
-
-      <h2>${t('Быстрые ссылки')}</h2>
-      <p>
-        <a href="/birthday-card">${t('Открытка на день рождения')}</a> ·
-        <a href="/love-card">${t('Открытка с признанием в любви')}</a> ·
-        <a href="/thank-you-card">${t('Открытка «Спасибо»')}</a> ·
-        <a href="/congrats-card">${t('Открытка с поздравлением')}</a> ·
-        <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
-        <a href="/just-because-card">${t('Открытка просто так')}</a> ·
-        <a href="/sympathy-card">${t('Открытка с соболезнованиями')}</a> ·
-        <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
-      </p>
-      <p style="margin-top:10px;">
-        ${t('Не знаете, что написать?')}
-        <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
-        <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
-        <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a> ·
-        <a href="/blog/${uiLang==='ru'?'':'en/'}sympathy-messages">${t('слова соболезнования')}</a>
-      </p>
-    </div>
+    ${aboutSectionHtml()}
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
   `;
@@ -1546,10 +1768,13 @@ function mountInlineAd(slotId){
 }
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout', sympathy:'leaf'};
-function occasionIconSvg(id, color){
-  const name = OCCASION_ICON[id];
+// Сами фигуры (в системе координат 0..16) вынесены отдельно от occasionIconSvg —
+// нужны в двух местах: маленькая иконка повода (чипы, подпись под карточкой)
+// и рассыпанный узор на карточках-примерах на витрине (см. stagePatternSvg).
+// Один и тот же нарисованный вручную язык иконок в обоих масштабах — чтобы
+// узор на фоне не выглядел вставкой из другого источника.
+function iconShapeMarkup(name, color){
   const paths = {
-    
     cake:`<path d="M2 9 Q8 6.2 14 9" fill="none" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/><rect x="2" y="9" width="12" height="5" rx="1" fill="none" stroke="${color}" stroke-width="1.3"/><line x1="8" y1="6" x2="8" y2="2.5" stroke="${color}" stroke-width="1.2" stroke-linecap="round"/><circle cx="8" cy="1.6" r="1" fill="${color}"/>`,
     heart:`<path d="M8 13.4C3 10 1.5 6.6 3.4 4.4C5 2.5 8 3.3 8 6C8 3.3 11 2.5 12.6 4.4C14.5 6.6 13 10 8 13.4Z" fill="${color}"/>`,
     gift:`<rect x="2.2" y="6.5" width="11.6" height="7" rx=".5" fill="none" stroke="${color}" stroke-width="1.2"/><line x1="2.2" y1="9.2" x2="13.8" y2="9.2" stroke="${color}" stroke-width="1.1"/><line x1="8" y1="6.5" x2="8" y2="13.5" stroke="${color}" stroke-width="1.1"/><path d="M8 6.5C6.3 6.5 5.4 4.8 6.3 3.8C7.2 3.2 8 4.6 8 6.5C8 4.6 8.8 3.2 9.7 3.8C10.6 4.8 9.7 6.5 8 6.5Z" fill="none" stroke="${color}" stroke-width="1.1"/>`,
@@ -1559,7 +1784,72 @@ function occasionIconSvg(id, color){
     sprout:`<circle cx="8" cy="8" r="1.6" fill="#B98A4A"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="${8+Math.cos(a*Math.PI/180)*4.2}" cy="${8+Math.sin(a*Math.PI/180)*4.2}" rx="2.6" ry="1.7" fill="${color}" transform="rotate(${a} ${8+Math.cos(a*Math.PI/180)*4.2} ${8+Math.sin(a*Math.PI/180)*4.2})"/>`).join('')}`,
     leaf:`<path d="M8 13.6C4 13.2 2.3 9.4 3.4 5C5 5.4 6.8 6.6 8 9C8 5.8 9.7 3.8 12.7 2.4C14.5 6.6 13 12.2 8.4 13.5C8.3 13.55 8.15 13.58 8 13.6Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 13C8 9.6 8.4 6.8 12 3" fill="none" stroke="${color}" stroke-width="1" stroke-linecap="round" opacity=".55"/>`
   };
-  return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${paths[name]}</svg>`;
+  return paths[name] || '';
+}
+function occasionIconSvg(id, color){
+  return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${iconShapeMarkup(OCCASION_ICON[id], color)}</svg>`;
+}
+// Рассыпанные по кольцу вдоль краёв сцены иконки (см. homeExampleCardHtml) —
+// фиксированные координаты/поворот/размер, а не Math.random(): иначе узор
+// "прыгал" бы при каждой перерисовке (смена языка/темы). Кольцо, а не вся
+// площадь — середину сцены всё равно закрывает "бумажная" карточка сверху.
+//
+// Раньше все точки садились почти у самого края (x/y≈0.5/99.5) — при таком
+// маленьком отступе от 0/100 бОльшая часть крупной иконки уходила уже за
+// пределы 0..100%, то есть обрезалась не карточкой, а собственным
+// overflow:hidden самой сцены (скруглённый угол буквально отрезал половину
+// фигурки) — отсюда и жалоба "почти не видно, обрезаны". Теперь два вида
+// точек:
+//  - full:true — целиком помещается в поле у края (центр на half-размера
+//    от 0/100, сама фигурка ни разу не пересекает ни край сцены, ни край
+//    "бумажной" карточки) — видна на 100%;
+//  - остальные — крупнее, центр ровно у самого края сцены (не заходит за
+//    0/100), но краем задевает "бумажную" карточку — заметная её бОльшая
+//    часть видна, меньшая тонет за карточкой, как будто иконка выглядывает
+//    из-за неё, а не обрублена углом.
+const PATTERN_SPOTS = [
+  // видны целиком — маленький угол поворота нарочно (у повёрнутого квадрата
+  // фактический охват по осям больше самого размера — на угле ~15° почти на
+  // четверть; при поле в 5-6.5% крупный поворот сам по себе утаскивал край
+  // фигурки под карточку, даже когда сам size с запасом умещался). Значения
+  // подобраны и перепроверены через offsetLeft/offsetTop/offsetWidth прямо
+  // в браузере на двух карточках с разной длиной текста (там, где поле у́же
+  // всего) — а не через getBoundingClientRect: та возвращает уже повёрнутый
+  // прямоугольник, и для карточки с собственным наклоном (--tilt) сравнение
+  // через неё врёт (может показывать 100% перекрытия там, где на самом деле
+  // 0%) — тем самым же поворотом, что и сама карточка, тем же образом
+  // повёрнута и "бумажная" карточка внутри, поэтому их взаимное
+  // расположение в СВОИХ координатах (не считая transform) — то, что
+  // реально нужно сравнивать.
+  {x:1.5,y:20, r:-4, size:4.83, full:true},
+  {x:1.5,y:80, r:4,  size:4.83, full:true},
+  {x:94, y:22, r:4,  size:4.83, full:true},
+  {x:94, y:78, r:-4, size:4.83, full:true},
+  {x:35, y:1.4,r:4,  size:4.14, full:true},
+  {x:65, y:95, r:-4, size:4.14, full:true},
+  // крупнее, слегка выглядывают из-за карточки
+  {x:2,  y:50, r:5,  size:9.66},
+  {x:89, y:50, r:-5, size:9.66},
+  {x:50, y:2,  r:5,  size:8.97},
+  {x:50, y:94, r:-5, size:8.28},
+  {x:20, y:2,  r:-5, size:8.97},
+  {x:80, y:94, r:5,  size:8.28}
+];
+// Раньше все фигурки лежали в одном общем <svg viewBox="0 0 100 100"
+// preserveAspectRatio="none"> — а сцена не квадратная (заметно выше, чем
+// шире), и "none" растягивал этот viewBox под её реальные пропорции сильнее
+// по одной оси, чем по другой. Значит и каждая фигурка внутри (нарисованная
+// в квадратных координатах 16×16) растягивалась вместе с ним — сердечки и
+// звёзды выходили вытянутыми. Теперь у каждой иконки свой собственный
+// квадратный <svg> (позиционирован процентами через CSS, .home-card-pattern-icon
+// в main.css) — масштабируется только целиком, без перекоса пропорций.
+function stagePatternSvg(iconName, color, opacity){
+  const items = PATTERN_SPOTS.map(p =>
+    `<span class="home-card-pattern-icon" style="left:${p.x}%; top:${p.y}%; width:${p.size}%; transform:translate(-50%,-50%) rotate(${p.r}deg); opacity:${opacity};">
+      <svg viewBox="0 0 16 16" aria-hidden="true">${iconShapeMarkup(iconName, color)}</svg>
+    </span>`
+  ).join('');
+  return `<div class="home-card-pattern" aria-hidden="true">${items}</div>`;
 }
 // crossedOut=false — глаз (пароль сейчас скрыт, клик покажет), true — глаз
 // с чертой (пароль сейчас показан, клик снова скроет). См. passwordFieldHtml.
@@ -2309,7 +2599,7 @@ function renderCardNotFound(){
     <div class="eyebrow">${t('не найдено')}</div>
     <h1 style="font-size:24px;margin-top:8px;">${t('Эта открытка недоступна')}</h1>
     <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
-    <button class="btn btn-primary" style="margin-top:20px;" onclick="goHome();">${t('Создать свою')}</button>
+    <button class="btn btn-primary" style="margin-top:20px;" onclick="goCreate();">${t('Создать свою')}</button>
   </div></div>`;
 }
 
@@ -2374,7 +2664,7 @@ function renderViewer(encodedData){
           <div class="view-msg" id="viewMsg">${esc(data.message)}</div>
           <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
           <div class="view-footer">
-            <button class="btn btn-primary" onclick="goHome()">${t('Создать свою открытку')}</button>
+            <button class="btn btn-primary" onclick="goCreate()">${t('Создать свою открытку')}</button>
             <p class="view-footer-note">${t('Бесплатно, за пару минут — на')} <a href="#" onclick="goHome();return false;">${BRAND}</a></p>
           </div>
         </div>
@@ -2737,7 +3027,10 @@ async function onGoogleCredential(response){
     session.user = json.user;
     showToast(t('Добро пожаловать!'));
     const dest = pendingRoute; pendingRoute = null;
-    location.hash = dest || '';
+    // Без явного pendingRoute (например, форма логина открыта не через
+    // "войдите, чтобы...", а сама по себе) ведём в конструктор — это и есть
+    // основной сценарий сайта, а не на витрину, которую человек уже видел.
+    location.hash = dest || 'create';
     renderRoute();
   }catch(err){
     showToast(err.message);
@@ -2919,7 +3212,8 @@ function renderResetPassword(token){
       if(!res.ok) throw new Error(json.error || t('Не удалось сохранить пароль'));
       session.user = json.user;
       showToast(t('Пароль обновлён, вы вошли в аккаунт'));
-      goHome();
+      location.hash = 'create';
+      renderRoute();
     }catch(err){
       errEl.textContent = err.message;
     }
@@ -3018,6 +3312,8 @@ function renderRoute(){
   if(hash === '#privacy') return renderPrivacy();
   if(hash === '#terms') return renderTerms();
   if(hash === '#group-new') return renderGroupCreate();
+  // #create — сам конструктор (раньше жил прямо на "/", см. renderHome).
+  if(hash === '#create') return renderCreator();
 
   const shortMatch = location.pathname.match(/^\/c\/([A-Za-z0-9]+)$/);
   if(shortMatch) return renderShortViewer(shortMatch[1]);
@@ -3027,15 +3323,28 @@ function renderRoute(){
 
   const cardData = new URLSearchParams(location.search).get('data');
   if(cardData) return renderViewer(cardData);
-  renderCreator();
+  // SEO-лендинги (/birthday-card и т.п.) ведут сразу в конструктор с нужным
+  // поводом, минуя витрину — это страницы под конкретный поисковый запрос
+  // с намерением "собрать открытку", лишний клик через главную им не нужен.
+  // Всё остальное (в первую очередь сама "/") — новая витрина.
+  if(seoLanding()) return renderCreator();
+  renderHome();
 }
 
-// Полный сброс на главный конструктор: чистит и хэш, и ?data= в query-строке
+// Полный сброс на витрину (главную): чистит и хэш, и ?data= в query-строке
 // разом (одной history.replaceState), иначе после просмотра открытки ссылка
 // вида "Создать свою" молча оставалась бы на месте — renderRoute() увидел бы
 // прежний ?data= и снова показал бы ту же открытку.
 function goHome(){
   history.replaceState(null, '', '/');
+  renderRoute();
+}
+
+// То же самое, но сразу в конструктор (#create), а не на витрину — для мест,
+// где человек уже принял решение "хочу собрать открытку" (кнопки "Создать
+// свою" на просмотре чужой открытки, где витрина была бы лишним шагом назад).
+function goCreate(){
+  history.replaceState(null, '', '/#create');
   renderRoute();
 }
 

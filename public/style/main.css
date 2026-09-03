@@ -42,12 +42,14 @@
   --focus: rgba(227,169,196,0.35);
   --accent:#E3A9C4;
 }
-/* Приколачиваем открытку (предпросмотр при сборке и то, что видит получатель)
-   обратно к светлым значениям внутри тёмной темы сайта — она не часть
-   "интерфейса", а самостоятельный документ, который должен выглядеть
-   одинаково для всех, вне зависимости от темы, выбранной на сайте. */
+/* Приколачиваем открытку (предпросмотр при сборке, то, что видит получатель,
+   и карточки-примеры на витрине) обратно к светлым значениям внутри тёмной
+   темы сайта — она не часть "интерфейса", а самостоятельный документ,
+   который должен выглядеть одинаково для всех, вне зависимости от темы,
+   выбранной на сайте. */
 :root[data-theme="dark"] .preview-stage,
-:root[data-theme="dark"] .view-stage{
+:root[data-theme="dark"] .view-stage,
+:root[data-theme="dark"] .home-card-stage{
   --paper:#FAF3E7;
   --paper-deep:#F0E4CE;
   --ink:#2F3B2A;
@@ -263,6 +265,163 @@ a{color:var(--accent);}
   .hero{grid-template-columns:1fr;}
   .hero-stamp{justify-self:start;margin-top:12px;}
 }
+
+/* ====================== ГЛАВНАЯ (renderHome в main.js) ======================
+   Отдельная страница-витрина на "/" — сам конструктор живёт на #create.
+   Порядок разделов: обложка → крупные примеры готовых открыток (с текстом,
+   не только цветами) → "как это работает" → финальный призыв → О сервисе/FAQ. */
+.home-hero{
+  padding:64px 0 40px; text-align:center; max-width:640px; margin:0 auto;
+}
+.home-hero h1{
+  font-family:'Fraunces',serif; font-size:46px; font-weight:600; line-height:1.14;
+  letter-spacing:-.015em; color:var(--ink);
+}
+@media (max-width:480px){ .home-hero h1{font-size:32px;} }
+.home-hero p{font-size:16px; color:var(--ink); opacity:.72; line-height:1.65; margin-top:16px;}
+.home-hero-ctas{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:26px;}
+
+.home-examples{padding:28px 0 8px;}
+.home-examples h2, .home-how h2, .home-final-cta h2{
+  font-family:'Fraunces',serif; font-weight:500; font-size:26px; letter-spacing:-.01em; color:var(--ink); text-align:center;
+}
+.home-examples .examples-sub{
+  font-size:14px; color:var(--ink); opacity:.65; margin:8px auto 0; max-width:52ch; line-height:1.55; text-align:center;
+}
+.examples-swipe-hint{opacity:.7; white-space:nowrap;}
+
+/* Ряд карточек внахлёст, по образцу веера открыток на витринах Papier/Minted
+   — вместо ровной сетки "как в каталоге". Вырывается на все 100vw (приём
+   "во всё окно" для карусели) независимо от max-width родительского .wrap —
+   без этого по бокам ленты оставались пустые кремовые поля (в цвет фона
+   страницы, но по факту всё равно читались как "белые полосы", раз лента
+   заканчивалась раньше края экрана). Раньше здесь СТОЯЛ этот приём с
+   отступом 8vw — и на широком мониторе он расходился с фактическим
+   отступом, с которым центрируется .wrap (там до заметно больше 8vw), так
+   что первая карточка стартовала заметно левее заголовка. Чинили это не
+   через vw (который и был причиной расхождения — он растёт вместе с шириной
+   экрана, а отступ .wrap — нет, у него верхний предел из-за max-width), а
+   фиксированным пикселями отступом: он не "уезжает" ни на каком экране. */
+.home-examples-row-wrap{
+  width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.home-examples-row-wrap::-webkit-scrollbar{display:none;}
+.home-examples-row{
+  display:flex; align-items:flex-end; width:max-content;
+  padding:44px 24px 82px;
+}
+/* Крупная карточка примера — двухслойная, как настоящий предпросмотр в
+   конструкторе (.preview-stage снаружи + .preview-card внутри): сцена с
+   фоном открытки, а внутри — "бумажная" карточка с букетом и текстом. Это
+   не просто украшение — цель в том, чтобы витрина выглядела как честный
+   кадр из самого сервиса, который потом подтвердится в конструкторе, а не
+   как отдельная маркетинговая картинка. На самой сцене, за карточкой —
+   рассыпанный узор из иконки повода (.home-card-pattern, см. stagePatternSvg
+   в main.js) — сердечки/звёзды/подарки и т.п. вместо стоковых фото: тот же
+   нарисованный вручную язык иконок, что и везде на сайте, без внешних
+   картинок и связанных с ними рисков лицензирования.
+   Каждая карточка наезжает на соседнюю (margin-left отрицательный), со
+   своим наклоном и вертикальной волной (--tilt/--lift, см. EXAMPLES в
+   main.js) — стопка/веер открыток, которую хочется разобрать, а не ровный
+   ряд. z-index растёт слева направо через инлайн-стиль (later on top); при
+   hover/focus карточка выпрыгивает поверх соседей курсором к зрителю. */
+.home-card{
+  flex:0 0 auto; width:287px; margin-left:-58px;
+  cursor:pointer; text-align:center;
+  transform:rotate(var(--tilt, 0deg)) translateY(calc(var(--lift, 0px) * var(--lift-scale, 1)));
+  transition:transform .22s ease;
+}
+.home-card:first-child{margin-left:0;}
+.home-card.featured{width:354px;}
+.home-card:hover, .home-card:focus-visible{
+  transform:rotate(0deg) translateY(-20px) scale(1.06);
+  z-index:50 !important;
+}
+/* z-index:0 (не auto) — вместе с position:relative создаёт собственный
+   стек для сцены. Без этого узор с z-index:-1 внутри (см. .home-card-pattern
+   ниже) считался бы от ближайшего предка, который реально создаёт стек —
+   это .home-card (у него transform, а transform создаёт стек сам по себе),
+   а не .home-card-stage (одного position:relative для этого мало). Тогда
+   отрицательный z-index утаскивал бы узор ЗА собственный градиентный фон
+   сцены — и тот полностью его перекрывал, узор не был виден вообще, а не
+   просто слабо. */
+.home-card-stage{
+  position:relative; z-index:0; overflow:hidden;
+  border-radius:25px; padding:37px 25px 31px;
+  box-shadow:0 24px 48px -22px rgba(47,59,42,0.45);
+  transition:box-shadow .2s ease;
+}
+.home-card:hover .home-card-stage, .home-card:focus-visible .home-card-stage{
+  box-shadow:0 34px 62px -16px rgba(47,59,42,0.55);
+}
+/* z-index:-1 — рисуется до обычного, непозиционированного содержимого
+   (.home-card-inner), то есть под "бумажной" карточкой, а не поверх нее;
+   pointer-events:none — чисто декоративный слой, клики должны идти карточке. */
+.home-card-pattern{
+  position:absolute; inset:0; width:100%; height:100%; z-index:-1; pointer-events:none;
+}
+/* Каждая иконка — свой квадратный <svg> (viewBox 16×16), а не одна фигура
+   внутри общего растянутого под прямоугольную сцену полотна: так width:%
+   масштабирует иконку целиком, без перекоса пропорций по одной оси сильнее,
+   чем по другой (см. комментарий у stagePatternSvg в main.js). */
+.home-card-pattern-icon{position:absolute;}
+.home-card-pattern-icon svg{display:block; width:100%; height:auto;}
+.home-card-inner{
+  background:var(--paper); border-radius:18px; overflow:hidden;
+  box-shadow:0 14px 30px -16px rgba(47,59,42,0.4);
+}
+.home-card-band{
+  padding:14px 20px; font-family:'Fraunces',serif; font-style:italic;
+  font-size:16px; text-align:center; color:var(--paper);
+}
+.home-card-bouquet{padding:11px 22px 0;}
+.home-card-msg{padding:4px 26px 25px; text-align:center;}
+.home-card-msg .to{font-size:14px; color:var(--ink); opacity:.6; margin-bottom:8px;}
+.home-card-msg .text{
+  font-family:'Fraunces',serif; font-size:18px; line-height:1.5; color:var(--ink); font-style:italic;
+}
+.home-card-msg .from{margin-top:12px; font-size:14px; color:var(--ink); opacity:.6;}
+.home-card-foot{
+  display:flex; align-items:center; justify-content:center; gap:9px;
+  padding:17px 7px 0;
+}
+.home-card-icon{display:inline-flex; opacity:.85;}
+.home-card-icon svg{width:18px; height:18px;}
+.home-card-label{font-size:15px; font-weight:500; color:var(--ink);}
+.home-card-cta{
+  font-size:14px; color:var(--accent); opacity:0; transform:translateX(-4px);
+  transition:opacity .15s ease, transform .15s ease; white-space:nowrap; margin-left:2px;
+}
+.home-card:hover .home-card-cta, .home-card:focus-visible .home-card-cta{opacity:1; transform:translateX(0);}
+@media (max-width:680px){
+  /* Волна и нахлёст мягче — на узком экране крутой веер съедает слишком
+     много ширины и мешает разглядеть каждую карточку по отдельности. */
+  .home-examples-row{--lift-scale:0.35; padding:33px 6vw 62px;}
+  .home-card{width:228px; margin-left:-42px;}
+  .home-card.featured{width:276px;}
+  .home-card-stage{padding:26px 18px 22px;}
+  .home-card-cta{opacity:1; transform:none;}
+}
+
+.home-how{padding:52px 0 8px;}
+.home-how-grid{
+  display:grid; grid-template-columns:repeat(3, 1fr); gap:28px; margin-top:30px;
+}
+@media (max-width:680px){ .home-how-grid{grid-template-columns:1fr;} }
+.home-how-step{text-align:center; padding:0 8px;}
+.home-how-num{
+  font-family:'Fraunces',serif; font-style:italic; font-size:14px; color:var(--accent); opacity:.8;
+}
+.home-how-title{font-family:'Fraunces',serif; font-weight:500; font-size:17px; color:var(--ink); margin-top:6px;}
+.home-how-text{font-size:13.5px; color:var(--ink); opacity:.65; line-height:1.55; margin-top:8px;}
+
+.home-final-cta{
+  margin:56px 0 16px; padding:40px 24px; text-align:center;
+  background:var(--paper-deep); border:1px solid var(--line); border-radius:20px;
+}
+.home-final-cta h2{margin-bottom:20px;}
 
 .panel{
   background:var(--paper-deep);

@@ -2,7 +2,7 @@
   "name": "VivoRose — a card with a virtual bouquet",
   "short_name": "VivoRose",
   "description": "A virtual bouquet that never wilts — pick the flowers, write your message, and share it with one link.",
-  "start_url": "/",
+  "start_url": "/#create",
   "scope": "/",
   "display": "standalone",
   "background_color": "#FAF3E7",
