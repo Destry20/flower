@@ -119,6 +119,41 @@ body{
   min-height:100vh;
 }
 
+::selection{background:var(--rose); color:var(--pale);}
+
+/* Системная настройка "уменьшить анимации" (люди с вестибулярными
+   нарушениями и т.п.) — гасим ВСЕ переходы/анимации сайта разом одним
+   правилом вместо того, чтобы помнить о ней в каждой отдельной анимации
+   (.reveal, bloom-пульс превью, модалка выбора цветов и т.д.). Не
+   transition:none/animation:none — почти нулевая длительность, а не полное
+   отключение: так свойства всё равно долетают до конечного состояния (на
+   случай если где-то в JS когда-нибудь появится логика на transitionend),
+   просто без видимого движения.
+   Стандартный приём, а не собственное изобретение — общее место в статьях
+   про accessibility. */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:0.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:0.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* Плавное появление секций при скролле (initScrollReveal в main.js навешивает
+   класс .in, когда элемент попал во вьюпорт) — .reveal целиком, .reveal-stagger
+   через прямых детей, с небольшой задержкой друг за другом. При
+   prefers-reduced-motion initScrollReveal сразу добавляет .in без наблюдателя,
+   а правило выше гасит саму transition — так что второй раз можно не проверять
+   тут же. */
+.reveal{opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease;}
+.reveal.in{opacity:1; transform:translateY(0);}
+.reveal-stagger > *{opacity:0; transform:translateY(18px); transition:opacity .55s ease, transform .55s ease;}
+.reveal-stagger.in > *{opacity:1; transform:translateY(0);}
+.reveal-stagger.in > *:nth-child(1){transition-delay:.05s;}
+.reveal-stagger.in > *:nth-child(2){transition-delay:.16s;}
+.reveal-stagger.in > *:nth-child(3){transition-delay:.27s;}
+
 h1,h2,h3, .display{
   font-family:'Fraunces',serif;
   font-weight:500;
@@ -753,7 +788,8 @@ input[type=date], input[type=time]{
   padding:7px 14px; font-size:12.5px; color:var(--ink); cursor:pointer;
 }
 .mine-actions button:hover{border-color:var(--accent); color:var(--accent);}
-.mine-empty{text-align:center; padding:60px 20px; opacity:.6;}
+.mine-empty{text-align:center; padding:36px 20px 60px; opacity:.6;}
+.mine-empty-vase{width:130px; margin:0 auto 6px; opacity:.85;}
 
 .cta-row{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;}
 /* font-weight не был задан вовсе — кнопки наследовали обычный текстовый вес
@@ -934,6 +970,18 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 .boot-loading{
   padding:120px 20px; text-align:center; opacity:.5;
   font-family:'Fraunces',serif; font-style:italic; font-size:15px;
+}
+/* Иконка тут — статичная разметка прямо в index.html (не через main.js:
+   этот экран как раз показывается, ПОКА main.js ещё грузится/выполняется),
+   тот же контур, что у 'leaf' в iconShapeMarkup — просто чтобы самый первый
+   кадр сайта тоже был "нарисован от руки", а не голым словом "Loading…". */
+.boot-loading-icon{
+  display:block; width:26px; height:26px; margin:0 auto 10px;
+  animation:bootPulse 1.6s ease-in-out infinite;
+}
+@keyframes bootPulse{
+  0%,100%{opacity:.4; transform:scale(.88);}
+  50%{opacity:.9; transform:scale(1);}
 }
 
 /* ---------- auth forms (login / register) ---------- */

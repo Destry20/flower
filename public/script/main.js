@@ -1151,6 +1151,30 @@ function buildBouquetSVG(cfg, size){
   </svg>`;
 }
 
+// Иллюстрация для пустого "Мои открытки" — та же нарисованная от руки ваза
+// (vaseSvg), что и в настоящих букетах, но НЕ через buildBouquetSVG: та
+// функция замешивает вазу/стебель/тень в холст, подогнанный под её
+// НЕЙТИВНЫЙ масштаб (~size 280-360, как используется по всему сайту) —
+// прямой вызов с маленьким size пропорции ломает: у вазы и тени фиксированные
+// пиксельные смещения от topY/cx, не зависящие от size, и при уменьшенном
+// холсте они вылезают за пределы viewBox и обрезаются (так и было до
+// исправления — ваза "не влезала"). Тут своя, отдельная композиция с
+// заведомо согласованными координатами.
+// После пары неудачных попыток анимации (увядающий/расцветающий букет —
+// см. историю) решили не усложнять: просто пустой горшок, без цветов и
+// анимации — сам по себе читается как "добавьте сюда открытку".
+function emptyVaseSvg(){
+  const cx = 85, vaseTopY = 140, tieY = vaseTopY - 2;
+  const bow = ribbonBow(cx, tieY, '#C97B86');
+  const vase = vaseSvg('A', cx, vaseTopY);
+  const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94}" rx="46" ry="7" fill="#000000" opacity=".08"/>`;
+  return `<svg viewBox="0 0 170 240" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;" aria-hidden="true">
+    ${shadow}
+    ${vase}
+    ${bow}
+  </svg>`;
+}
+
 /* ====================== WEB AUDIO CHIME ====================== */
 
 // Три коротких сгенерированных мелодии (без аудиофайлов, только осциллятор Web
@@ -1194,6 +1218,32 @@ function activateOnKey(event){
   }
 }
 window.activateOnKey = activateOnKey;
+
+// Плавное появление секций при скролле (.reveal — целиком, .reveal-stagger —
+// его прямые дети по очереди, см. CSS) — вызывается в конце renderHome/
+// renderCreator, после того как соответствующая разметка уже вставлена в DOM.
+// Разово на элемент: как только показался — снимаем с наблюдения, повторный
+// скролл вверх/вниз не должен ни прятать, ни переигрывать анимацию заново.
+// Без IntersectionObserver (совсем старый браузер) или при
+// prefers-reduced-motion — просто сразу показываем всё, без анимации.
+function initScrollReveal(){
+  const els = document.querySelectorAll('.reveal, .reveal-stagger');
+  if(!els.length) return;
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduceMotion || !('IntersectionObserver' in window)){
+    els.forEach(el => el.classList.add('in'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+  els.forEach(el => io.observe(el));
+}
 
 /* ====================== RENDER: CREATOR ====================== */
 
@@ -1335,7 +1385,7 @@ function aboutSectionHtml(){
     <h2 class="about-heading">${t('О сервисе')}</h2>
     <p class="about-intro">${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
 
-    <div class="about-faq">
+    <div class="about-faq reveal-stagger">
       <div class="about-faq-item">
         <div class="icon-badge">${badgeIconSvg('you', BADGE_ICON_COLOR)}</div>
         <h3>${t('Нужна ли регистрация')}</h3>
@@ -1446,17 +1496,17 @@ function renderHome(){
       <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:14px;"></p>
     </div>
 
-    <div class="home-examples" id="examples">
+    <div class="home-examples reveal" id="examples">
       <h2>${t('Примеры открыток')}</h2>
       <p class="examples-sub">${t('Нажмите на понравившуюся — мы соберём такой же букет, а вы допишете своё послание')} <span class="examples-swipe-hint">${t('· смахните, чтобы увидеть все →')}</span></p>
     </div>
-    <div class="home-examples-row-wrap">
+    <div class="home-examples-row-wrap reveal">
       <div class="home-examples-row">${EXAMPLES.map(homeExampleCardHtml).join('')}</div>
     </div>
 
     <div class="home-how">
       <h2>${t('Как это работает')}</h2>
-      <div class="home-how-grid">
+      <div class="home-how-grid reveal-stagger">
         <div class="home-how-step">
           <div class="icon-badge">${badgeIconSvg('gift', BADGE_ICON_COLOR)}</div>
           <span class="home-how-num">01</span>
@@ -1478,7 +1528,7 @@ function renderHome(){
       </div>
     </div>
 
-    <div class="home-final-cta">
+    <div class="home-final-cta reveal">
       <h2>${t('Готовы отправить что-то красивое?')}</h2>
       <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
     </div>
@@ -1488,6 +1538,7 @@ function renderHome(){
   <footer class="site-footer">${footerHtml()}</footer>
   `;
   fetchHeroCardCount();
+  initScrollReveal();
 }
 
 function renderCreator(){
@@ -1694,6 +1745,7 @@ function renderCreator(){
   renderPreviewBouquet();
   updatePreviewText();
   fetchHeroCardCount();
+  initScrollReveal();
 }
 
 function leafIcon(){
@@ -2477,9 +2529,11 @@ async function renderGroupPage(shortId){
     renderGroupPageBody(shortId, json.group);
   }catch(e){
     const body = document.getElementById('groupPageBody');
-    if(body) body.innerHTML = `
+    if(body) body.innerHTML = `<div style="text-align:center;">
+      ${notFoundIllustrationSvg()}
       <h1 style="font-size:22px;">${t('Открытка не найдена')}</h1>
-      <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или открытка уже удалена.')}</p>`;
+      <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или открытка уже удалена.')}</p>
+    </div>`;
   }
 }
 
@@ -2634,9 +2688,27 @@ async function submitGroupJoin(shortId){
 
 /* ====================== VIEWER ====================== */
 
+// Небольшая иллюстрация для "не найдено" — тот же нарисованный от руки язык,
+// что и у остального сайта, только тут это печальная противоположность
+// главного обещания бренда ("букет, который не вянет"): увядший стебель с
+// парой опавших лепестков, вместо голого текста об ошибке. Переиспользуется
+// в renderCardNotFound и в catch-ветке renderGroupPage — оба места это по
+// сути один и тот же "битая/просроченная ссылка" сценарий.
+function notFoundIllustrationSvg(){
+  return `<svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" style="display:block;margin:0 auto 14px;">
+    <path d="M36 10C34 26 24 32 21 48" fill="none" stroke="#5C7457" stroke-width="2" stroke-linecap="round"/>
+    <path d="M21 48C16 50 11 49 8 44" fill="none" stroke="#5C7457" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+    <ellipse cx="19" cy="46" rx="8" ry="5.4" fill="#C97B86" opacity=".55" transform="rotate(-32 19 46)"/>
+    <ellipse cx="13" cy="42" rx="5.4" ry="3.6" fill="#C97B86" opacity=".35" transform="rotate(-55 13 42)"/>
+    <circle cx="50" cy="56" r="2.4" fill="#C97B86" opacity=".3"/>
+    <circle cx="57" cy="61" r="1.7" fill="#C97B86" opacity=".22"/>
+  </svg>`;
+}
+
 function renderCardNotFound(){
   setPageTitle(t('Открытка не найдена'));
   document.getElementById('app').innerHTML = `<div class="view-stage"><div style="text-align:center;">
+    ${notFoundIllustrationSvg()}
     <div class="eyebrow">${t('не найдено')}</div>
     <h1 style="font-size:24px;margin-top:8px;">${t('Эта открытка недоступна')}</h1>
     <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
@@ -2887,7 +2959,7 @@ async function renderMyCards(){
   const wrap = document.getElementById('mineList');
   if(wrap){
     if(!list.length){
-      wrap.innerHTML = `<div class="mine-empty">${t('Пока пусто. Соберите первую открытку — она появится здесь.')}</div>`;
+      wrap.innerHTML = `<div class="mine-empty"><div class="mine-empty-vase">${emptyVaseSvg()}</div>${t('Пока пусто. Соберите первую открытку — она появится здесь.')}</div>`;
     } else {
       const dateLocale = uiLang === 'ru' ? 'ru-RU' : 'en-US';
       wrap.innerHTML = list.map(item=>{
