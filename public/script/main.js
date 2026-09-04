@@ -278,6 +278,7 @@ const EN_STRINGS = {
   'Ссылка скопирована': 'Link copied',
   'Скопируйте ссылку вручную': 'Copy the link manually',
   'Добавьте текст пожелания': 'Add a message first',
+  'Укажите дату отложенного открытия или выключите переключатель': 'Pick a date for the scheduled opening, or turn the toggle off',
   'Не удалось создать ссылку, попробуйте ещё раз': 'Could not create the link, please try again',
   'Собрали для вас новый вариант': 'Put together a new version for you',
   'Не удалось удалить открытку': 'Could not delete the card',
@@ -306,6 +307,8 @@ const EN_STRINGS = {
   'аккаунт': 'account',
   'Вход': 'Log in',
   'Чтобы открытки сохранялись за вами, а не только в этом браузере.': 'So your cards are saved to you, not just to this browser.',
+  'Аккаунт нужен, чтобы вы потом сами могли закрыть приём подписей и завершить открытку «всей компанией».': 'An account is needed so you can later close the group card yourself once everyone has signed it.',
+  'Войдите, чтобы открыть настройки своего аккаунта.': 'Log in to open your account settings.',
   'Email': 'Email',
   'Пароль': 'Password',
   'Нет аккаунта?': 'No account yet?',
@@ -521,6 +524,21 @@ let flowerPickerOpen = false;
 // загрузке из /api/auth/me.
 const session = { user: null };
 let pendingRoute = null; // куда вернуться после логина
+
+// Подпись под "Вход"/"Регистрация" — раньше была одна и та же фраза про
+// "открытки сохранятся за вами" независимо от того, откуда человека сюда
+// привело. Для мест, где аккаунт нужен по другой причине (не за тем, чтобы
+// просто не потерять открытку), даём настоящую причину вместо общей фразы —
+// иначе экран входа выглядит немотивированной преградой на пути к тому, что
+// человек только что попросил сделать.
+const LOGIN_REASON_TEXT = {
+  'group-new': () => t('Аккаунт нужен, чтобы вы потом сами могли закрыть приём подписей и завершить открытку «всей компанией».'),
+  'account': () => t('Войдите, чтобы открыть настройки своего аккаунта.')
+};
+function authReasonText(fallback){
+  const reason = LOGIN_REASON_TEXT[pendingRoute];
+  return reason ? reason() : fallback;
+}
 
 async function loadMe(){
   try{
@@ -1649,7 +1667,7 @@ function renderCreator(){
           <div class="date-inline ${state.revealEnabled?'show':''}" id="dateInline">
             <div class="row2">
               <label for="revealDate" class="sr-only">${t('Дата открытия')}</label>
-              <input type="date" id="revealDate" value="${state.revealDate}">
+              <input type="date" id="revealDate" value="${state.revealDate}" min="${new Date().toISOString().slice(0,10)}">
               <label for="revealTime" class="sr-only">${t('Время открытия')}</label>
               <input type="time" id="revealTime" value="${state.revealTime}">
             </div>
@@ -2061,9 +2079,9 @@ function flowerRowsHtml(){
         <div class="swatches">${f.colors.map((c,i)=>`<div class="swatch ${on&&color===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${label.toLowerCase()} №${i+1}" aria-pressed="${on&&color===c}" onclick="setFlowerColor('${f.id}','${c}')" onkeydown="activateOnKey(event)"></div>`).join('')}</div>
       </div>
       <div class="stepper">
-        <button aria-label="${t('Меньше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',-1)">−</button>
+        <button aria-label="${t('Меньше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',-1)" ${!on?'disabled':''}>−</button>
         <span aria-live="polite">${count}</span>
-        <button aria-label="${t('Больше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',1)">+</button>
+        <button aria-label="${t('Больше')} ${label.toLowerCase()}" onclick="stepFlower('${f.id}',1)" ${(!on||count>=MAX_FLOWERS_PER_TYPE)?'disabled':''}>+</button>
       </div>
     </div>`;
   }).join('');
@@ -2162,6 +2180,15 @@ function replayPreview(){
 async function saveAndShare(){
   if(!state.message.trim()){
     showToast(t('Добавьте текст пожелания'));
+    return;
+  }
+  // Тумблер "Открыть в определённый момент" включён, но дата не выбрана —
+  // раньше это молча превращалось в reveal:null (то есть открытка уходила
+  // БЕЗ блокировки конверта, хотя отправитель включил её и мог быть уверен,
+  // что она сработает). Останавливаем и просим дату явно, а не тихо теряем
+  // намерение отправителя.
+  if(state.revealEnabled && !state.revealDate){
+    showToast(t('Укажите дату отложенного открытия или выключите переключатель'));
     return;
   }
   const payload = {
@@ -3158,7 +3185,7 @@ function renderLogin(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Вход')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Чтобы открытки сохранялись за вами, а не только в этом браузере.')}</p>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${authReasonText(t('Чтобы открытки сохранялись за вами, а не только в этом браузере.'))}</p>
       ${appConfig.googleClientId ? `<div id="googleBtnLogin" class="google-btn-slot"></div><div class="auth-divider"><span>${t('или')}</span></div>` : ''}
       <form id="loginForm" class="auth-form">
         <label class="sr-only" for="loginEmail">${t('Email')}</label>
@@ -3202,7 +3229,7 @@ function renderRegister(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Регистрация')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Чтобы открытки сохранялись за вами и были доступны с любого устройства — без аккаунта они живут только в этом браузере. Займёт полминуты.')}</p>
+      <p style="opacity:.7;margin-top:8px;font-size:14px;">${authReasonText(t('Чтобы открытки сохранялись за вами и были доступны с любого устройства — без аккаунта они живут только в этом браузере. Займёт полминуты.'))}</p>
       ${appConfig.googleClientId ? `<div id="googleBtnRegister" class="google-btn-slot"></div><div class="auth-divider"><span>${t('или')}</span></div>` : ''}
       <form id="registerForm" class="auth-form">
         <label class="sr-only" for="regName">${t('Имя')}</label>

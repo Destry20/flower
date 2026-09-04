@@ -645,6 +645,11 @@ a{color:var(--accent);}
   transition:border-color .15s ease, color .15s ease;
 }
 .stepper button:hover{border-color:var(--accent); color:var(--accent);}
+/* Раньше кнопка на границе (0 или MAX_FLOWERS_PER_TYPE) просто ничего не
+   делала по клику, ничем внешне не отличаясь от рабочей — человек не мог
+   понять, заметил ли сайт клик вообще. disabled — обычное явное "дальше
+   некуда" вместо этого. */
+.stepper button:disabled{opacity:.35; cursor:default; border-color:var(--line); color:var(--ink);}
 .stepper span{font-size:13px; min-width:14px; text-align:center;}
 .scene-picker, .envelope-picker{
   width:100%; margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
