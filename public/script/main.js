@@ -236,6 +236,7 @@ const EN_STRINGS = {
   'Нежная мелодия при открытии': 'Gentle melody on opening',
   'Короткий сгенерированный перезвон, без сторонних файлов': 'A short generated chime, no external files',
   'Мелодия': 'Melody',
+  'Почерк': 'Handwriting',
   'нажмите, чтобы прослушать': 'click to preview',
   'Открыть в определённый момент': 'Open at a specific moment',
   'До этого времени получатель увидит только конверт': 'Until then the recipient will only see the envelope',
@@ -500,6 +501,7 @@ const state = {
   ribbon: RIBBONS[0],
   flowers: {}, // id -> {color, count}
   message: '',
+  messageFont: 'serif',
   from: '',
   to: '',
   music: false,
@@ -700,6 +702,7 @@ function sanitizeCardData(raw){
     ribbon,
     flowers,
     message: typeof data.message === 'string' ? data.message.slice(0,400) : '',
+    messageFont: MESSAGE_FONTS.some(f=>f.id===data.messageFont) ? data.messageFont : MESSAGE_FONTS[0].id,
     from: typeof data.from === 'string' ? data.from.slice(0,30) : '',
     to: typeof data.to === 'string' ? data.to.slice(0,30) : '',
     music: !!data.music,
@@ -1205,6 +1208,29 @@ const MELODIES = [
 ];
 function melodyById(id){ return MELODIES.find(m=>m.id===id) || MELODIES[0]; }
 
+// "Почерк" текста пожелания — раньше был всегда один и тот же Fraunces,
+// теперь выбор из трёх начертаний. scale — Caveat (рукописный) визуально
+// мельче засечного шрифта при том же номинальном размере (у него нет
+// засечек/капительной высоты serif), поэтому крупнее компенсируем через em,
+// относительно того размера, что уже задан в каждом конкретном месте
+// (textarea/превью/сама открытка у получателя — три разных базовых размера).
+const MESSAGE_FONTS = [
+  {id:'serif', label:{ru:'Курсив',en:'Cursive'}, css:"'Fraunces',serif"},
+  {id:'hand',  label:{ru:'От руки',en:'Handwritten'}, css:"'Caveat',cursive", scale:1.35},
+  {id:'sans',  label:{ru:'Обычный',en:'Plain'}, css:"'Inter',sans-serif"}
+];
+function messageFontById(id){ return MESSAGE_FONTS.find(f=>f.id===id) || MESSAGE_FONTS[0]; }
+// Инлайновая строка стиля, а не CSS-класс — так же, как остальной сайт
+// повсюду вставляет вычисленные на лету значения прямо в разметку (цвет
+// ленты, фон сцены и т.д.), вместо того чтобы заводить под каждую комбинацию
+// отдельный класс. Используется в трёх разных местах с разным базовым
+// размером текста (textarea конструктора, живой предпросмотр, сама открытка
+// у получателя) — em у "От руки" масштабируется от размера каждого из них.
+function messageFontStyleAttr(id){
+  const f = messageFontById(id);
+  return `font-family:${f.css};${f.scale?` font-size:${f.scale}em;`:''}`;
+}
+
 function playChime(melodyId){
   try{
     const melody = melodyById(melodyId);
@@ -1559,6 +1585,42 @@ function renderHome(){
   initScrollReveal();
 }
 
+// Горизонтальная полоса-навигация над формой конструктора — раньше номер
+// шага ("01"/"02"...) был спрятан мелким текстом внутри каждой панели и не
+// работал как ориентир "где я, сколько ещё осталось": все 4 панели видны
+// одной длинной прокруткой сразу, отдельного шага-мастера тут нет. Полоса не
+// подменяет это одним "текущим шагом" — по клику просто прокручивает к
+// панели, а какая панель сейчас перед глазами подсвечивает initStepSpy (см.
+// ниже) через IntersectionObserver, отдельно от initScrollReveal — та
+// снимает наблюдение после первого показа (анимация "появления" разовая), а
+// тут слежение должно быть постоянным, весь скролл по форме.
+function stepBarHtml(){
+  const steps = [
+    {n:1, panel:'panelOccasion', label:t('Повод')},
+    {n:2, panel:'panelBouquet', label:t('Букет')},
+    {n:3, panel:'panelMessage', label:t('Послание')},
+    {n:4, panel:'panelExtra', label:t('Дополнительно')}
+  ];
+  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${i===0?'active':''}" data-panel="${s.panel}" onclick="event.preventDefault(); document.getElementById('${s.panel}').scrollIntoView({behavior:'smooth',block:'start'});"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
+}
+// Постоянное (не разовое, в отличие от initScrollReveal) слежение за тем,
+// какая панель формы сейчас в верхней части экрана — подсвечивает
+// соответствующий пункт .step-bar. Узкая полоса rootMargin (15%-70% от
+// вьюпорта) — панель считается "текущей", когда её верх пересекает область
+// чуть ниже шапки, а не когда она просто где-то видна целиком.
+function initStepSpy(){
+  const items = document.querySelectorAll('.step-bar-item');
+  if(!items.length || !('IntersectionObserver' in window)) return;
+  const panels = Array.from(items).map(a => document.getElementById(a.dataset.panel)).filter(Boolean);
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const item = document.querySelector(`.step-bar-item[data-panel="${entry.target.id}"]`);
+      if(item) item.classList.toggle('active', entry.isIntersecting);
+    });
+  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+  panels.forEach(p => io.observe(p));
+}
+
 function renderCreator(){
   const landing = seoLanding();
   // На SEO-лендинге заголовок/описание должны остаться теми же после
@@ -1584,8 +1646,9 @@ function renderCreator(){
 
     <div class="builder">
       <div class="col-form">
+        ${stepBarHtml()}
 
-        <div class="panel">
+        <div class="panel" id="panelOccasion">
           <div class="panel-head">
             <span class="step-num">01</span>
             <div><div class="panel-title">${t('Повод')}</div><div class="panel-sub">${t('задаёт тон открытки')}</div></div>
@@ -1593,7 +1656,7 @@ function renderCreator(){
           <div class="chip-row" id="occasionChips" role="group" aria-label="${t('Повод')}"></div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="panelBouquet">
           <div class="panel-head">
             <span class="step-num">02</span>
             <div><div class="panel-title">${t('Букет')}</div><div class="panel-sub">${t('форма вазы, цветы, лента')}</div></div>
@@ -1627,7 +1690,7 @@ function renderCreator(){
           </div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="panelMessage">
           <div class="panel-head">
             <span class="step-num">03</span>
             <div><div class="panel-title">${t('Послание')}</div><div class="panel-sub">${t('кому и что хотите сказать')}</div></div>
@@ -1637,11 +1700,13 @@ function renderCreator(){
             <input type="text" id="fromInput" placeholder="${t('Ваше имя')}" aria-label="${t('Ваше имя')}" maxlength="30" value="${esc(state.from)}">
           </div>
           <label for="msgInput" class="sr-only">${t('Текст пожелания')}</label>
-          <textarea id="msgInput" maxlength="400" placeholder="${tr(occ.placeholder)}">${esc(state.message)}</textarea>
+          <textarea id="msgInput" maxlength="400" placeholder="${tr(occ.placeholder)}" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)}</textarea>
           <div class="char-count" id="charCount">${state.message.length}/400</div>
+          <span class="field-label" id="msgFontLabel" style="margin-top:14px;">${t('Почерк')}</span>
+          <div class="chip-row" id="msgFontChips" role="group" aria-labelledby="msgFontLabel"></div>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="panelExtra">
           <div class="panel-head">
             <span class="step-num">04</span>
             <div><div class="panel-title">${t('Дополнительно')}</div><div class="panel-sub">${t('необязательные штрихи')}</div></div>
@@ -1688,7 +1753,7 @@ function renderCreator(){
             <div class="preview-bouquet" id="pvBouquet"></div>
             <div class="preview-msg">
               <div class="to" id="pvTo"></div>
-              <div class="text" id="pvText">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
+              <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
               <div class="from" id="pvFrom"></div>
             </div>
           </div>
@@ -1749,6 +1814,10 @@ function renderCreator(){
     `<div class="chip ${state.melody===m.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.melody===m.id}" onclick="setMelody('${m.id}')" onkeydown="activateOnKey(event)">${tr(m.label)}</div>`
   ).join('');
 
+  document.getElementById('msgFontChips').innerHTML = MESSAGE_FONTS.map(f =>
+    `<div class="chip ${state.messageFont===f.id?'active':''}" style="font-family:${f.css};" tabindex="0" role="button" aria-pressed="${state.messageFont===f.id}" onclick="setMessageFont('${f.id}')" onkeydown="activateOnKey(event)">${tr(f.label)}</div>`
+  ).join('');
+
   document.getElementById('toInput').oninput = e=>{ state.to=e.target.value; updatePreviewText(); };
   document.getElementById('fromInput').oninput = e=>{ state.from=e.target.value; updatePreviewText(); };
   document.getElementById('msgInput').oninput = e=>{
@@ -1764,6 +1833,7 @@ function renderCreator(){
   updatePreviewText();
   fetchHeroCardCount();
   initScrollReveal();
+  initStepSpy();
 }
 
 function leafIcon(){
@@ -2143,6 +2213,17 @@ function setMelody(id){
   event.currentTarget.classList.add('active'); event.currentTarget.setAttribute('aria-pressed','true');
   playChime(id); // сразу даём услышать выбранную мелодию
 }
+function setMessageFont(id){
+  state.messageFont = id;
+  document.querySelectorAll('#msgFontChips .chip').forEach(c=>{c.classList.remove('active'); c.setAttribute('aria-pressed','false');});
+  event.currentTarget.classList.add('active'); event.currentTarget.setAttribute('aria-pressed','true');
+  const f = messageFontById(id);
+  [document.getElementById('msgInput'), document.getElementById('pvText')].forEach(el=>{
+    if(!el) return;
+    el.style.fontFamily = f.css;
+    el.style.fontSize = f.scale ? f.scale+'em' : '';
+  });
+}
 function toggleReveal(){
   state.revealEnabled=!state.revealEnabled;
   const el = document.getElementById('revealSwitch');
@@ -2193,7 +2274,7 @@ async function saveAndShare(){
   }
   const payload = {
     occasion: state.occasion, vase: state.vase, ribbon: state.ribbon,
-    flowers: state.flowers, message: state.message, from: state.from, to: state.to,
+    flowers: state.flowers, message: state.message, messageFont: state.messageFont, from: state.from, to: state.to,
     music: state.music, melody: state.melody, charm: state.charm,
     envelope: state.envelope, background: state.background,
     reveal: state.revealEnabled ? (state.revealDate ? (state.revealDate+'T'+(state.revealTime||'00:00')) : null) : null,
@@ -2801,7 +2882,7 @@ function renderViewer(encodedData){
         <div class="view-content" id="viewContent">
           <div class="view-occasion-band" style="background:${occ.color}">${tr(occ.stamp)}</div>
           <div class="view-bouquet-wrap" id="viewBouquet">${buildBouquetSVG(data, 300)}</div>
-          <div class="view-msg" id="viewMsg">${esc(data.message)}</div>
+          <div class="view-msg" id="viewMsg" style="${messageFontStyleAttr(data.messageFont)}">${esc(data.message)}</div>
           <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
           <div class="view-footer">
             <button class="btn btn-primary" onclick="goCreate()">${t('Создать свою открытку')}</button>
