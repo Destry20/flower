@@ -239,6 +239,10 @@ const EN_STRINGS = {
   'Короткий сгенерированный перезвон, без сторонних файлов': 'A short generated chime, no external files',
   'Мелодия': 'Melody',
   'Почерк': 'Handwriting',
+  'пока пусто': 'empty so far',
+  'с мелодией': 'with melody',
+  'без мелодии': 'no melody',
+  'открытие по расписанию': 'scheduled opening',
   'нажмите, чтобы прослушать': 'click to preview',
   'Открыть в определённый момент': 'Open at a specific moment',
   'До этого времени получатель увидит только конверт': 'Until then the recipient will only see the envelope',
@@ -522,6 +526,13 @@ state.flowers.carnation = {color:FLOWER_TYPES[4].colors[0], count:2};
 // теперь прячем его за кнопку и всплывающее окошко, открытое/закрытое
 // состояние которого просто гоняем через renderCreator(), как и всё остальное.
 let flowerPickerOpen = false;
+// Какая из 4 панелей формы сейчас развёрнута — остальные схлопнуты до
+// заголовка+иконки+краткой сводки того, что там уже выбрано (см.
+// panelSummaryHtml). Не жёсткий мастер: развернуть любую панель можно в
+// любой момент кликом, ничего не блокирует переход к следующей без
+// заполнения предыдущей — просто способ не показывать все 4 "кирпича"
+// целиком одновременно.
+let openPanelId = 'panelOccasion';
 
 /* ====================== SESSION / ACCOUNT ====================== */
 // session.user — текущий пользователь (или null для гостя), заполняется при
@@ -1593,16 +1604,151 @@ function renderHome(){
 // монотонно при скролле; варьируем в пределах уже существующей палитры
 // сайта, без единого нового цвета.
 const PANEL_ACCENTS = ['var(--rose)', 'var(--gold)', 'var(--sage-dark)', 'var(--plum)'];
+// Те же 4 цвета литералом (hex) — для самих SVG-иконок (badgeIconSvg
+// собирает fill/stroke прямо в разметку, CSS-переменная там не пригодится,
+// см. рассуждение у BADGE_ICON_COLOR) — и картинка на бейдже каждой панели,
+// подарок/росток/конверт/звезда, вместо голой цифры шага.
+const PANEL_ACCENT_HEX = ['#C97B86', '#B98A4A', '#5C7457', '#4B2E3D'];
+const PANEL_ICONS = ['gift', 'sprout', 'envelope', 'star'];
+
+// Разметка заголовка панели-аккордеона — иконка-бейдж (та же azбука
+// badgeIconSvg, что и на главной/в FAQ) вместо голой цифры шага,
+// заголовок+подзаголовок, справа — сводка выбранного (видна только пока
+// панель свёрнута, см. CSS) и стрелка. Один и тот же клик на весь заголовок
+// открывает панель — как и клик по соответствующему пункту .step-bar
+// (тот же togglePanel).
+function panelHeadHtml(idx, id, title, sub){
+  return `<div class="panel-head" tabindex="0" role="button" aria-expanded="${openPanelId===id}" onclick="togglePanel('${id}')" onkeydown="activateOnKey(event)">
+    <div class="icon-badge panel-icon-badge">${badgeIconSvg(PANEL_ICONS[idx], PANEL_ACCENT_HEX[idx], 20)}</div>
+    <div class="panel-head-text">
+      <div class="panel-title">${title}</div>
+      <div class="panel-sub">${sub}</div>
+    </div>
+    <div class="panel-summary">${panelSummaryHtml(id)}</div>
+    <span class="panel-chevron">⌄</span>
+  </div>`;
+}
+
+// Раньше дёргал полный renderCreator() — вся форма (все 4 панели, флаттер
+// с чипами и полями) сносилась и пересобиралась заново одним innerHTML.
+// Из-за этого а) не было видно самого сворачивания/разворачивания — оно
+// происходило мгновенно, между двумя разными наборами DOM-узлов, а не как
+// переход одного и того же элемента (CSS-переходы такое в принципе не умеют
+// анимировать — нужен ОДИН И ТОТ ЖЕ узел до и после); и б) следом ещё
+// срабатывал scrollIntoView, накладывая скачок скролла поверх уже
+// дёрнувшегося макета — вместе это и читалось как "резко дёргается". Тут
+// вместо пересборки — точечные правки уже существующих узлов, а высоту
+// .panel-body-wrap анимируют expandPanelBody/collapsePanelBody ниже.
+function togglePanel(id){
+  if(openPanelId === id) return; // уже развёрнута — клик по заголовку ничего не делает, а не схлопывает в пустоту
+  const prevId = openPanelId;
+  openPanelId = id;
+
+  const prevEl = document.getElementById(prevId);
+  if(prevEl){
+    prevEl.classList.remove('open');
+    prevEl.querySelector('.panel-head').setAttribute('aria-expanded', 'false');
+    // Сводка могла устареть, пока панель была открыта (например, дописали
+    // текст пожелания) — обновляем её именно сейчас, в момент сворачивания.
+    // innerHTML, не textContent: panelSummaryHtml уже возвращает
+    // HTML-экранированный текст (esc()), рассчитанный на вставку как разметка.
+    const summaryEl = prevEl.querySelector('.panel-summary');
+    if(summaryEl) summaryEl.innerHTML = panelSummaryHtml(prevId);
+    collapsePanelBody(prevEl.querySelector('.panel-body-wrap'));
+  }
+  const nextEl = document.getElementById(id);
+  if(nextEl){
+    nextEl.classList.add('open');
+    nextEl.querySelector('.panel-head').setAttribute('aria-expanded', 'true');
+    expandPanelBody(nextEl.querySelector('.panel-body-wrap'));
+  }
+  document.querySelectorAll('.step-bar-item').forEach(item=>{
+    item.classList.toggle('active', item.dataset.panel === id);
+  });
+  // 'nearest', а не 'start' — если панель и так почти целиком видна (частый
+  // случай: клик по заголовку соседней свёрнутой панели), лишний скачок
+  // скролла только добавил бы дёргания сверху анимации раскрытия, а не помог бы.
+  // Небольшая задержка — даём макету осесть после первых шагов схлопывания/
+  // разворачивания (см. ниже), иначе браузер целится в позицию, которая
+  // через мгновение сама сдвинется.
+  if(nextEl) setTimeout(() => nextEl.scrollIntoView({ behavior:'smooth', block:'nearest' }), 30);
+}
+
+// Явная анимация высоты в пикселях, а не CSS grid-template-rows:0fr→1fr —
+// стандартный трюк на 0fr/1fr в этом проекте на практике не разворачивался
+// до высоты содержимого (см. историю у .panel-body-wrap в main.css), так
+// что считаем пиксели сами. CSS transition для height объявлен один раз в
+// стилях (.panel-step .panel-body-wrap) — он подхватывает любое следующее
+// присвоение style.height на том же узле, откуда бы оно ни пришло.
+//
+// void el.offsetHeight между двумя присвоениями height — без него браузер
+// имеет право слить оба присвоения в одно (последнее побеждает) ещё до
+// перерисовки, и увидит только конечное значение без начального — тогда
+// переход не с чего анимировать, он просто мгновенно "телепортируется"
+// в целевую высоту. Чтение offsetHeight форсирует немедленный расчёт
+// раскладки между ними, так что оба значения успевают зафиксироваться.
+function expandPanelBody(wrap){
+  if(!wrap) return;
+  const target = wrap.scrollHeight; // натуральная высота содержимого — читается верно независимо от того, что сейчас стоит в height
+  wrap.style.height = '0px';
+  void wrap.offsetHeight;
+  wrap.style.height = target + 'px';
+  const onEnd = (e) => {
+    if(e.target !== wrap || e.propertyName !== 'height') return;
+    // Снимаем фиксацию в px обратно на auto — без этого дальнейший рост
+    // содержимого (например, многострочный текст пожелания) обрезался бы
+    // застывшей высотой, измеренной в момент открытия панели.
+    wrap.style.height = 'auto';
+    wrap.removeEventListener('transitionend', onEnd);
+  };
+  wrap.addEventListener('transitionend', onEnd);
+}
+function collapsePanelBody(wrap){
+  if(!wrap) return;
+  // Если сейчас высота 'auto' (обычный случай — панель до этого была открыта
+  // и expandPanelBody уже сняла фиксацию) — сперва фиксируем ТЕКУЩУЮ
+  // фактическую высоту явным числом: CSS не умеет анимировать переход ОТ
+  // 'auto', а без начального числа схлопывание случилось бы мгновенно.
+  wrap.style.height = wrap.getBoundingClientRect().height + 'px';
+  void wrap.offsetHeight;
+  wrap.style.height = '0px';
+}
+
+// Короткая сводка того, что уже выбрано в панели — видна, только пока она
+// свёрнута (см. .panel-step:not(.open) .panel-summary в CSS), чтобы
+// схлопнутая панель не превращалась в чёрный ящик "непонятно, что там".
+function panelSummaryHtml(id){
+  if(id === 'panelOccasion'){
+    return esc(tr(occasionById(state.occasion).label));
+  }
+  if(id === 'panelBouquet'){
+    const vase = VASES.find(v=>v.id===state.vase);
+    const n = Object.keys(state.flowers).length;
+    const word = uiLang==='ru' ? pluralizeRu(n, 'вид', 'вида', 'видов') : (n===1?'type':'types');
+    return `${esc(vase?tr(vase.label):'')} · ${n} ${word}`;
+  }
+  if(id === 'panelMessage'){
+    if(!state.message.trim()) return t('пока пусто');
+    const short = state.message.length>28 ? state.message.slice(0,28).trim()+'…' : state.message;
+    return state.to ? `${esc(state.to)} — «${esc(short)}»` : `«${esc(short)}»`;
+  }
+  if(id === 'panelExtra'){
+    const parts = [state.music ? t('с мелодией') : t('без мелодии')];
+    if(state.revealEnabled && state.revealDate) parts.push(t('открытие по расписанию'));
+    return parts.join(' · ');
+  }
+  return '';
+}
 
 // Горизонтальная полоса-навигация над формой конструктора — раньше номер
 // шага ("01"/"02"...) был спрятан мелким текстом внутри каждой панели и не
-// работал как ориентир "где я, сколько ещё осталось": все 4 панели видны
-// одной длинной прокруткой сразу, отдельного шага-мастера тут нет. Полоса не
-// подменяет это одним "текущим шагом" — по клику просто прокручивает к
-// панели, а какая панель сейчас перед глазами подсвечивает initStepSpy (см.
-// ниже) через IntersectionObserver, отдельно от initScrollReveal — та
-// снимает наблюдение после первого показа (анимация "появления" разовая), а
-// тут слежение должно быть постоянным, весь скролл по форме.
+// работал как ориентир "где я". Теперь панели — аккордеон (openPanelId), и
+// "текущий шаг" здесь буквально означает "какая панель сейчас развёрнута" —
+// клик вызывает тот же togglePanel, что и клик по заголовку самой панели, а
+// подсветка — это просто openPanelId===panel, без слежения за скроллом
+// (раньше был отдельный IntersectionObserver под это — с аккордеоном он не
+// нужен: "текущая" панель больше не определяется тем, что попало в область
+// экрана, а тем, что явно раскрыто).
 function stepBarHtml(){
   const steps = [
     {n:1, panel:'panelOccasion', label:t('Повод')},
@@ -1610,26 +1756,8 @@ function stepBarHtml(){
     {n:3, panel:'panelMessage', label:t('Послание')},
     {n:4, panel:'panelExtra', label:t('Дополнительно')}
   ];
-  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${i===0?'active':''}" style="--panel-accent:${PANEL_ACCENTS[i]};" data-panel="${s.panel}" onclick="event.preventDefault(); document.getElementById('${s.panel}').scrollIntoView({behavior:'smooth',block:'start'});"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
+  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${openPanelId===s.panel?'active':''}" style="--panel-accent:${PANEL_ACCENTS[i]};" data-panel="${s.panel}" onclick="event.preventDefault(); togglePanel('${s.panel}');"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
 }
-// Постоянное (не разовое, в отличие от initScrollReveal) слежение за тем,
-// какая панель формы сейчас в верхней части экрана — подсвечивает
-// соответствующий пункт .step-bar. Узкая полоса rootMargin (15%-70% от
-// вьюпорта) — панель считается "текущей", когда её верх пересекает область
-// чуть ниже шапки, а не когда она просто где-то видна целиком.
-function initStepSpy(){
-  const items = document.querySelectorAll('.step-bar-item');
-  if(!items.length || !('IntersectionObserver' in window)) return;
-  const panels = Array.from(items).map(a => document.getElementById(a.dataset.panel)).filter(Boolean);
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      const item = document.querySelector(`.step-bar-item[data-panel="${entry.target.id}"]`);
-      if(item) item.classList.toggle('active', entry.isIntersecting);
-    });
-  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
-  panels.forEach(p => io.observe(p));
-}
-
 function renderCreator(){
   const landing = seoLanding();
   // На SEO-лендинге заголовок/описание должны остаться теми же после
@@ -1666,95 +1794,91 @@ function renderCreator(){
       <div class="col-form">
         ${stepBarHtml()}
 
-        <div class="panel" id="panelOccasion" style="--panel-accent:${PANEL_ACCENTS[0]};">
-          <div class="panel-head">
-            <span class="step-num">01</span>
-            <div><div class="panel-title">${t('Повод')}</div><div class="panel-sub">${t('задаёт тон открытки')}</div></div>
-          </div>
-          <div class="chip-row" id="occasionChips" role="group" aria-label="${t('Повод')}"></div>
+        <div class="panel panel-step ${openPanelId==='panelOccasion'?'open':''}" id="panelOccasion" style="--panel-accent:${PANEL_ACCENTS[0]};">
+          ${panelHeadHtml(0, 'panelOccasion', t('Повод'), t('задаёт тон открытки'))}
+          <div class="panel-body-wrap" style="height:${openPanelId==='panelOccasion'?'auto':'0px'};"><div class="panel-body">
+            <div class="chip-row" id="occasionChips" role="group" aria-label="${t('Повод')}"></div>
+          </div></div>
         </div>
 
-        <div class="panel" id="panelBouquet" style="--panel-accent:${PANEL_ACCENTS[1]};">
-          <div class="panel-head">
-            <span class="step-num">02</span>
-            <div><div class="panel-title">${t('Букет')}</div><div class="panel-sub">${t('форма вазы, цветы, лента')}</div></div>
-          </div>
-          <span class="field-label" id="vaseLabel">${t('Ваза')}</span>
-          <div class="vase-row" id="vaseChips" role="group" aria-labelledby="vaseLabel" style="margin-bottom:20px;"></div>
-          <span class="field-label" id="flowersLabel">${t('Цветы')}</span>
-          <div class="flower-summary" id="flowerSummaryBox">${flowerSummaryHtml()}</div>
-          <div class="flower-modal-backdrop ${flowerPickerOpen?'show':''}" id="flowerModalBackdrop" onclick="if(event.target===this) closeFlowerPicker()">
-            <div class="flower-modal" role="dialog" aria-modal="true" aria-labelledby="flowerModalTitle">
-              <div class="flower-modal-head">
-                <div class="flower-modal-head-icon">${plusIconSvg()}</div>
-                <div class="flower-modal-head-text">
-                  <span class="field-label" id="flowerModalTitle" style="margin-bottom:2px;">${t('Добавьте цветы в букет')}</span>
-                  <span class="hint">${t('отметьте нужные, выберите цвет и количество')}</span>
+        <div class="panel panel-step ${openPanelId==='panelBouquet'?'open':''}" id="panelBouquet" style="--panel-accent:${PANEL_ACCENTS[1]};">
+          ${panelHeadHtml(1, 'panelBouquet', t('Букет'), t('форма вазы, цветы, лента'))}
+          <div class="panel-body-wrap" style="height:${openPanelId==='panelBouquet'?'auto':'0px'};"><div class="panel-body">
+            <span class="field-label" id="vaseLabel">${t('Ваза')}</span>
+            <div class="vase-row" id="vaseChips" role="group" aria-labelledby="vaseLabel" style="margin-bottom:20px;"></div>
+            <span class="field-label" id="flowersLabel">${t('Цветы')}</span>
+            <div class="flower-summary" id="flowerSummaryBox">${flowerSummaryHtml()}</div>
+            <div class="flower-modal-backdrop ${flowerPickerOpen?'show':''}" id="flowerModalBackdrop" onclick="if(event.target===this) closeFlowerPicker()">
+              <div class="flower-modal" role="dialog" aria-modal="true" aria-labelledby="flowerModalTitle">
+                <div class="flower-modal-head">
+                  <div class="flower-modal-head-icon">${plusIconSvg()}</div>
+                  <div class="flower-modal-head-text">
+                    <span class="field-label" id="flowerModalTitle" style="margin-bottom:2px;">${t('Добавьте цветы в букет')}</span>
+                    <span class="hint">${t('отметьте нужные, выберите цвет и количество')}</span>
+                  </div>
+                  <button type="button" class="flower-modal-close" onclick="closeFlowerPicker()" aria-label="${t('Закрыть')}">✕</button>
                 </div>
-                <button type="button" class="flower-modal-close" onclick="closeFlowerPicker()" aria-label="${t('Закрыть')}">✕</button>
+                <div class="flower-row" id="flowerRows" role="group" aria-labelledby="flowersLabel"></div>
+                <button type="button" class="btn btn-primary" onclick="closeFlowerPicker()">${t('Готово')}</button>
               </div>
-              <div class="flower-row" id="flowerRows" role="group" aria-labelledby="flowersLabel"></div>
-              <button type="button" class="btn btn-primary" onclick="closeFlowerPicker()">${t('Готово')}</button>
             </div>
-          </div>
-          <span class="field-label" id="ribbonLabel" style="margin-top:18px;">${t('Лента')}</span>
-          <div class="swatches" id="ribbonSwatches" role="group" aria-labelledby="ribbonLabel"></div>
-          <div class="toggle-line" style="margin-top:18px; padding-top:18px; border-top:1px solid var(--line);">
-            <div>
-              <div style="font-size:14px;" id="charmLabel">${t('Подвеска на ленте')}</div>
-              <div style="font-size:12px;opacity:.6;">${t('Форма и цвет — под ваш повод: сердце, звезда, лист…')}</div>
+            <span class="field-label" id="ribbonLabel" style="margin-top:18px;">${t('Лента')}</span>
+            <div class="swatches" id="ribbonSwatches" role="group" aria-labelledby="ribbonLabel"></div>
+            <div class="toggle-line" style="margin-top:18px; padding-top:18px; border-top:1px solid var(--line);">
+              <div>
+                <div style="font-size:14px;" id="charmLabel">${t('Подвеска на ленте')}</div>
+                <div style="font-size:12px;opacity:.6;">${t('Форма и цвет — под ваш повод: сердце, звезда, лист…')}</div>
+              </div>
+              <div class="switch ${state.charm?'on':''}" id="charmSwitch" tabindex="0" role="switch" aria-checked="${state.charm}" aria-labelledby="charmLabel" onclick="toggleCharm()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
             </div>
-            <div class="switch ${state.charm?'on':''}" id="charmSwitch" tabindex="0" role="switch" aria-checked="${state.charm}" aria-labelledby="charmLabel" onclick="toggleCharm()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
-          </div>
+          </div></div>
         </div>
 
-        <div class="panel" id="panelMessage" style="--panel-accent:${PANEL_ACCENTS[2]};">
-          <div class="panel-head">
-            <span class="step-num">03</span>
-            <div><div class="panel-title">${t('Послание')}</div><div class="panel-sub">${t('кому и что хотите сказать')}</div></div>
-          </div>
-          <div class="row2" style="margin-bottom:12px;">
-            <input type="text" id="toInput" placeholder="${t('Имя получателя')}" aria-label="${t('Имя получателя')}" maxlength="30" value="${esc(state.to)}">
-            <input type="text" id="fromInput" placeholder="${t('Ваше имя')}" aria-label="${t('Ваше имя')}" maxlength="30" value="${esc(state.from)}">
-          </div>
-          <label for="msgInput" class="sr-only">${t('Текст пожелания')}</label>
-          <textarea id="msgInput" maxlength="400" placeholder="${tr(occ.placeholder)}" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)}</textarea>
-          <div class="char-count" id="charCount">${state.message.length}/400</div>
-          <span class="field-label" id="msgFontLabel" style="margin-top:14px;">${t('Почерк')}</span>
-          <div class="chip-row" id="msgFontChips" role="group" aria-labelledby="msgFontLabel"></div>
+        <div class="panel panel-step ${openPanelId==='panelMessage'?'open':''}" id="panelMessage" style="--panel-accent:${PANEL_ACCENTS[2]};">
+          ${panelHeadHtml(2, 'panelMessage', t('Послание'), t('кому и что хотите сказать'))}
+          <div class="panel-body-wrap" style="height:${openPanelId==='panelMessage'?'auto':'0px'};"><div class="panel-body">
+            <div class="row2" style="margin-bottom:12px;">
+              <input type="text" id="toInput" placeholder="${t('Имя получателя')}" aria-label="${t('Имя получателя')}" maxlength="30" value="${esc(state.to)}">
+              <input type="text" id="fromInput" placeholder="${t('Ваше имя')}" aria-label="${t('Ваше имя')}" maxlength="30" value="${esc(state.from)}">
+            </div>
+            <label for="msgInput" class="sr-only">${t('Текст пожелания')}</label>
+            <textarea id="msgInput" maxlength="400" placeholder="${tr(occ.placeholder)}" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)}</textarea>
+            <div class="char-count" id="charCount">${state.message.length}/400</div>
+            <span class="field-label" id="msgFontLabel" style="margin-top:14px;">${t('Почерк')}</span>
+            <div class="chip-row" id="msgFontChips" role="group" aria-labelledby="msgFontLabel"></div>
+          </div></div>
         </div>
 
-        <div class="panel" id="panelExtra" style="--panel-accent:${PANEL_ACCENTS[3]};">
-          <div class="panel-head">
-            <span class="step-num">04</span>
-            <div><div class="panel-title">${t('Дополнительно')}</div><div class="panel-sub">${t('необязательные штрихи')}</div></div>
-          </div>
-          <div class="toggle-line">
-            <div>
-              <div style="font-size:14px;" id="musicLabel">${t('Нежная мелодия при открытии')}</div>
-              <div style="font-size:12px;opacity:.6;">${t('Короткий сгенерированный перезвон, без сторонних файлов')}</div>
+        <div class="panel panel-step ${openPanelId==='panelExtra'?'open':''}" id="panelExtra" style="--panel-accent:${PANEL_ACCENTS[3]};">
+          ${panelHeadHtml(3, 'panelExtra', t('Дополнительно'), t('необязательные штрихи'))}
+          <div class="panel-body-wrap" style="height:${openPanelId==='panelExtra'?'auto':'0px'};"><div class="panel-body">
+            <div class="toggle-line">
+              <div>
+                <div style="font-size:14px;" id="musicLabel">${t('Нежная мелодия при открытии')}</div>
+                <div style="font-size:12px;opacity:.6;">${t('Короткий сгенерированный перезвон, без сторонних файлов')}</div>
+              </div>
+              <div class="switch ${state.music?'on':''}" id="musicSwitch" tabindex="0" role="switch" aria-checked="${state.music}" aria-labelledby="musicLabel" onclick="toggleMusic()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
             </div>
-            <div class="switch ${state.music?'on':''}" id="musicSwitch" tabindex="0" role="switch" aria-checked="${state.music}" aria-labelledby="musicLabel" onclick="toggleMusic()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
-          </div>
-          <div class="sub-inline ${state.music?'show':''}" id="melodyInline">
-            <span class="field-label" id="melodyLabel">${t('Мелодия')} <span class="hint">${t('нажмите, чтобы прослушать')}</span></span>
-            <div class="chip-row" id="melodyChips" role="group" aria-labelledby="melodyLabel"></div>
-          </div>
-          <div class="toggle-line">
-            <div>
-              <div style="font-size:14px;" id="revealLabel">${t('Открыть в определённый момент')}</div>
-              <div style="font-size:12px;opacity:.6;">${t('До этого времени получатель увидит только конверт')}</div>
+            <div class="sub-inline ${state.music?'show':''}" id="melodyInline">
+              <span class="field-label" id="melodyLabel">${t('Мелодия')} <span class="hint">${t('нажмите, чтобы прослушать')}</span></span>
+              <div class="chip-row" id="melodyChips" role="group" aria-labelledby="melodyLabel"></div>
             </div>
-            <div class="switch ${state.revealEnabled?'on':''}" id="revealSwitch" tabindex="0" role="switch" aria-checked="${state.revealEnabled}" aria-labelledby="revealLabel" onclick="toggleReveal()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
-          </div>
-          <div class="date-inline ${state.revealEnabled?'show':''}" id="dateInline">
-            <div class="row2">
-              <label for="revealDate" class="sr-only">${t('Дата открытия')}</label>
-              <input type="date" id="revealDate" value="${state.revealDate}" min="${new Date().toISOString().slice(0,10)}">
-              <label for="revealTime" class="sr-only">${t('Время открытия')}</label>
-              <input type="time" id="revealTime" value="${state.revealTime}">
+            <div class="toggle-line">
+              <div>
+                <div style="font-size:14px;" id="revealLabel">${t('Открыть в определённый момент')}</div>
+                <div style="font-size:12px;opacity:.6;">${t('До этого времени получатель увидит только конверт')}</div>
+              </div>
+              <div class="switch ${state.revealEnabled?'on':''}" id="revealSwitch" tabindex="0" role="switch" aria-checked="${state.revealEnabled}" aria-labelledby="revealLabel" onclick="toggleReveal()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
             </div>
-          </div>
+            <div class="date-inline ${state.revealEnabled?'show':''}" id="dateInline">
+              <div class="row2">
+                <label for="revealDate" class="sr-only">${t('Дата открытия')}</label>
+                <input type="date" id="revealDate" value="${state.revealDate}" min="${new Date().toISOString().slice(0,10)}">
+                <label for="revealTime" class="sr-only">${t('Время открытия')}</label>
+                <input type="time" id="revealTime" value="${state.revealTime}">
+              </div>
+            </div>
+          </div></div>
         </div>
 
         <div class="cta-row">
@@ -1854,7 +1978,6 @@ function renderCreator(){
   updatePreviewText();
   fetchHeroCardCount();
   initScrollReveal();
-  initStepSpy();
 }
 
 function leafIcon(){

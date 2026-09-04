@@ -495,7 +495,7 @@ a{color:var(--accent);}
    языка, а не двумя случайно похожими решениями. */
 .icon-badge{
   width:52px; height:52px; margin:0 auto 12px; border-radius:50%; flex:none;
-  background:color-mix(in srgb, var(--rose) 15%, var(--paper));
+  background:color-mix(in srgb, var(--panel-accent, var(--rose)) 15%, var(--paper));
   display:flex; align-items:center; justify-content:center;
 }
 .icon-badge svg{display:block;}
@@ -515,30 +515,70 @@ a{color:var(--accent);}
   position:relative;
 }
 .panel + .panel{margin-top:18px;}
-/* --panel-accent — своя у каждой из 4 панелей (задаётся инлайн в
-   renderCreator(), см. main.js), а не всегда --rose: одинаковые панели
-   подряд читались монотонно при скролле, разные акценты дают за что
-   зацепиться взгляду и заодно совпадают с цветом кружка на .step-bar. */
+/* --panel-accent — своя у каждой из 4 панелей формы конструктора (задаётся
+   инлайн в renderCreator(), см. main.js), а не всегда --rose: этот декор
+   используется и на других страницах с обычным .panel (вход, "всей
+   компанией" и т.д.), которые --panel-accent не задают — там просто
+   срабатывает фолбэк на --rose, как и было раньше. */
 .panel::before{
   content:''; position:absolute; left:28px; top:0; width:34px; height:1px;
   background:var(--panel-accent, var(--rose));
 }
 .panel-head{display:flex; align-items:center; gap:12px; margin-bottom:18px;}
-/* Раньше — простой курсивный текст ("01"), терявшийся рядом с заголовком
-   шага. Кружок-бейдж делает те же 4 цифры (Повод/Букет/Послание/Дополнительно)
-   опорными точками для взгляда при скролле формы, а не мелкой подписью. */
-.step-num{
-  font-family:'Fraunces',serif; font-weight:600; color:var(--pale); font-size:13px;
-  flex:none; width:28px; height:28px; border-radius:50%;
-  background:var(--panel-accent, var(--rose));
-  display:flex; align-items:center; justify-content:center;
-}
 
-/* Полоса-навигатор над формой (stepBarHtml/initStepSpy в main.js) — клик
-   прокручивает к панели, initStepSpy подсвечивает пункт, чья панель сейчас
-   вверху экрана. Не отдельная страница-мастер (все 4 панели видны разом),
-   поэтому это именно навигация "куда прокрутить", а не блокирующий переход
-   "шаг за шагом". */
+/* ---------- .panel-step: 4 панели формы конструктора как аккордеон ----------
+   Модификатор поверх обычного .panel — специально ОТДЕЛЬНЫЙ класс, не правки
+   в самом .panel: тот используется на других страницах (вход, "всей
+   компанией"), которые ничего не знают про --panel-accent/аккордеон и не
+   должны получить их фон/поведение просто потому, что где-то далеко
+   поменяли общий класс. */
+.panel-step{
+  background:color-mix(in srgb, var(--panel-accent, var(--rose)) 7%, var(--paper-deep));
+  transition:background-color .2s ease;
+}
+.panel-step::before{ display:none; } /* тонкая полоска-декор заменена иконкой-бейджем в заголовке — вместе смотрелись бы избыточно */
+.panel-step .panel-head{
+  cursor:pointer; margin-bottom:0; padding:4px 0;
+}
+.panel-step .panel-head:hover .panel-icon-badge{ transform:scale(1.06); }
+.panel-icon-badge{
+  width:40px; height:40px; margin:0; flex:none;
+  transition:transform .15s ease;
+}
+.panel-head-text{flex:1; min-width:0;}
+/* Видна, только пока панель свёрнута (см. .panel-step.open ниже) — коротко
+   говорит, что уже выбрано, чтобы свёрнутая панель не превращалась в чёрный
+   ящик. Текст сама panelSummaryHtml в main.js. */
+.panel-summary{
+  flex:none; max-width:38%; font-size:12.5px; color:var(--ink); opacity:.6;
+  text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.panel-chevron{
+  flex:none; font-size:16px; color:var(--ink); opacity:.45;
+  transition:transform .2s ease;
+}
+.panel-step.open .panel-chevron{ transform:rotate(180deg); }
+.panel-step.open .panel-summary{ display:none; }
+/* Раньше — display:none мгновенно, безо всякого перехода (и, что важнее,
+   через полную пересборку всей формы на каждый клик — см. большой
+   комментарий у togglePanel в main.js). Высота .panel-body-wrap анимируется
+   не через CSS-класс, а через инлайновый style="height:...px", который сам
+   расставляет expandPanelBody/collapsePanelBody в main.js — пробовали
+   стандартный трюк grid-template-rows:0fr→1fr, но в замерах через DOM он
+   не разворачивался до высоты содержимого (застревал на паддинге), так что
+   решили не рисковать и считать пиксели явно, вручную — это чуть больше
+   кода, зато однозначно надёжно везде. transition тут объявлен один раз —
+   он подхватывает ЛЮБОЕ последующее изменение height, откуда бы оно ни
+   пришло. */
+.panel-step .panel-body-wrap{ overflow:hidden; transition:height .28s ease; }
+.panel-step .panel-body{ padding-top:18px; }
+@media (max-width:480px){ .panel-summary{max-width:32%;} }
+
+/* Полоса-навигатор над формой (stepBarHtml в main.js) — тот же togglePanel,
+   что и у заголовка самой панели: тоже разворачивает нужную панель (плюс
+   подсвечивает свой пункт), а не просто скроллит к уже открытой. Не
+   отдельная страница-мастер (все 4 панели по-прежнему доступны, просто
+   схлопнуты) — переход между шагами свободный, а не по порядку. */
 .step-bar{
   display:flex; align-items:center; margin-bottom:20px;
   padding:14px 16px; background:var(--paper-deep); border:1px solid var(--line); border-radius:14px;
