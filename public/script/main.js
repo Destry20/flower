@@ -1587,6 +1587,13 @@ function renderHome(){
   initScrollReveal();
 }
 
+// Свой акцентный цвет на каждую из 4 панелей формы (кружок номера, тонкая
+// полоска-декор panel::before, и тот же цвет у соответствующего пункта
+// .step-bar при подсветке) — одинаковые --rose кружки подряд читались
+// монотонно при скролле; варьируем в пределах уже существующей палитры
+// сайта, без единого нового цвета.
+const PANEL_ACCENTS = ['var(--rose)', 'var(--gold)', 'var(--sage-dark)', 'var(--plum)'];
+
 // Горизонтальная полоса-навигация над формой конструктора — раньше номер
 // шага ("01"/"02"...) был спрятан мелким текстом внутри каждой панели и не
 // работал как ориентир "где я, сколько ещё осталось": все 4 панели видны
@@ -1603,7 +1610,7 @@ function stepBarHtml(){
     {n:3, panel:'panelMessage', label:t('Послание')},
     {n:4, panel:'panelExtra', label:t('Дополнительно')}
   ];
-  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${i===0?'active':''}" data-panel="${s.panel}" onclick="event.preventDefault(); document.getElementById('${s.panel}').scrollIntoView({behavior:'smooth',block:'start'});"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
+  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${i===0?'active':''}" style="--panel-accent:${PANEL_ACCENTS[i]};" data-panel="${s.panel}" onclick="event.preventDefault(); document.getElementById('${s.panel}').scrollIntoView({behavior:'smooth',block:'start'});"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
 }
 // Постоянное (не разовое, в отличие от initScrollReveal) слежение за тем,
 // какая панель формы сейчас в верхней части экрана — подсвечивает
@@ -1632,6 +1639,15 @@ function renderCreator(){
   setPageTitle(landing ? t(landing.h1) : t('Собрать открытку'));
   setMeta(landing ? t(landing.h1) : `${BRAND} — ${t('соберите открытку с букетом')}`, landing ? t(landing.sub) : siteDescription());
   const occ = occasionById(state.occasion);
+  // Тот же рассыпанный узор из иконки повода, что и на карточках-примерах
+  // главной (stagePatternSvg/PATTERN_SPOTS) — раньше использовался только
+  // там, а пространство вокруг самой открытки в конструкторе оставалось
+  // пустым. Светлее/темнее и цветом повода/светлым — та же логика выбора,
+  // что и на главной (bg.dark ? светлый узор на тёмной сцене : цвет повода
+  // на светлой).
+  const previewBg = BACKGROUNDS.find(b=>b.id===state.background);
+  const previewPatternColor = previewBg.dark ? '#F3EEE3' : occ.color;
+  const previewPatternOpacity = previewBg.dark ? 0.28 : 0.2;
   parkInlineAd();
   document.getElementById('app').innerHTML = `
   ${topbarHtml()}
@@ -1646,11 +1662,11 @@ function renderCreator(){
       <div class="hero-stamp">${tr(occ.stamp)}</div>
     </div>
 
-    <div class="builder">
+    <div class="builder" style="--builder-accent:${occ.color};">
       <div class="col-form">
         ${stepBarHtml()}
 
-        <div class="panel" id="panelOccasion">
+        <div class="panel" id="panelOccasion" style="--panel-accent:${PANEL_ACCENTS[0]};">
           <div class="panel-head">
             <span class="step-num">01</span>
             <div><div class="panel-title">${t('Повод')}</div><div class="panel-sub">${t('задаёт тон открытки')}</div></div>
@@ -1658,7 +1674,7 @@ function renderCreator(){
           <div class="chip-row" id="occasionChips" role="group" aria-label="${t('Повод')}"></div>
         </div>
 
-        <div class="panel" id="panelBouquet">
+        <div class="panel" id="panelBouquet" style="--panel-accent:${PANEL_ACCENTS[1]};">
           <div class="panel-head">
             <span class="step-num">02</span>
             <div><div class="panel-title">${t('Букет')}</div><div class="panel-sub">${t('форма вазы, цветы, лента')}</div></div>
@@ -1692,7 +1708,7 @@ function renderCreator(){
           </div>
         </div>
 
-        <div class="panel" id="panelMessage">
+        <div class="panel" id="panelMessage" style="--panel-accent:${PANEL_ACCENTS[2]};">
           <div class="panel-head">
             <span class="step-num">03</span>
             <div><div class="panel-title">${t('Послание')}</div><div class="panel-sub">${t('кому и что хотите сказать')}</div></div>
@@ -1708,7 +1724,7 @@ function renderCreator(){
           <div class="chip-row" id="msgFontChips" role="group" aria-labelledby="msgFontLabel"></div>
         </div>
 
-        <div class="panel" id="panelExtra">
+        <div class="panel" id="panelExtra" style="--panel-accent:${PANEL_ACCENTS[3]};">
           <div class="panel-head">
             <span class="step-num">04</span>
             <div><div class="panel-title">${t('Дополнительно')}</div><div class="panel-sub">${t('необязательные штрихи')}</div></div>
@@ -1749,18 +1765,21 @@ function renderCreator(){
       </div>
 
       <div class="col-preview">
-        <div class="preview-stage ${BACKGROUNDS.find(b=>b.id===state.background).dark?'stage-dark':''}" id="previewStage" style="background:${BACKGROUNDS.find(b=>b.id===state.background).css}">
-          <div class="preview-card">
-            <div class="preview-occasion-band" id="pvBand" style="background:${occ.color}">${tr(occ.stamp)}</div>
-            <div class="preview-bouquet" id="pvBouquet"></div>
-            <div class="preview-msg">
-              <div class="to" id="pvTo"></div>
-              <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
-              <div class="from" id="pvFrom"></div>
+        <div class="preview-stage ${previewBg.dark?'stage-dark':''}" id="previewStage" style="background:${previewBg.css}">
+          <div class="preview-hero">
+            ${stagePatternSvg(OCCASION_ICON[occ.id], previewPatternColor, previewPatternOpacity)}
+            <div class="preview-card">
+              <div class="preview-occasion-band" id="pvBand" style="background:${occ.color}">${tr(occ.stamp)}</div>
+              <div class="preview-bouquet" id="pvBouquet"></div>
+              <div class="preview-msg">
+                <div class="to" id="pvTo"></div>
+                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
+                <div class="from" id="pvFrom"></div>
+              </div>
             </div>
+            <button class="pv-replay" onclick="replayPreview()">${t('↻ Показать анимацию открытия')}</button>
+            <div class="preview-note">${t('Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.')}</div>
           </div>
-          <button class="pv-replay" onclick="replayPreview()">${t('↻ Показать анимацию открытия')}</button>
-          <div class="preview-note">${t('Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.')}</div>
 
           <div class="scene-picker">
             <span class="field-label" id="bgLabel">${t('Фон сцены')} <span class="hint">${t('получатель увидит такой же')}</span></span>

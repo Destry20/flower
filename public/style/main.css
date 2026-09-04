@@ -294,11 +294,36 @@ a{color:var(--accent);}
 .builder{
   display:grid; grid-template-columns:1fr 1fr; gap:36px;
   align-items:start;
+  position:relative; z-index:0; /* см. .builder::before ниже — тот же приём против "утечки" отрицательного z-index на предка, что и у .home-card-stage */
+}
+/* Мягкие цветовые пятна за формой — раньше вся страница конструктора была
+   одним плоским кремовым полотном без единого акцента фона, при том что сама
+   открытка в превью — единственное живое пятно на странице. Цвет пятен —
+   --builder-accent, задаётся инлайн в renderCreator() под цвет ТЕКУЩЕГО
+   повода (occ.color), так что фон чуть меняется в тон при смене повода, а не
+   висит одним и тем же цветом независимо от того, что вообще собирают.
+   z-index:-1 требует, чтобы .builder сам был stacking context (z-index:0
+   выше) — иначе отрицательный z-index ищет ближайшего предка со своим
+   контекстом и может уйти совсем не туда (тот самый баг с паттерном на
+   карточках примеров, см. историю .home-card-pattern). */
+.builder::before{
+  content:'';
+  position:absolute; z-index:-1; pointer-events:none;
+  top:-60px; left:-8%; right:-8%; height:640px;
+  background:
+    radial-gradient(ellipse 460px 340px at 12% 15%, color-mix(in srgb, var(--builder-accent, var(--rose)) 20%, transparent), transparent 70%),
+    radial-gradient(ellipse 420px 320px at 88% 55%, color-mix(in srgb, var(--sage) 16%, transparent), transparent 70%);
 }
 @media (max-width:880px){
   .builder{grid-template-columns:1fr;}
   .hero{grid-template-columns:1fr;}
   .hero-stamp{justify-self:start;margin-top:12px;}
+  /* Живой предпросмотр — самая мотивирующая часть (видно, как букет
+     складывается) — раньше на мобильном оказывался в самом низу, после всей
+     формы (просто следующий элемент в разметке). order переставляет его
+     сразу после героя, до самой формы — то же самое ощущение "вот что вы
+     собираете", что и на десктопе, где колонки стоят рядом. */
+  .col-preview{order:-1;}
 }
 
 /* ====================== ГЛАВНАЯ (renderHome в main.js) ======================
@@ -490,8 +515,13 @@ a{color:var(--accent);}
   position:relative;
 }
 .panel + .panel{margin-top:18px;}
+/* --panel-accent — своя у каждой из 4 панелей (задаётся инлайн в
+   renderCreator(), см. main.js), а не всегда --rose: одинаковые панели
+   подряд читались монотонно при скролле, разные акценты дают за что
+   зацепиться взгляду и заодно совпадают с цветом кружка на .step-bar. */
 .panel::before{
-  content:''; position:absolute; left:28px; top:0; width:34px; height:1px; background:var(--rose);
+  content:''; position:absolute; left:28px; top:0; width:34px; height:1px;
+  background:var(--panel-accent, var(--rose));
 }
 .panel-head{display:flex; align-items:center; gap:12px; margin-bottom:18px;}
 /* Раньше — простой курсивный текст ("01"), терявшийся рядом с заголовком
@@ -500,7 +530,7 @@ a{color:var(--accent);}
 .step-num{
   font-family:'Fraunces',serif; font-weight:600; color:var(--pale); font-size:13px;
   flex:none; width:28px; height:28px; border-radius:50%;
-  background:var(--rose);
+  background:var(--panel-accent, var(--rose));
   display:flex; align-items:center; justify-content:center;
 }
 
@@ -528,7 +558,9 @@ a{color:var(--accent);}
   background:var(--paper); color:var(--ink); border:1px solid var(--line);
   transition:background-color .15s ease, color .15s ease, border-color .15s ease;
 }
-.step-bar-item.active .step-bar-num{background:var(--plum); color:var(--pale); border-color:var(--plum);}
+.step-bar-item.active .step-bar-num{
+  background:var(--panel-accent, var(--plum)); color:var(--pale); border-color:var(--panel-accent, var(--plum));
+}
 .step-bar-line{flex:1 1 auto; height:1px; background:var(--line); margin:0 8px; min-width:6px;}
 @media (max-width:480px){ .step-bar-label{display:none;} }
 .panel-title{font-family:'Fraunces',serif; font-weight:500; font-size:17px; color:var(--ink);}
@@ -860,6 +892,20 @@ input[type=date], input[type=time]{
    высоты у родителя, которого больше нет), и попытки его сохранить только
    роняли рекламу под зависшую карточку. Поэтому карточка + реклама под ней
    теперь просто обычный, не липнущий блок — скроллится вместе со страницей. */
+/* Оборачивает саму карточку + кнопку повтора анимации + подсказку (но НЕ
+   scene-picker/envelope-picker ниже — те просто органы управления, не часть
+   "открытки") — узор из иконки повода (stagePatternSvg, задаётся инлайн в
+   renderCreator) сидит здесь, за карточкой. position:relative + z-index:0
+   — без этого второго узор с z-index:-1 внутри посчитал бы "ближайшим
+   предком со своим стек-контекстом" не эту обёртку, а что-то выше (обычно
+   он тогда просто не виден — та же ошибка уже один раз ловили на карточках
+   примеров на главной, см. .home-card-pattern). display:flex — те же
+   свойства раскладки, что раньше были прямо на .preview-stage для этих
+   элементов, просто на уровень глубже. */
+.preview-hero{
+  position:relative; z-index:0; width:100%;
+  display:flex; flex-direction:column; align-items:center;
+}
 .preview-card{
   width:100%; max-width:360px; background:var(--paper);
   border:1px solid var(--line); border-radius:14px; overflow:hidden;
