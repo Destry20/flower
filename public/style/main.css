@@ -815,6 +815,9 @@ input[type=date], input[type=time]{
 .mine-info{flex:1; min-width:0;}
 .mine-info .mi-to{font-size:14px; color:var(--ink);}
 .mine-info .mi-date{font-size:12px; color:var(--ink); opacity:.55; margin-top:2px;}
+.mi-status{font-size:12px; margin-top:4px;}
+.mi-status.opened{color:var(--sage-dark);}
+.mi-status.pending{color:var(--ink); opacity:.45;}
 .mine-actions{display:flex; gap:8px; flex:none;}
 .mine-actions button{
   border:1px solid var(--line); background:var(--paper); border-radius:999px;

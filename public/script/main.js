@@ -124,6 +124,8 @@ const EN_STRINGS = {
   'Открытка всей компанией': 'Group card',
   'Ссылка повреждена или открытка уже удалена.': 'This link is broken or the card was already removed.',
   'Открыта для подписей': 'Open for signatures',
+  'Открыта': 'Opened',
+  'Ещё не открыта': 'Not opened yet',
   'подписал(и)': 'signed',
   'Добавить свою подпись': 'Add your signature',
   'Ваше пожелание': 'Your message',
@@ -3058,7 +3060,7 @@ async function renderMyCards(){
     try{
       const res = await fetch('/api/cards');
       const json = await res.json();
-      list = (json.cards || []).map(c => ({ id:c.id, shortId:c.shortId, occasion:c.occasion, to:c.to, createdAt:c.createdAt, data:c.encodedData, server:true }));
+      list = (json.cards || []).map(c => ({ id:c.id, shortId:c.shortId, occasion:c.occasion, to:c.to, createdAt:c.createdAt, openedAt:c.openedAt, data:c.encodedData, server:true }));
     }catch(e){ list = []; }
   } else {
     try{ list = JSON.parse(localStorage.getItem('my-cards') || '[]'); }catch(e){ list = []; }
@@ -3073,11 +3075,22 @@ async function renderMyCards(){
       wrap.innerHTML = list.map(item=>{
         const occ = occasionById(item.occasion) || OCCASIONS[0];
         const d = new Date(item.createdAt);
+        // Статус "открыта/нет" — только у открыток за аккаунтом (item.server):
+        // у гостя (localStorage-список) поля openedAt просто нет и никогда не
+        // будет, сервер о таких открытках вообще не знает, так что тут не
+        // отдельная проверка "есть ли аккаунт", а естественное следствие того,
+        // откуда взялся сам список.
+        const statusHtml = item.server
+          ? (item.openedAt
+              ? `<div class="mi-status opened">${t('Открыта')} ${new Date(item.openedAt).toLocaleDateString(dateLocale,{day:'numeric',month:'long'})}</div>`
+              : `<div class="mi-status pending">${t('Ещё не открыта')}</div>`)
+          : '';
         return `<div class="mine-row">
           <div class="mine-dot" style="background:${occ.color}"></div>
           <div class="mine-info">
             <div class="mi-to">${item.to ? t('Для')+' '+esc(item.to) : tr(occ.label)}</div>
             <div class="mi-date">${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long',year:'numeric'})}</div>
+            ${statusHtml}
           </div>
           <div class="mine-actions">
             <button onclick="openCardLink('${item.data}')">${t('Открыть')}</button>

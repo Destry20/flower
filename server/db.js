@@ -185,11 +185,25 @@ function createCard({ userId, encodedData, occasion, to, from }){
     to: (to || '').slice(0, 30),
     from: (from || '').slice(0, 30),
     createdAt: Date.now(),
-    expiresAt: userId ? null : Date.now() + GUEST_CARD_TTL_MS
+    expiresAt: userId ? null : Date.now() + GUEST_CARD_TTL_MS,
+    openedAt: null
   };
   data.cards.unshift(card);
   persist();
   return card;
+}
+// Вызывается из GET /api/share/:shortId (server/routes/share.js) — это и есть
+// момент, когда получатель реально загрузил открытку в браузере (не просто
+// боту мессенджера, генерирующему превью ссылки, отдали HTML страницы — тот
+// JS не выполняет и до этого запроса не доходит, см. isBotUserAgent). Первое
+// открытие фиксируем один раз (повторные визиты/обновления страницы дату не
+// двигают) — статус нужен только "открыли/нет", а не счётчик визитов.
+function markCardOpened(shortId, userAgent){
+  if(isBotUserAgent(userAgent)) return;
+  const card = data.cards.find(c => c.shortId === shortId);
+  if(!card || card.openedAt) return;
+  card.openedAt = Date.now();
+  persist();
 }
 function deleteCard(id, userId){
   const before = data.cards.length;
@@ -592,7 +606,7 @@ function disableAdminTotp(){
 module.exports = {
   findUserByEmail, findUserById, createUser,
   setResetToken, findUserByResetTokenHash, updateUserPassword,
-  listCardsByUser, createCard, deleteCard, findCardByShortId,
+  listCardsByUser, createCard, deleteCard, findCardByShortId, markCardOpened,
   createGroupCard, findGroupCardByShortId, listGroupCardsByUser, isGroupCardClosed, addGroupContribution, closeGroupCard, MAX_CONTRIBUTIONS,
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
