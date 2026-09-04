@@ -1331,37 +1331,48 @@ function applyExample(id){
    SEO-лендинги (/birthday-card и т.п.) по-прежнему ведут прямо в конструктор,
    минуя эту страницу. Сам конструктор теперь живёт на #create — см. renderRoute. */
 function aboutSectionHtml(){
-  return `<div class="legal-wrap" id="about" style="padding-top:10px; scroll-margin-top:24px;">
-    <h2>${t('О сервисе')}</h2>
-    <p>${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
+  return `<div class="about-wrap" id="about" style="scroll-margin-top:24px;">
+    <h2 class="about-heading">${t('О сервисе')}</h2>
+    <p class="about-intro">${t('VivoRose — это простой способ отправить тёплые слова не пустым текстом, а живой открыткой: соберите букет из цветов, ленты и вазы на свой вкус, добавьте короткое послание и отправьте всё одной ссылкой. Получатель открывает её как настоящую открытку — с разворотом конверта и постепенным цветением букета, без установки приложений.')}</p>
 
-    <h2>${t('Нужна ли регистрация')}</h2>
-    <p>${t('Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.')}</p>
+    <div class="about-faq">
+      <div class="about-faq-item">
+        <div class="icon-badge">${badgeIconSvg('you', BADGE_ICON_COLOR)}</div>
+        <h3>${t('Нужна ли регистрация')}</h3>
+        <p>${t('Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.')}</p>
+      </div>
+      <div class="about-faq-item">
+        <div class="icon-badge">${badgeIconSvg('star', BADGE_ICON_COLOR)}</div>
+        <h3>${t('Это бесплатно?')}</h3>
+        <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
+      </div>
+      <div class="about-faq-item">
+        <div class="icon-badge">${badgeIconSvg('heart', BADGE_ICON_COLOR)}</div>
+        <h3>${t('Для каких поводов')}</h3>
+        <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
+      </div>
+    </div>
 
-    <h2>${t('Это бесплатно?')}</h2>
-    <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
-
-    <h2>${t('Для каких поводов')}</h2>
-    <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
-
-    <h2>${t('Быстрые ссылки')}</h2>
-    <p>
-      <a href="/birthday-card">${t('Открытка на день рождения')}</a> ·
-      <a href="/love-card">${t('Открытка с признанием в любви')}</a> ·
-      <a href="/thank-you-card">${t('Открытка «Спасибо»')}</a> ·
-      <a href="/congrats-card">${t('Открытка с поздравлением')}</a> ·
-      <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
-      <a href="/just-because-card">${t('Открытка просто так')}</a> ·
-      <a href="/sympathy-card">${t('Открытка с соболезнованиями')}</a> ·
-      <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
-    </p>
-    <p style="margin-top:10px;">
-      ${t('Не знаете, что написать?')}
-      <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
-      <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
-      <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a> ·
-      <a href="/blog/${uiLang==='ru'?'':'en/'}sympathy-messages">${t('слова соболезнования')}</a>
-    </p>
+    <div class="about-links">
+      <h3>${t('Быстрые ссылки')}</h3>
+      <p>
+        <a href="/birthday-card">${t('Открытка на день рождения')}</a> ·
+        <a href="/love-card">${t('Открытка с признанием в любви')}</a> ·
+        <a href="/thank-you-card">${t('Открытка «Спасибо»')}</a> ·
+        <a href="/congrats-card">${t('Открытка с поздравлением')}</a> ·
+        <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
+        <a href="/just-because-card">${t('Открытка просто так')}</a> ·
+        <a href="/sympathy-card">${t('Открытка с соболезнованиями')}</a> ·
+        <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
+      </p>
+      <p style="margin-top:10px;">
+        ${t('Не знаете, что написать?')}
+        <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}sympathy-messages">${t('слова соболезнования')}</a>
+      </p>
+    </div>
   </div>`;
 }
 
@@ -1447,16 +1458,19 @@ function renderHome(){
       <h2>${t('Как это работает')}</h2>
       <div class="home-how-grid">
         <div class="home-how-step">
+          <div class="icon-badge">${badgeIconSvg('gift', BADGE_ICON_COLOR)}</div>
           <span class="home-how-num">01</span>
           <div class="home-how-title">${t('Выберите повод')}</div>
           <div class="home-how-text">${t('День рождения, любовь, спасибо, поддержка — под каждый свой тон и набор цветов.')}</div>
         </div>
         <div class="home-how-step">
+          <div class="icon-badge">${badgeIconSvg('sprout', BADGE_ICON_COLOR)}</div>
           <span class="home-how-num">02</span>
           <div class="home-how-title">${t('Соберите букет')}</div>
           <div class="home-how-text">${t('Ваза, цветы, лента, конверт и фон — на свой вкус, за пару минут.')}</div>
         </div>
         <div class="home-how-step">
+          <div class="icon-badge">${badgeIconSvg('envelope', BADGE_ICON_COLOR)}</div>
           <span class="home-how-num">03</span>
           <div class="home-how-title">${t('Отправьте ссылкой')}</div>
           <div class="home-how-text">${t('Получатель откроет её как настоящую открытку — с разворотом и цветением, без установки приложений.')}</div>
@@ -1774,6 +1788,15 @@ function mountInlineAd(slotId){
 }
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout', sympathy:'leaf'};
+// Цвет декоративных бейджей вне контекста повода (см. badgeIconSvg) — тот же
+// оттенок, что и CSS-переменная --rose. Литерал, а не var(--rose): значения
+// внутри inline-SVG собираются в JS до вставки в DOM, откуда CSS-переменные
+// не читаются напрямую (нет прецедента такого в проекте — остальные цвета
+// иконок тоже всегда приходят готовым hex, см. OCCASIONS). --rose — один из
+// фирменных акцентов, не меняющихся между светлой/тёмной темой (см.
+// комментарий у :root[data-theme="dark"] в main.css), так что литерал тут
+// не "разъедется" с темой.
+const BADGE_ICON_COLOR = '#C97B86';
 // Сами фигуры (в системе координат 0..16) вынесены отдельно от occasionIconSvg —
 // нужны в двух местах: маленькая иконка повода (чипы, подпись под карточкой)
 // и рассыпанный узор на карточках-примерах на витрине (см. stagePatternSvg).
@@ -1788,12 +1811,24 @@ function iconShapeMarkup(name, color){
     you:`<circle cx="8" cy="4.2" r="2.3" fill="${color}"/><path d="M8 6.8C5.2 6.8 3.5 9 3.8 12.5L4.6 15L11.4 15L12.2 12.5C12.5 9 10.8 6.8 8 6.8Z" fill="${color}"/>`,
     feather:`<path d="M13 2.2C9.4 3 5.6 6.6 3.4 12.6M13 2.2C11.2 5 9.4 6.8 6.6 8.6M13 2.2C10.4 4 8.4 5 5.6 5.8" fill="none" stroke="${color}" stroke-width="1.1" stroke-linecap="round"/>`,
     sprout:`<circle cx="8" cy="8" r="1.6" fill="#B98A4A"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="${8+Math.cos(a*Math.PI/180)*4.2}" cy="${8+Math.sin(a*Math.PI/180)*4.2}" rx="2.6" ry="1.7" fill="${color}" transform="rotate(${a} ${8+Math.cos(a*Math.PI/180)*4.2} ${8+Math.sin(a*Math.PI/180)*4.2})"/>`).join('')}`,
-    leaf:`<path d="M8 13.6C4 13.2 2.3 9.4 3.4 5C5 5.4 6.8 6.6 8 9C8 5.8 9.7 3.8 12.7 2.4C14.5 6.6 13 12.2 8.4 13.5C8.3 13.55 8.15 13.58 8 13.6Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 13C8 9.6 8.4 6.8 12 3" fill="none" stroke="${color}" stroke-width="1" stroke-linecap="round" opacity=".55"/>`
+    leaf:`<path d="M8 13.6C4 13.2 2.3 9.4 3.4 5C5 5.4 6.8 6.6 8 9C8 5.8 9.7 3.8 12.7 2.4C14.5 6.6 13 12.2 8.4 13.5C8.3 13.55 8.15 13.58 8 13.6Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 13C8 9.6 8.4 6.8 12 3" fill="none" stroke="${color}" stroke-width="1" stroke-linecap="round" opacity=".55"/>`,
+    // Не привязан ни к одному поводу (нет в OCCASION_ICON) — используется
+    // только как самостоятельная декоративная иконка "отправки" (см.
+    // badgeIconSvg/шаг "Отправьте ссылкой" на главной).
+    envelope:`<rect x="1.6" y="3.6" width="12.8" height="9" rx="1.2" fill="none" stroke="${color}" stroke-width="1.2"/><path d="M2.2 4.3L8 9L13.8 4.3" fill="none" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>`
   };
   return paths[name] || '';
 }
 function occasionIconSvg(id, color){
   return `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">${iconShapeMarkup(OCCASION_ICON[id], color)}</svg>`;
+}
+// Та же нарисованная вручную "азбука" фигур, что и у occasionIconSvg, но не
+// привязана к конкретному поводу — для декоративных бейджей в местах, где
+// иконка иллюстрирует шаг/ответ, а не конкретный повод ("Как это работает"
+// и карточки FAQ в aboutSectionHtml). Крупнее (24×24 по умолчанию), но та же
+// координатная сетка 0..16, что и у мелких иконок — контур не "плывёт".
+function badgeIconSvg(name, color, size = 24){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 16 16" aria-hidden="true">${iconShapeMarkup(name, color)}</svg>`;
 }
 // Рассыпанные по кольцу вдоль краёв сцены иконки (см. homeExampleCardHtml) —
 // фиксированные координаты/поворот/размер, а не Math.random(): иначе узор
