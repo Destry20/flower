@@ -176,6 +176,16 @@ router.delete('/groups/:shortId', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Ручной снимок базы "прямо сейчас" — независим от ежедневной автоотправки
+// на почту (см. server/backup.js), не влияет на её отсчёт (lastBackupAt тут
+// намеренно не трогаем: это разовое скачивание для админа, а не замена
+// расписания).
+router.get('/backup', requireAdmin, (req, res) => {
+  const dateStr = new Date().toISOString().slice(0, 10);
+  res.set('Content-Disposition', `attachment; filename="db-backup-${dateStr}.json"`);
+  res.type('application/json').send(db.getDbSnapshot());
+});
+
 router.post('/site-status', requireAdmin, (req, res) => {
   const { enabled } = req.body || {};
   db.setSiteEnabled(!!enabled);

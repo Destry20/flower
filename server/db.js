@@ -301,6 +301,24 @@ function setSiteEnabled(enabled){
   persist();
 }
 
+/* ---------------- admin: backup ---------------- */
+
+// Полный снимок базы для бэкапа (скачивание из админки и авторассылка на
+// почту — см. server/backup.js) — тот же файл, что реально лежит на диске,
+// сериализуем заново из живых данных, а не читаем DB_FILE, чтобы не поймать
+// файл в процессе записи (persist() пишет через tmp+rename, но незачем
+// зависеть от этого при экспорте).
+function getDbSnapshot(){
+  return JSON.stringify(data, null, 2);
+}
+function getLastBackupAt(){
+  return data.meta.lastBackupAt || null;
+}
+function setLastBackupAt(ts){
+  data.meta.lastBackupAt = ts;
+  persist();
+}
+
 /* ---------------- admin: traffic ---------------- */
 
 function dayKey(ts){
@@ -582,5 +600,6 @@ module.exports = {
   getCounts, listRecentUsers, listRecentCards, listRecentGroupCards,
   adminDeleteCard, adminDeleteGroupCard, adminDeleteUser,
   getAdminTotp, setAdminTotpPending, confirmAdminTotp, disableAdminTotp,
-  getCardsCreatedTotal, incrementCardsCreated
+  getCardsCreatedTotal, incrementCardsCreated,
+  getDbSnapshot, getLastBackupAt, setLastBackupAt
 };

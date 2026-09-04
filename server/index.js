@@ -15,6 +15,7 @@ const shareRoutes = require('./routes/share');
 const groupRoutes = require('./routes/group');
 const statsRoutes = require('./routes/stats');
 const db = require('./db');
+const { startBackupScheduler } = require('./backup');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
 const { tServer, pickLang } = require('./i18n');
 
@@ -320,4 +321,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`VivoRose запущен: http://localhost:${PORT}`);
+  startBackupScheduler();
 });

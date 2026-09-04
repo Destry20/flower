@@ -254,6 +254,14 @@ $('logoutBtn').addEventListener('click', async () => {
   showLogin();
 });
 
+$('downloadBackupBtn').addEventListener('click', () => {
+  // Обычная навигация (не fetch+blob) — так браузер сам приложит куку
+  // vr_admin_token (credentials: same-origin в api() тут не нужен, это не
+  // XHR) и сам покажет системный "Сохранить как" благодаря
+  // Content-Disposition: attachment на /api/admin/backup.
+  window.open('/api/admin/backup', '_blank');
+});
+
 $('toggleSiteBtn').addEventListener('click', async () => {
   const next = !currentSiteEnabled;
   const msg = next
