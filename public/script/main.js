@@ -107,6 +107,7 @@ const EN_STRINGS = {
   'Войдите в аккаунт, чтобы открытка сохранялась без срока и не потерялась.': 'Log in to keep the card saved indefinitely so it doesn\'t get lost.',
   'Мои открытки': 'My cards',
   'Написать нам': 'Contact us',
+  'Поддержать проект': 'Support the project',
   'Блог': 'Blog',
   'Включить светлую тему': 'Switch to light theme',
   'Включить тёмную тему': 'Switch to dark theme',
@@ -2087,7 +2088,7 @@ function footerHtml(){
   // /blog(/en) — реальный путь вне SPA (статические файлы, см. public/blog/),
   // поэтому обычная ссылка, а не хэш-роут.
   const blogHref = uiLang === 'ru' ? '/blog/' : '/blog/en/';
-  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="${blogHref}">${t('Блог')}</a> · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a>`;
+  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="${blogHref}">${t('Блог')}</a> · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a> · <a href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">☕ ${t('Поддержать проект')}</a>`;
 }
 
 // Оба рекламных iframe (#inlineAdRow, см. index.html — нативный + баннер
