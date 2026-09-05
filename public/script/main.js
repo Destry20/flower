@@ -959,7 +959,7 @@ function leafSpray(cx, tieY, color){
 }
 
 function vaseSvg(type, cx, topY){
-  const c = {A:{fill:'#C97B5A', dark:'#9B5738'}, B:{fill:'#EDE7DA', dark:'#B9AF9B'}, C:{fill:'#DCC9A3', dark:'#B39B6D'}}[type] || {fill:'#C97B5A', dark:'#9B5738'};
+  const c = {A:{fill:'#C97B5A', dark:'#9B5738'}, B:{fill:'#DCEAEE', dark:'#6E98A2'}, C:{fill:'#DCC9A3', dark:'#B39B6D'}}[type] || {fill:'#C97B5A', dark:'#9B5738'};
   if(type==='A'){
     // мягкий блик слева и тень справа поверх глины — без них ваза читалась плоским пятном
     return `<path d="M ${cx-46} ${topY} C ${cx-52} ${topY+55} ${cx-38} ${topY+90} ${cx} ${topY+92} C ${cx+38} ${topY+90} ${cx+52} ${topY+55} ${cx+46} ${topY}
@@ -970,36 +970,54 @@ function vaseSvg(type, cx, topY){
       <ellipse cx="${cx}" cy="${topY-6}" rx="29" ry="5" fill="${darken(c.fill,12)}" opacity=".3"/>`;
   }
   if(type==='B'){
-    // лёгкий тон "воды" у дна + пара стеклянных бликов — сразу читается как стекло, не пластик
-    return `<path d="M ${cx-34} ${topY} L ${cx-30} ${topY+95} L ${cx+30} ${topY+95} L ${cx+34} ${topY} Z" fill="${c.fill}" opacity=".5" stroke="${c.dark}" stroke-width="1"/>
-      <path d="M ${cx-27} ${topY+68} L ${cx-25} ${topY+92} L ${cx+25} ${topY+92} L ${cx+27} ${topY+68} Z" fill="#BFDCE6" opacity=".3"/>
-      <path d="M ${cx-24} ${topY+6} L ${cx-20} ${topY+80}" stroke="#FFFFFF" stroke-width="3" opacity=".45" stroke-linecap="round" fill="none"/>
-      <path d="M ${cx+16} ${topY+14} L ${cx+13} ${topY+60}" stroke="#FFFFFF" stroke-width="1.6" opacity=".3" stroke-linecap="round" fill="none"/>
-      <ellipse cx="${cx}" cy="${topY}" rx="34" ry="7" fill="${lighten(c.fill,10)}" opacity=".7" stroke="${c.dark}" stroke-width="1"/>`;
+    // Стеклянная — раньше была той же прямой трапецией, что и мраморная, только
+    // бледнее, из-за чего на маленьком чипе обе читались одним пятном. Теперь
+    // отдельный силуэт (мягкий "бочонок" вместо прямых граней) + более тёмный
+    // холодный контур, чтобы ваза не растворялась в кремовом фоне, + заметный
+    // тон "воды" у дна вместо почти прозрачного прежнего.
+    return `<path d="M ${cx-32} ${topY} C ${cx-38} ${topY+22} ${cx-36} ${topY+70} ${cx-28} ${topY+92}
+      L ${cx+28} ${topY+92} C ${cx+36} ${topY+70} ${cx+38} ${topY+22} ${cx+32} ${topY} Z" fill="${c.fill}" opacity=".62" stroke="${c.dark}" stroke-width="1.4"/>
+      <path d="M ${cx-30} ${topY+62} C ${cx-32} ${topY+78} ${cx-30} ${topY+90} ${cx-26} ${topY+92} L ${cx+26} ${topY+92} C ${cx+30} ${topY+90} ${cx+32} ${topY+78} ${cx+30} ${topY+62} Z" fill="#8FC4D2" opacity=".42"/>
+      <path d="M ${cx-22} ${topY+8} C ${cx-26} ${topY+35} ${cx-24} ${topY+65} ${cx-18} ${topY+82}" stroke="#FFFFFF" stroke-width="4" opacity=".6" stroke-linecap="round" fill="none"/>
+      <path d="M ${cx+15} ${topY+14} C ${cx+13} ${topY+35} ${cx+14} ${topY+55} ${cx+11} ${topY+66}" stroke="#FFFFFF" stroke-width="2" opacity=".4" stroke-linecap="round" fill="none"/>
+      <ellipse cx="${cx}" cy="${topY}" rx="32" ry="7" fill="${lighten(c.fill,12)}" opacity=".85" stroke="${c.dark}" stroke-width="1.4"/>
+      <ellipse cx="${cx}" cy="${topY-1.3}" rx="32" ry="7" fill="none" stroke="#FFFFFF" stroke-width=".8" opacity=".5"/>`;
   }
   if(type==='D'){
-    // мраморная — прямые грани, тонкие "прожилки" и глянцевый блик, без цветного fill из карты выше
-    return `<path d="M ${cx-40} ${topY} L ${cx-34} ${topY+92} L ${cx+34} ${topY+92} L ${cx+40} ${topY} Z" fill="#EDEBE4" stroke="#B7B2A6" stroke-width="1"/>
-      <path d="M ${cx-30} ${topY+15} Q ${cx} ${topY+40} ${cx+18} ${topY+70}" stroke="#C9C2B4" stroke-width="1" fill="none" opacity=".7"/>
-      <path d="M ${cx+25} ${topY+10} Q ${cx+10} ${topY+50} ${cx-15} ${topY+85}" stroke="#C9C2B4" stroke-width="1" fill="none" opacity=".5"/>
-      <path d="M ${cx-22} ${topY+8} L ${cx-16} ${topY+70}" stroke="#FFFFFF" stroke-width="3" opacity=".4" stroke-linecap="round"/>
-      <ellipse cx="${cx}" cy="${topY}" rx="40" ry="8" fill="#F5F3ED" stroke="#B7B2A6" stroke-width="1"/>`;
+    // мраморная — прямые грани урны + точёная нога-пьедестал (отличает силуэт
+    // от стеклянной), два тона прожилок и более тёмный контур вместо прежнего
+    // почти-в-цвет-заливки, который стирал вазу на светлом фоне
+    return `<path d="M ${cx-40} ${topY} L ${cx-33} ${topY+80} L ${cx+33} ${topY+80} L ${cx+40} ${topY} Z" fill="#EDEBE4" stroke="#8C8578" stroke-width="1.3"/>
+      <ellipse cx="${cx}" cy="${topY+82}" rx="30" ry="6" fill="#E2DED3" stroke="#8C8578" stroke-width="1.1"/>
+      <rect x="${cx-22}" y="${topY+82}" width="44" height="9" rx="2" fill="#DED9CB" stroke="#8C8578" stroke-width="1.1"/>
+      <path d="M ${cx-28} ${topY+12} Q ${cx-4} ${topY+38} ${cx+16} ${topY+64}" stroke="#9C9284" stroke-width="1.3" fill="none" opacity=".8"/>
+      <path d="M ${cx+24} ${topY+8} Q ${cx+8} ${topY+45} ${cx-14} ${topY+76}" stroke="#B8B0A0" stroke-width="1.1" fill="none" opacity=".6"/>
+      <path d="M ${cx-20} ${topY+8} L ${cx-14} ${topY+62}" stroke="#FFFFFF" stroke-width="3" opacity=".45" stroke-linecap="round"/>
+      <ellipse cx="${cx}" cy="${topY}" rx="40" ry="8" fill="#F5F3ED" stroke="#8C8578" stroke-width="1.2"/>`;
   }
   if(type==='E'){
-    // плетёная корзина — отдельно от карты цветов вверху (как и мраморная):
-    // это не гладкая заливка, а "полосы" плетения, изогнутые дугой, чтобы
-    // читаться как обхват вокруг круглой корзины, а не ряд прямых линий
-    const basket = '#C99A5B', basketDark = '#8F6B36', basketLight = lighten('#C99A5B', 20);
+    // плетёная корзина — прежние полосы плетения были на opacity .28, то есть
+    // почти невидимы, корзина читалась плоским коричневым трапецоидом. Теперь
+    // у каждой полосы есть тень+блик (это и даёт эффект "внахлёст", как у
+    // настоящего плетения), плюс вертикальные рёбра для перекрёстной фактуры.
+    const basket = '#C99A5B', basketDark = '#7A5A2E', basketDeep = '#5E441F', basketLight = lighten('#C99A5B', 22);
     let weave = '';
     for(let i=0;i<7;i++){
       const yy = topY + 9 + i*11.5;
       const wRatio = 1 - (i/7)*0.12; // корзина чуть сужается книзу — полосы тоже короче
-      weave += `<path d="M ${cx-39*wRatio} ${yy} Q ${cx} ${yy+3} ${cx+39*wRatio} ${yy}" fill="none" stroke="${basketDark}" stroke-width="2.6" opacity=".28" stroke-linecap="round"/>`;
+      weave += `<path d="M ${cx-39*wRatio} ${yy} Q ${cx} ${yy+3} ${cx+39*wRatio} ${yy}" fill="none" stroke="${basketDeep}" stroke-width="3.2" opacity=".42" stroke-linecap="round"/>`;
+      weave += `<path d="M ${cx-39*wRatio} ${yy-2.4} Q ${cx} ${yy+.6} ${cx+39*wRatio} ${yy-2.4}" fill="none" stroke="${basketLight}" stroke-width="1.4" opacity=".55" stroke-linecap="round"/>`;
     }
-    return `<path d="M ${cx-40} ${topY+2} L ${cx-30} ${topY+90} L ${cx+30} ${topY+90} L ${cx+40} ${topY+2} Z" fill="${basket}" stroke="${basketDark}" stroke-width="1"/>
+    let ribs = '';
+    for(let i=-2;i<=2;i++){
+      const frac = i/2.4;
+      ribs += `<path d="M ${cx+frac*36} ${topY+6} L ${cx+frac*27} ${topY+88}" stroke="${basketDark}" stroke-width="1" opacity=".16"/>`;
+    }
+    return `<path d="M ${cx-40} ${topY+2} L ${cx-30} ${topY+90} L ${cx+30} ${topY+90} L ${cx+40} ${topY+2} Z" fill="${basket}" stroke="${basketDark}" stroke-width="1.3"/>
+      ${ribs}
       ${weave}
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="${basketLight}" stroke="${basketDark}" stroke-width="1.5"/>
-      <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="none" stroke="${basketDark}" stroke-width=".7" opacity=".5"/>`;
+      <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="none" stroke="${basketDeep}" stroke-width=".8" opacity=".5"/>`;
   }
   // крафтовая — складки бумаги и верхняя светлая полоса вместо ровного прямоугольника
   return `<rect x="${cx-38}" y="${topY-4}" width="76" height="88" rx="6" fill="${c.fill}" stroke="${c.dark}" stroke-width="1"/>
@@ -1894,12 +1912,13 @@ function renderCreator(){
             ${stagePatternSvg(OCCASION_ICON[occ.id], previewPatternColor, previewPatternOpacity)}
             <div class="preview-card">
               <div class="preview-occasion-band" id="pvBand" style="background:${occ.color}">${tr(occ.stamp)}</div>
-              <div class="preview-bouquet" id="pvBouquet"></div>
+              <div class="preview-bouquet-wrap" id="pvBouquetWrap"><div class="preview-bouquet" id="pvBouquet"></div></div>
               <div class="preview-msg">
                 <div class="to" id="pvTo"></div>
                 <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
                 <div class="from" id="pvFrom"></div>
               </div>
+              <div class="preview-envelope-overlay" id="pvEnvelopeOverlay" aria-hidden="true">${envelopeSvg(occ.color, state.envelope, 150, 108)}</div>
             </div>
             <button class="pv-replay" onclick="replayPreview()">${t('↻ Показать анимацию открытия')}</button>
             <div class="preview-note">${t('Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.')}</div>
@@ -2223,9 +2242,9 @@ function themeIconSvg(theme){
 
 function vaseThumbSvg(type){
   if(type==='A') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M6 6C4 18 6 32 17 32C28 32 30 18 28 6L23 3L11 3Z" fill="#C97B5A" stroke="#9B5738" stroke-width="1"/><ellipse cx="17" cy="6" rx="6" ry="1.6" fill="#E3A583"/></svg>`;
-  if(type==='B') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M10 3L8 32L26 32L24 3Z" fill="#EDE7DA" opacity=".55" stroke="#B9AF9B" stroke-width="1"/><ellipse cx="17" cy="3" rx="7" ry="1.6" fill="#F5F1E6" stroke="#B9AF9B" stroke-width=".8"/></svg>`;
-  if(type==='D') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#EDEBE4" stroke="#B7B2A6" stroke-width="1"/><path d="M10 14Q17 20 20 28" stroke="#C9C2B4" stroke-width="1" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#F5F3ED" stroke="#B7B2A6" stroke-width="1"/></svg>`;
-  if(type==='E') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#C99A5B" stroke="#8F6B36" stroke-width="1"/><path d="M8 15Q17 17.5 26 15" stroke="#8F6B36" stroke-width="1.2" opacity=".4" fill="none"/><path d="M7.3 22.5Q17 25 26.7 22.5" stroke="#8F6B36" stroke-width="1.2" opacity=".4" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#DDB876" stroke="#8F6B36" stroke-width="1"/></svg>`;
+  if(type==='B') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M11 4C8 12 8 26 10 32L24 32C26 26 26 12 23 4Z" fill="#DCEAEE" opacity=".68" stroke="#6E98A2" stroke-width="1.2"/><path d="M10.5 22C10 26 10.5 30 11.5 32L22.5 32C23.5 30 24 26 23.5 22Z" fill="#8FC4D2" opacity=".4"/><path d="M13 8C11.5 14 11.5 22 12.5 29" stroke="#FFFFFF" stroke-width="1.6" opacity=".65" stroke-linecap="round" fill="none"/><ellipse cx="17" cy="4" rx="6.5" ry="1.7" fill="#EFF7F8" stroke="#6E98A2" stroke-width="1"/></svg>`;
+  if(type==='D') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M9 8L7 28L27 28L25 8Z" fill="#EDEBE4" stroke="#8C8578" stroke-width="1.2"/><rect x="10" y="28" width="14" height="4" rx="1" fill="#DED9CB" stroke="#8C8578" stroke-width="1"/><path d="M11 13Q17 20 20 26" stroke="#9C9284" stroke-width="1.2" fill="none" opacity=".8"/><path d="M22 12Q17 20 14 27" stroke="#B8B0A0" stroke-width="1" fill="none" opacity=".55"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#F5F3ED" stroke="#8C8578" stroke-width="1.1"/></svg>`;
+  if(type==='E') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#C99A5B" stroke="#7A5A2E" stroke-width="1.2"/><path d="M13 9L11.6 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M21 9L22.4 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M8 15Q17 18 26 15" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><path d="M7.3 22.5Q17 25.5 26.7 22.5" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#DDB876" stroke="#7A5A2E" stroke-width="1.2"/></svg>`;
   return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="9" width="22" height="23" rx="3" fill="#DCC9A3" stroke="#B39B6D" stroke-width="1"/><rect x="5" y="4" width="24" height="7" rx="2" fill="#EAD9B0" stroke="#B39B6D" stroke-width="1"/></svg>`;
 }
 
@@ -2393,11 +2412,48 @@ function randomizeBouquet(){
   showToast(t('Собрали для вас новый вариант'));
 }
 
+// Раньше кнопка просто дёргала букет (scale-пульс) поверх уже открытой
+// карточки — превью никогда не показывало то, что реально увидит получатель
+// (конверт, затем распускание букета и текста по очереди, частицы). Теперь
+// это честная мини-версия настоящего открытия: карточка на миг гасится и
+// накрывается конвертом (мгновенно, без transition — как "сброс" перед
+// повтором), а затем проигрывается та же последовательность, что и в
+// openCard() для реального получателя.
+let previewReplayTimers = [];
 function replayPreview(){
-  const el = document.getElementById('pvBouquet');
-  el.classList.remove('pv-bloom');
-  void el.offsetWidth;
-  el.classList.add('pv-bloom');
+  const overlay = document.getElementById('pvEnvelopeOverlay');
+  const bouquetWrap = document.getElementById('pvBouquetWrap');
+  const to = document.getElementById('pvTo');
+  const text = document.getElementById('pvText');
+  const from = document.getElementById('pvFrom');
+  const stage = document.getElementById('previewStage');
+  if(!overlay || !bouquetWrap) return;
+
+  // Повторный клик посреди уже идущей анимации отменяет предыдущую очередь
+  // таймеров, а не накладывает два "открытия" друг на друга.
+  previewReplayTimers.forEach(clearTimeout);
+  previewReplayTimers = [];
+
+  [bouquetWrap, to, text, from].forEach(el => { el.style.transition = 'none'; el.style.opacity = '0'; });
+  bouquetWrap.style.transform = 'scale(.85)';
+  overlay.classList.add('show');
+
+  previewReplayTimers.push(setTimeout(() => {
+    overlay.classList.remove('show');
+    [bouquetWrap, to, text, from].forEach(el => { el.style.transition = ''; });
+    // форсируем reflow между снятием transition:none и заданием новой цели —
+    // иначе браузер схлопывает оба изменения в один кадр и переход не играет
+    // (тот же приём, что и в expandPanelBody/collapsePanelBody)
+    void bouquetWrap.offsetWidth;
+    bouquetWrap.style.opacity = '1';
+    bouquetWrap.style.transform = 'scale(1)';
+    const occ = occasionById(state.occasion);
+    if(state.music) playChime(state.melody);
+    if(stage) dropParticles(occ.anim, stage);
+  }, 500));
+
+  previewReplayTimers.push(setTimeout(() => { to.style.opacity = '.6'; text.style.opacity = '1'; }, 950));
+  previewReplayTimers.push(setTimeout(() => { from.style.opacity = '.6'; }, 1150));
 }
 
 /* ====================== SAVE + SHARE (без сервера — данные лежат прямо в ссылке) ====================== */
@@ -3137,7 +3193,12 @@ function openCard(withMusic, occasionId, melodyId){
 // petals (мягкий, по умолчанию), hearts (Любовь), confetti (праздничные поводы).
 // Раньше был только один жёстко зашитый вариант (лепестки) — теперь форма/цвет/
 // траектория частицы зависят от style, а сама механика (создать → уронить → убрать) общая.
-function dropParticles(style){
+// container необязателен: без него частицы летят на весь экран (position:fixed,
+// как при реальном открытии открытки во весь viewport). С container (например,
+// превью в конструкторе, где карточка — лишь часть страницы) частицы падают
+// внутри его границ (position:absolute, container должен быть position:relative) —
+// иначе "открытие" засыпало бы конфетти всю страницу конструктора, а не карточку.
+function dropParticles(style, container){
   style = style || 'petals';
   const presets = {
     petals: {
@@ -3162,13 +3223,22 @@ function dropParticles(style){
       const el=document.createElement('div');
       el.className='petal';
       const c=p.colors[i%p.colors.length];
-      el.style.left = Math.random()*100+'vw';
       el.setAttribute('aria-hidden','true');
       el.innerHTML=p.shape(c);
       el.style.transition=`transform ${p.duration}s ease-in, opacity ${p.duration}s ease-in`;
-      document.body.appendChild(el);
+      let fallDistance;
+      if(container){
+        el.style.position = 'absolute';
+        el.style.left = Math.random()*100+'%';
+        fallDistance = container.clientHeight + 40;
+        container.appendChild(el);
+      } else {
+        el.style.left = Math.random()*100+'vw';
+        fallDistance = window.innerHeight + 40;
+        document.body.appendChild(el);
+      }
       requestAnimationFrame(()=>{
-        el.style.transform=`translateY(${window.innerHeight+40}px) rotate(${p.spin()}deg)`;
+        el.style.transform=`translateY(${fallDistance}px) rotate(${p.spin()}deg)`;
         el.style.opacity='0';
       });
       setTimeout(()=>el.remove(), p.duration*1000+100);
