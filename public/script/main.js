@@ -471,10 +471,12 @@ const VASES = [
   {id:'C', label:{ru:'Крафтовая',en:'Kraft-wrapped'}},
   {id:'D', label:{ru:'Мраморная',en:'Marble'}},
   {id:'E', label:{ru:'Плетёная корзина',en:'Wicker basket'}},
-  // Единственный вариант без сосуда вообще — стебли просто обёрнуты бумагой
-  // и перевязаны (см. vaseSvg 'F'). До этого все пять "ваз" были именно
-  // сосудами с цветами внутри — самого букета как отдельного образа не было.
-  {id:'F', label:{ru:'Букет без вазы',en:'Wrapped bouquet, no vase'}}
+  // Варианты без сосуда вообще — стебли просто обёрнуты бумагой и перевязаны
+  // (см. PAPER_WRAP_PALETTES/paperWrapSvg). До этого все пять "ваз" были
+  // именно сосудами с цветами внутри — самого букета не было совсем.
+  {id:'F', label:{ru:'Букет, крафт',en:'Wrapped bouquet, kraft paper'}},
+  {id:'G', label:{ru:'Букет, белая бумага',en:'Wrapped bouquet, white paper'}},
+  {id:'H', label:{ru:'Букет, чёрная бумага',en:'Wrapped bouquet, black paper'}}
 ];
 
 const RIBBONS = ['#B98A4A','#C97B86','#4B2E3D','#8CA087','#F2E1C8','#7e4ab9'];
@@ -962,8 +964,41 @@ function leafSpray(cx, tieY, color){
   return leaf(cx-15, tieY-1, -58, 21) + leaf(cx+15, tieY-1, 58, 21) + leaf(cx-6, tieY-5, -16, 25) + leaf(cx+7, tieY-7, 14, 24);
 }
 
+// Букет без вазы — сосуда нет вообще: бумага обёрнута вокруг стеблей конусом
+// и завязана лентой прямо у выхода стеблей (там же, где у остальных ваз
+// горлышко). Первая версия была плоской треугольной трапецией с ровным
+// мелким зигзагом сверху — читалась как корона/пила, а не как мятая бумага
+// (см. настоящие фото букетов: раструб всегда изогнутый, а нахлёст бумаги
+// сверху — один-два крупных неровных залома, не частый зубчатый ряд). Здесь
+// силуэт — мягкий раструб на кривых вместо прямых граней, асимметричный
+// нахлёст сверху и тёмный просвет под ним — намёк, что внутри пусто.
+// Три сорта бумаги (крафт/белая/чёрная) переиспользуют один и тот же контур —
+// разный только набор из 4 тонов, поэтому вынесено в отдельную функцию.
+function paperWrapSvg(cx, topY, paper, paperDark, paperDeep, paperLight){
+  return `<path d="M ${cx-4} ${topY+86}
+      C ${cx-22} ${topY+58} ${cx-40} ${topY+30} ${cx-42} ${topY+10}
+      C ${cx-34} ${topY+2} ${cx-24} ${topY+9} ${cx-15} ${topY-1}
+      C ${cx-6} ${topY-9} ${cx+2} ${topY+3} ${cx+11} ${topY-4}
+      C ${cx+21} ${topY-12} ${cx+34} ${topY-2} ${cx+40} ${topY+8}
+      C ${cx+40} ${topY+28} ${cx+22} ${topY+56} ${cx+4} ${topY+86} Z" fill="${paper}" stroke="${paperDark}" stroke-width="1.2"/>
+    <path d="M ${cx-15} ${topY+3} Q ${cx-2} ${topY+11} ${cx+12} ${topY-1}" fill="none" stroke="${paperDeep}" stroke-width="3" opacity=".3" stroke-linecap="round"/>
+    <path d="M ${cx-2} ${topY+84} C ${cx-16} ${topY+56} ${cx-28} ${topY+30} ${cx-28} ${topY+12}" stroke="${paperDark}" stroke-width="1" opacity=".4" fill="none"/>
+    <path d="M ${cx+2} ${topY+84} C ${cx+12} ${topY+54} ${cx+22} ${topY+30} ${cx+20} ${topY+10}" stroke="${paperDark}" stroke-width="1" opacity=".35" fill="none"/>
+    <path d="M ${cx-30} ${topY+9} Q ${cx-2} ${topY+1} ${cx+9} ${topY-2} Q ${cx+24} ${topY-6} ${cx+36} ${topY+7}" fill="none" stroke="${paperDeep}" stroke-width="1.6" opacity=".55"/>
+    <path d="M ${cx-14} ${topY+16} L ${cx-6} ${topY+62}" stroke="${paperLight}" stroke-width="4" opacity=".45" stroke-linecap="round"/>`;
+}
+const PAPER_WRAP_PALETTES = {
+  F: {paper:'#D9BD8C', dark:'#9C7A45', deep:'#6F5227', light:'#F0E2C0'},
+  G: {paper:'#F5F1E9', dark:'#B7AA8A', deep:'#8C7C57', light:'#FFFFFF'},
+  H: {paper:'#2E2A26', dark:'#655C50', deep:'#8A8074', light:'#EDE7DD'}
+};
+
 function vaseSvg(type, cx, topY){
   const c = {A:{fill:'#C97B5A', dark:'#9B5738'}, B:{fill:'#DCEAEE', dark:'#6E98A2'}, C:{fill:'#DCC9A3', dark:'#B39B6D'}}[type] || {fill:'#C97B5A', dark:'#9B5738'};
+  if(PAPER_WRAP_PALETTES[type]){
+    const p = PAPER_WRAP_PALETTES[type];
+    return paperWrapSvg(cx, topY, p.paper, p.dark, p.deep, p.light);
+  }
   if(type==='A'){
     // мягкий блик слева и тень справа поверх глины — без них ваза читалась плоским пятном
     return `<path d="M ${cx-46} ${topY} C ${cx-52} ${topY+55} ${cx-38} ${topY+90} ${cx} ${topY+92} C ${cx+38} ${topY+90} ${cx+52} ${topY+55} ${cx+46} ${topY}
@@ -1022,26 +1057,6 @@ function vaseSvg(type, cx, topY){
       ${weave}
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="${basketLight}" stroke="${basketDark}" stroke-width="1.5"/>
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="none" stroke="${basketDeep}" stroke-width=".8" opacity=".5"/>`;
-  }
-  if(type==='F'){
-    // Букет без вазы — все пять вариантов выше были сосудом с цветами внутри,
-    // тут его нет вообще: стебли просто обёрнуты бумагой в конус и перевязаны
-    // (лента — уже отдельный ribbonBow чуть выше). Конус сужается книзу к
-    // точке переwязки, а верхний край — не гладкий эллипс как у вазы, а
-    // ломаный, будто бумагу заминали руками.
-    const paper = '#EFDFC4', paperDark = '#C7A873', paperDeep = '#A67F45';
-    let topEdge = '';
-    for(let i=0;i<=8;i++){
-      const xx = cx - 44 + 11*i;
-      const yy = topY + (i%2===0 ? -6 : 2);
-      topEdge += `${xx.toFixed(1)},${yy} `;
-    }
-    return `<path d="M ${cx-8} ${topY+82} L ${cx-44} ${topY} L ${cx+44} ${topY} L ${cx+8} ${topY+82} Z" fill="${paper}" stroke="${paperDark}" stroke-width="1"/>
-      <path d="M ${cx-6} ${topY+80} L ${cx-30} ${topY+6}" stroke="${paperDark}" stroke-width="1" opacity=".35"/>
-      <path d="M ${cx} ${topY+82} L ${cx-2} ${topY+4}" stroke="${paperDark}" stroke-width="1" opacity=".3"/>
-      <path d="M ${cx+6} ${topY+80} L ${cx+28} ${topY+6}" stroke="${paperDark}" stroke-width="1" opacity=".35"/>
-      <path d="M ${cx-18} ${topY+12} L ${cx-9} ${topY+68}" stroke="${lighten(paper,16)}" stroke-width="4" opacity=".4" stroke-linecap="round"/>
-      <polyline points="${topEdge}" fill="none" stroke="${paperDeep}" stroke-width="1.4" stroke-linejoin="round"/>`;
   }
   // крафтовая — складки бумаги и верхняя светлая полоса вместо ровного прямоугольника
   return `<rect x="${cx-38}" y="${topY-4}" width="76" height="88" rx="6" fill="${c.fill}" stroke="${c.dark}" stroke-width="1"/>
@@ -2269,7 +2284,12 @@ function vaseThumbSvg(type){
   if(type==='B') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M11 4C8 12 8 26 10 32L24 32C26 26 26 12 23 4Z" fill="#DCEAEE" opacity=".68" stroke="#6E98A2" stroke-width="1.2"/><path d="M10.5 22C10 26 10.5 30 11.5 32L22.5 32C23.5 30 24 26 23.5 22Z" fill="#8FC4D2" opacity=".4"/><path d="M13 8C11.5 14 11.5 22 12.5 29" stroke="#FFFFFF" stroke-width="1.6" opacity=".65" stroke-linecap="round" fill="none"/><ellipse cx="17" cy="4" rx="6.5" ry="1.7" fill="#EFF7F8" stroke="#6E98A2" stroke-width="1"/></svg>`;
   if(type==='D') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M9 8L7 28L27 28L25 8Z" fill="#EDEBE4" stroke="#8C8578" stroke-width="1.2"/><rect x="10" y="28" width="14" height="4" rx="1" fill="#DED9CB" stroke="#8C8578" stroke-width="1"/><path d="M11 13Q17 20 20 26" stroke="#9C9284" stroke-width="1.2" fill="none" opacity=".8"/><path d="M22 12Q17 20 14 27" stroke="#B8B0A0" stroke-width="1" fill="none" opacity=".55"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#F5F3ED" stroke="#8C8578" stroke-width="1.1"/></svg>`;
   if(type==='E') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#C99A5B" stroke="#7A5A2E" stroke-width="1.2"/><path d="M13 9L11.6 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M21 9L22.4 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M8 15Q17 18 26 15" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><path d="M7.3 22.5Q17 25.5 26.7 22.5" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#DDB876" stroke="#7A5A2E" stroke-width="1.2"/></svg>`;
-  if(type==='F') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 30L6 7L28 7Z" fill="#EFDFC4" stroke="#C7A873" stroke-width="1.1"/><path d="M14 27L10 9" stroke="#C7A873" stroke-width="1" opacity=".4"/><path d="M20 27L24 9" stroke="#C7A873" stroke-width="1" opacity=".4"/><polyline points="6,7 9,4 12,7 15,4 18,7 21,4 24,7 27,4 28,7" fill="none" stroke="#A67F45" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+  if(PAPER_WRAP_PALETTES[type]){
+    // Та же форма, что и в полноразмерном букете (paperWrapSvg) — не отдельный
+    // упрощённый рисунок, просто вписана в маленький viewBox и смасштабирована.
+    const p = PAPER_WRAP_PALETTES[type];
+    return `<svg width="34" height="38" viewBox="0 0 82 98" aria-hidden="true">${paperWrapSvg(41, 12, p.paper, p.dark, p.deep, p.light)}</svg>`;
+  }
   return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="9" width="22" height="23" rx="3" fill="#DCC9A3" stroke="#B39B6D" stroke-width="1"/><rect x="5" y="4" width="24" height="7" rx="2" fill="#EAD9B0" stroke="#B39B6D" stroke-width="1"/></svg>`;
 }
 
