@@ -476,7 +476,7 @@ const VASES = [
   // именно сосудами с цветами внутри — самого букета не было совсем.
   {id:'F', label:{ru:'Букет, крафт',en:'Wrapped bouquet, kraft paper'}},
   {id:'G', label:{ru:'Букет, белая бумага',en:'Wrapped bouquet, white paper'}},
-  {id:'H', label:{ru:'Букет, чёрная бумага',en:'Wrapped bouquet, black paper'}}
+  {id:'H', label:{ru:'Букет, розовая бумага',en:'Wrapped bouquet, blush paper'}}
 ];
 
 const RIBBONS = ['#B98A4A','#C97B86','#4B2E3D','#8CA087','#F2E1C8','#7e4ab9'];
@@ -975,22 +975,35 @@ function leafSpray(cx, tieY, color){
 // Три сорта бумаги (крафт/белая/чёрная) переиспользуют один и тот же контур —
 // разный только набор из 4 тонов, поэтому вынесено в отдельную функцию.
 function paperWrapSvg(cx, topY, paper, paperDark, paperDeep, paperLight){
-  return `<path d="M ${cx-4} ${topY+86}
-      C ${cx-22} ${topY+58} ${cx-40} ${topY+30} ${cx-42} ${topY+10}
-      C ${cx-34} ${topY+2} ${cx-24} ${topY+9} ${cx-15} ${topY-1}
-      C ${cx-6} ${topY-9} ${cx+2} ${topY+3} ${cx+11} ${topY-4}
-      C ${cx+21} ${topY-12} ${cx+34} ${topY-2} ${cx+40} ${topY+8}
-      C ${cx+40} ${topY+28} ${cx+22} ${topY+56} ${cx+4} ${topY+86} Z" fill="${paper}" stroke="${paperDark}" stroke-width="1.2"/>
-    <path d="M ${cx-15} ${topY+3} Q ${cx-2} ${topY+11} ${cx+12} ${topY-1}" fill="none" stroke="${paperDeep}" stroke-width="3" opacity=".3" stroke-linecap="round"/>
-    <path d="M ${cx-2} ${topY+84} C ${cx-16} ${topY+56} ${cx-28} ${topY+30} ${cx-28} ${topY+12}" stroke="${paperDark}" stroke-width="1" opacity=".4" fill="none"/>
-    <path d="M ${cx+2} ${topY+84} C ${cx+12} ${topY+54} ${cx+22} ${topY+30} ${cx+20} ${topY+10}" stroke="${paperDark}" stroke-width="1" opacity=".35" fill="none"/>
-    <path d="M ${cx-30} ${topY+9} Q ${cx-2} ${topY+1} ${cx+9} ${topY-2} Q ${cx+24} ${topY-6} ${cx+36} ${topY+7}" fill="none" stroke="${paperDeep}" stroke-width="1.6" opacity=".55"/>
-    <path d="M ${cx-14} ${topY+16} L ${cx-6} ${topY+62}" stroke="${paperLight}" stroke-width="4" opacity=".45" stroke-linecap="round"/>`;
+  // v2: настоящие фото букетов без вазы (проверено на Wikimedia Commons)
+  // держат ленту не у широкого раструба, а заметно ниже, на "талии" обёртки
+  // (см. buildBouquetSVG — там же ниже сдвинут узел ленты для этих типов),
+  // а верхний край — не гладкая волна, а 2-3 крупных острых залома разной
+  // высоты вперемешку с проёмами, как у реально смятой/скрученной бумаги.
+  // Сама бумага почти прямая по бокам (не "бочонок", не "сердце") — раструб
+  // конуса, а не пузатый сосуд, чтобы силуэт не читался ещё одной вазой.
+  return `<path d="M ${cx-3} ${topY+86}
+      C ${cx-24} ${topY+55} ${cx-40} ${topY+25} ${cx-42} ${topY+6}
+      L ${cx-23} ${topY-9}
+      L ${cx-9} ${topY+5}
+      L ${cx+3} ${topY-15}
+      L ${cx+15} ${topY+1}
+      L ${cx+29} ${topY-6}
+      L ${cx+40} ${topY+6}
+      C ${cx+38} ${topY+26} ${cx+24} ${topY+56} ${cx+5} ${topY+86} Z" fill="${paper}" stroke="${paperDark}" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M ${cx-4} ${topY+84} C ${cx-18} ${topY+56} ${cx-28} ${topY+28} ${cx-27} ${topY+4}" stroke="${paperDark}" stroke-width="1" opacity=".4" fill="none"/>
+    <path d="M ${cx+2} ${topY+84} L ${cx+3} ${topY-14}" stroke="${paperDark}" stroke-width="1" opacity=".35" fill="none"/>
+    <path d="M ${cx+5} ${topY+84} C ${cx+16} ${topY+56} ${cx+22} ${topY+28} ${cx+22} ${topY+4}" stroke="${paperDark}" stroke-width="1" opacity=".3" fill="none"/>
+    <path d="M ${cx-16} ${topY+18} L ${cx-8} ${topY+64}" stroke="${paperLight}" stroke-width="4" opacity=".45" stroke-linecap="round"/>`;
 }
+// Крафт/белая/розовая — три сорта бумаги вместо одной, как и у остальных
+// "ваз" (материал разный, форма — общая, см. paperWrapSvg). Чёрная версия
+// первой итерации не прижилась (выглядела мрачно, не как подарочный букет) —
+// заменена на розовую: чаще всего встречается на настоящих фото букетов.
 const PAPER_WRAP_PALETTES = {
   F: {paper:'#D9BD8C', dark:'#9C7A45', deep:'#6F5227', light:'#F0E2C0'},
   G: {paper:'#F5F1E9', dark:'#B7AA8A', deep:'#8C7C57', light:'#FFFFFF'},
-  H: {paper:'#2E2A26', dark:'#655C50', deep:'#8A8074', light:'#EDE7DD'}
+  H: {paper:'#E9B8C4', dark:'#B96D82', deep:'#8C4A5C', light:'#FBE4EA'}
 };
 
 function vaseSvg(type, cx, topY){
@@ -1210,8 +1223,14 @@ function buildBouquetSVG(cfg, size){
 
   const vase = vaseSvg(cfg.vase, cx, vaseTopY);
   const leaves = n > 0 ? leafSpray(cx, tieY) : '';
-  const bow = ribbonBow(cx, vaseTopY-2, cfg.ribbon);
-  const charm = cfg.charm ? bouquetCharmSvg(cx, vaseTopY-2, cfg.occasion) : '';
+  // Для обычной вазы лента лежит у горлышка (vaseTopY-2 — там же, где у вазы
+  // рисуется сама кромка). У бумажного букета "горлышка" нет: широкий раструб
+  // как раз наверху, а перевязана бумага заметно ниже, на талии обёртки —
+  // иначе лента визуально стягивала бы самое широкое место конуса, что не
+  // имеет смысла (см. paperWrapSvg и настоящие фото букетов).
+  const knotY = PAPER_WRAP_PALETTES[cfg.vase] ? vaseTopY+40 : vaseTopY-2;
+  const bow = ribbonBow(cx, knotY, cfg.ribbon);
+  const charm = cfg.charm ? bouquetCharmSvg(cx, knotY, cfg.occasion) : '';
   // мягкая тень под вазой — без неё композиция выглядела "приклеенной" к верху холста
   const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94}" rx="46" ry="7" fill="#000000" opacity=".08"/>`;
   // Мягкая тень под каждой головкой цветка — раньше светлые/кремовые лепестки
@@ -2288,7 +2307,7 @@ function vaseThumbSvg(type){
     // Та же форма, что и в полноразмерном букете (paperWrapSvg) — не отдельный
     // упрощённый рисунок, просто вписана в маленький viewBox и смасштабирована.
     const p = PAPER_WRAP_PALETTES[type];
-    return `<svg width="34" height="38" viewBox="0 0 82 98" aria-hidden="true">${paperWrapSvg(41, 12, p.paper, p.dark, p.deep, p.light)}</svg>`;
+    return `<svg width="34" height="38" viewBox="0 0 82 103" aria-hidden="true">${paperWrapSvg(41, 16, p.paper, p.dark, p.deep, p.light)}</svg>`;
   }
   return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="9" width="22" height="23" rx="3" fill="#DCC9A3" stroke="#B39B6D" stroke-width="1"/><rect x="5" y="4" width="24" height="7" rx="2" fill="#EAD9B0" stroke="#B39B6D" stroke-width="1"/></svg>`;
 }
