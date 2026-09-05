@@ -1239,7 +1239,12 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
   background:var(--paper-deep); border:1px solid var(--line);
 }
 .article-cta p{margin-bottom:16px; opacity:.85;}
-.article-cta .btn{display:inline-block; text-decoration:none;}
+/* .legal-wrap a{color:var(--accent)} несколькими правилами выше — специфичнее
+   голого .btn-primary (класс+тег против одного класса) и побеждает его. Тут
+   это не просто "не тот оттенок": --accent в светлой теме равен --plum, то
+   есть ровно фону самой кнопки — подпись становится буквально невидимой,
+   а не просто блёкнет. color повторён явно, чтобы победить по специфичности. */
+.article-cta .btn{display:inline-block; text-decoration:none; color:var(--pale);}
 
 /* Хаб-страница блога (/blog, /blog/en) — список статей карточками, тот же
    визуальный язык, что и .wish-list (paper-deep фон, скруглённые углы), но
