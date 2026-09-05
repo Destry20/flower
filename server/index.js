@@ -106,7 +106,7 @@ app.use(attachUser);
 // и /group/<id>) — раньше засчитывался вообще любой GET без расширения файла,
 // из-за чего боты, сканирующие /.env, /.git/config и подобное, засоряли
 // статистику и "Recent activity" в админке вперемешку с реальными визитами.
-const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|congrats-card|support-card|just-because-card|sympathy-card|blog\/(en\/)?(birthday-wishes|thank-you-messages|love-messages|sympathy-messages))?$/;
+const REAL_PAGE_RE = /^\/((c|group)\/[A-Za-z0-9]+|birthday-card|love-card|thank-you-card|virtual-bouquet|congrats-card|support-card|just-because-card|sympathy-card|group-card|blog\/?|blog\/en\/?|blog\/(en\/)?(birthday-wishes|thank-you-messages|love-messages|sympathy-messages|congrats-wishes|support-words|just-because-messages))?$/;
 app.use((req, res, next) => {
   if(req.method === 'GET' && REAL_PAGE_RE.test(req.path)){
     db.recordVisit(req.path, req.get('user-agent'));
@@ -257,6 +257,14 @@ const SEO_PAGES = {
   '/sympathy-card': {
     ru: { title: 'Открытка с соболезнованиями и букетом · VivoRose', description: 'Соберите открытку с соболезнованиями и мягким на вид букетом, добавьте несколько тёплых слов — и отправьте одной ссылкой. Бесплатно, без регистрации.' },
     en: { title: 'A Sympathy Card With a Bouquet · VivoRose', description: 'Build a sympathy card with a gentle bouquet and a few kind words, and send it as one link. Free, no sign-up.' }
+  },
+  // Отдельный лендинг под открытку "всей компанией" (см. renderGroupLanding в
+  // main.js) — раньше у этой функции не было вообще никакой страницы под
+  // поисковый запрос, только сама форма создания за хэшем #group-new
+  // (не индексируется, требует входа в аккаунт).
+  '/group-card': {
+    ru: { title: 'Открытка от всей компании онлайн — общий букет · VivoRose', description: 'Отправьте ссылку — и каждый добавит своё имя, пожелание и один цветок. Букет соберётся из вклада всех участников. Бесплатно, без установки приложений.' },
+    en: { title: 'Group Card Online — Everyone Adds a Flower and a Wish · VivoRose', description: 'Send one link and let everyone add their name, a wish, and one flower — the bouquet grows from everyone\'s contribution. Free, no app to install.' }
   }
 };
 app.get(Object.keys(SEO_PAGES), (req, res, next) => {

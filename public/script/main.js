@@ -107,6 +107,7 @@ const EN_STRINGS = {
   'Войдите в аккаунт, чтобы открытка сохранялась без срока и не потерялась.': 'Log in to keep the card saved indefinitely so it doesn\'t get lost.',
   'Мои открытки': 'My cards',
   'Написать нам': 'Contact us',
+  'Блог': 'Blog',
   'Включить светлую тему': 'Switch to light theme',
   'Включить тёмную тему': 'Switch to dark theme',
   'Меню': 'Menu',
@@ -117,6 +118,20 @@ const EN_STRINGS = {
   'Вы задаёте основу — повод и вазу. Дальше отправьте ссылку остальным: каждый добавит своё имя, пожелание и один цветок. Букет соберётся из цветов всех участников — вы сами закроете приём подписей, когда решите, что открытка готова.':
     'You set the base — the occasion and vase. Then send the link to everyone else: each person adds their name, a message, and one flower. The bouquet grows from everyone’s flowers — you decide when to close it for signatures.',
   'Букет пока пуст — его наполнят цветами те, кто подпишет открытку': 'The bouquet starts empty — it fills up as people sign the card',
+  // Лендинг /group-card (renderGroupLanding) — у функции "открытка всей
+  // компанией" раньше не было отдельной страницы под поисковый запрос,
+  // только форма создания за хэшем #group-new (не индексируется, нужен вход).
+  'Открытка от всей компании — общий букет': 'A Group Card — One Bouquet From Everyone',
+  'Отправьте ссылку — и каждый добавит своё имя, пожелание и один цветок. Букет соберётся из вклада всех участников, а закрыть приём подписей сможете в любой момент.':
+    'Send one link — everyone adds their name, a wish, and one flower. The bouquet grows from everyone\'s contribution, and you close it whenever you\'re ready.',
+  'Создать общую открытку': 'Start a Group Card',
+  'Задайте основу': 'Set the basics',
+  'Выберите повод и вазу — это увидит каждый, кто подпишет открытку.': 'Pick an occasion and a vase — everyone who signs the card will see it.',
+  'Разошлите ссылку': 'Share the link',
+  'Каждый по ссылке добавляет своё имя, пожелание и один цветок — без регистрации.': 'Everyone adds their name, a wish, and one flower through the link — no account needed.',
+  'Закройте и отправьте': 'Close it and send',
+  'Букет растёт по мере того, как подписывают открытку. Закройте приём подписей, когда решите, что готово, и отправьте получателю.':
+    'The bouquet grows as people sign. Close it whenever you feel it\'s ready, then send it to the recipient.',
   'Кому': 'To',
   'Создать ссылку-приглашение': 'Create invite link',
   'Введите имя получателя': 'Enter the recipient’s name',
@@ -188,6 +203,9 @@ const EN_STRINGS = {
   'Не знаете, что написать? 26 нежных слов →': 'Not sure what to write? 26 tender words →',
   'Не знаете, что написать? 26 слов благодарности →': 'Not sure what to write? 26 thank-you messages →',
   'Не знаете, что написать? 24 слова соболезнования →': 'Not sure what to write? 24 words of sympathy →',
+  'Не знаете, что написать? 30 готовых поздравлений →': 'Not sure what to write? 30 ready-made congratulations →',
+  'Не знаете, что написать? 26 слов поддержки →': 'Not sure what to write? 26 words of support →',
+  'Не знаете, что написать? 28 тёплых слов →': 'Not sure what to write? 28 just-because messages →',
   'Открытка с соболезнованиями и букетом': 'A Sympathy Card With a Bouquet',
   'Когда трудно подобрать слова — соберите открытку с мягким букетом и тёплыми словами поддержки и отправьте её одной ссылкой.':
     'When words are hard to find, build a card with a gentle bouquet and a few kind words, and send it as one link.',
@@ -217,7 +235,11 @@ const EN_STRINGS = {
   'пожелания на день рождения': 'birthday wishes',
   'нежные слова о любви': 'tender love words',
   'слова благодарности': 'thank-you messages',
+  'слова поздравления': 'congratulations messages',
+  'слова поддержки': 'words of support',
+  'слова просто так': 'just-because messages',
   'слова соболезнования': 'words of sympathy',
+  'Открытка от всей компании': 'Group card',
   'Повод': 'Occasion',
   'задаёт тон открытки': 'sets the tone of the card',
   'Букет': 'Bouquet',
@@ -443,9 +465,9 @@ const SEO_LANDING_PAGES = {
   '/love-card': { occasion:'love', h1:'Виртуальная открытка с букетом — признание в любви', sub:'Соберите романтический букет, напишите то, что давно хотели сказать, и отправьте одной ссылкой. Открывается как настоящая открытка — с конвертом и цветением букета.', blogSlug:'love-messages', blogLabel:'Не знаете, что написать? 26 нежных слов →' },
   '/thank-you-card': { occasion:'thanks', h1:'Виртуальная открытка «Спасибо» с букетом цветов', sub:'Скажите спасибо не просто текстом, а живой открыткой с букетом. Соберите её за пару минут и отправьте одной ссылкой — бесплатно, без регистрации.', blogSlug:'thank-you-messages', blogLabel:'Не знаете, что написать? 26 слов благодарности →' },
   '/virtual-bouquet': { occasion:'foryou', h1:'Отправить виртуальный букет онлайн — бесплатно', sub:'Соберите букет из цветов, ленты и вазы на свой вкус, добавьте пару строк и отправьте одной ссылкой. Букет не завянет, а получатель откроет его как настоящую открытку.' },
-  '/congrats-card': { occasion:'congrats', h1:'Виртуальная открытка с поздравлением и букетом', sub:'Соберите открытку с поздравлением и живым на вид букетом, добавьте несколько слов — и отправьте одной ссылкой. Бесплатно, без регистрации.' },
-  '/support-card': { occasion:'sorry', h1:'Виртуальная открытка со словами поддержки', sub:'Покажите, что вы рядом — соберите открытку с букетом и тёплыми словами и отправьте одной ссылкой. Бесплатно, без регистрации.' },
-  '/just-because-card': { occasion:'justbecause', h1:'Виртуальная открытка просто так, без повода', sub:'Соберите букет и отправьте открытку просто потому что вспомнили о человеке — без повода, без регистрации, бесплатно.' },
+  '/congrats-card': { occasion:'congrats', h1:'Виртуальная открытка с поздравлением и букетом', sub:'Соберите открытку с поздравлением и живым на вид букетом, добавьте несколько слов — и отправьте одной ссылкой. Бесплатно, без регистрации.', blogSlug:'congrats-wishes', blogLabel:'Не знаете, что написать? 30 готовых поздравлений →' },
+  '/support-card': { occasion:'sorry', h1:'Виртуальная открытка со словами поддержки', sub:'Покажите, что вы рядом — соберите открытку с букетом и тёплыми словами и отправьте одной ссылкой. Бесплатно, без регистрации.', blogSlug:'support-words', blogLabel:'Не знаете, что написать? 26 слов поддержки →' },
+  '/just-because-card': { occasion:'justbecause', h1:'Виртуальная открытка просто так, без повода', sub:'Соберите букет и отправьте открытку просто потому что вспомнили о человеке — без повода, без регистрации, бесплатно.', blogSlug:'just-because-messages', blogLabel:'Не знаете, что написать? 28 тёплых слов →' },
   '/sympathy-card': { occasion:'sympathy', h1:'Открытка с соболезнованиями и букетом', sub:'Когда трудно подобрать слова — соберите открытку с мягким букетом и тёплыми словами поддержки и отправьте её одной ссылкой.', blogSlug:'sympathy-messages', blogLabel:'Не знаете, что написать? 24 слова соболезнования →' }
 };
 function seoLanding(){ return SEO_LANDING_PAGES[location.pathname] || null; }
@@ -1488,13 +1510,17 @@ function aboutSectionHtml(){
         <a href="/support-card">${t('Открытка со словами поддержки')}</a> ·
         <a href="/just-because-card">${t('Открытка просто так')}</a> ·
         <a href="/sympathy-card">${t('Открытка с соболезнованиями')}</a> ·
-        <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a>
+        <a href="/virtual-bouquet">${t('Просто виртуальный букет')}</a> ·
+        <a href="/group-card">${t('Открытка от всей компании')}</a>
       </p>
       <p style="margin-top:10px;">
         ${t('Не знаете, что написать?')}
         <a href="/blog/${uiLang==='ru'?'':'en/'}birthday-wishes">${t('пожелания на день рождения')}</a> ·
         <a href="/blog/${uiLang==='ru'?'':'en/'}love-messages">${t('нежные слова о любви')}</a> ·
         <a href="/blog/${uiLang==='ru'?'':'en/'}thank-you-messages">${t('слова благодарности')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}congrats-wishes">${t('слова поздравления')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}support-words">${t('слова поддержки')}</a> ·
+        <a href="/blog/${uiLang==='ru'?'':'en/'}just-because-messages">${t('слова просто так')}</a> ·
         <a href="/blog/${uiLang==='ru'?'':'en/'}sympathy-messages">${t('слова соболезнования')}</a>
       </p>
     </div>
@@ -2058,7 +2084,10 @@ function scrollToAbout(){
   }
 }
 function footerHtml(){
-  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a>`;
+  // /blog(/en) — реальный путь вне SPA (статические файлы, см. public/blog/),
+  // поэтому обычная ссылка, а не хэш-роут.
+  const blogHref = uiLang === 'ru' ? '/blog/' : '/blog/en/';
+  return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="${blogHref}">${t('Блог')}</a> · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a>`;
 }
 
 // Оба рекламных iframe (#inlineAdRow, см. index.html — нативный + баннер
@@ -2722,6 +2751,64 @@ function openView(url){
    обычная открытка, но с несколькими сообщениями вместо одного). Закрывает
    организатор сам, вручную, с любого устройства — не по заранее выбранному
    сроку. v1: без модерации подписей. */
+
+// SEO-лендинг под /group-card (server/index.js, SEO_PAGES) — у самой функции
+// "открытка всей компанией" раньше не было страницы под поисковый запрос,
+// только форма создания за хэшем #group-new, которая: а) не индексируется
+// (хэш), б) сразу требует входа в аккаунт — человеку, который ещё не знает,
+// что это такое, показывать форму логина рано. Здесь просто объясняем, как
+// это работает, и ведём в ту же форму по клику на кнопку.
+function renderGroupLanding(){
+  const title = t('Открытка от всей компании — общий букет');
+  setPageTitle(title);
+  setMeta(title, t('Отправьте ссылку — и каждый добавит своё имя, пожелание и один цветок. Букет соберётся из вклада всех участников, а закрыть приём подписей сможете в любой момент.'));
+  document.getElementById('app').innerHTML = `
+    ${topbarHtml()}
+    <div class="wrap">
+      <div class="home-hero">
+        <div class="eyebrow">${t('вместе')}</div>
+        <h1>${title}</h1>
+        <p>${t('Вы задаёте основу — повод и вазу. Дальше отправьте ссылку остальным: каждый добавит своё имя, пожелание и один цветок. Букет соберётся из цветов всех участников — вы сами закроете приём подписей, когда решите, что открытка готова.')}</p>
+        <div class="home-hero-ctas">
+          <button class="btn btn-primary" onclick="location.hash='group-new'">${t('Создать общую открытку')} →</button>
+        </div>
+      </div>
+
+      <div class="home-how">
+        <h2>${t('Как это работает')}</h2>
+        <div class="home-how-grid reveal-stagger">
+          <div class="home-how-step">
+            <div class="icon-badge">${badgeIconSvg('gift', BADGE_ICON_COLOR)}</div>
+            <span class="home-how-num">01</span>
+            <div class="home-how-title">${t('Задайте основу')}</div>
+            <div class="home-how-text">${t('Выберите повод и вазу — это увидит каждый, кто подпишет открытку.')}</div>
+          </div>
+          <div class="home-how-step">
+            <div class="icon-badge">${badgeIconSvg('sprout', BADGE_ICON_COLOR)}</div>
+            <span class="home-how-num">02</span>
+            <div class="home-how-title">${t('Разошлите ссылку')}</div>
+            <div class="home-how-text">${t('Каждый по ссылке добавляет своё имя, пожелание и один цветок — без регистрации.')}</div>
+          </div>
+          <div class="home-how-step">
+            <div class="icon-badge">${badgeIconSvg('envelope', BADGE_ICON_COLOR)}</div>
+            <span class="home-how-num">03</span>
+            <div class="home-how-title">${t('Закройте и отправьте')}</div>
+            <div class="home-how-text">${t('Букет растёт по мере того, как подписывают открытку. Закройте приём подписей, когда решите, что готово, и отправьте получателю.')}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-final-cta reveal">
+        <h2>${t('Собрать открытку всей компанией')}</h2>
+        <button class="btn btn-primary" onclick="location.hash='group-new'">${t('Создать общую открытку')} →</button>
+      </div>
+
+      ${aboutSectionHtml()}
+    </div>
+    <footer class="site-footer">${footerHtml()}</footer>
+  `;
+  initScrollReveal();
+}
 
 const groupState = { to:'', occasion:'birthday', vase:'A' };
 
@@ -3772,8 +3859,11 @@ function renderRoute(){
   // SEO-лендинги (/birthday-card и т.п.) ведут сразу в конструктор с нужным
   // поводом, минуя витрину — это страницы под конкретный поисковый запрос
   // с намерением "собрать открытку", лишний клик через главную им не нужен.
-  // Всё остальное (в первую очередь сама "/") — новая витрина.
+  // /group-card — отдельный случай: это лендинг под другую форму (group-new,
+  // не renderCreator), поэтому у него свой рендер, а не seoLanding().
+  if(location.pathname === '/group-card') return renderGroupLanding();
   if(seoLanding()) return renderCreator();
+  // Всё остальное (в первую очередь сама "/") — новая витрина.
   renderHome();
 }
 

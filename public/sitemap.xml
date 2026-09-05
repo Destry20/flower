@@ -9,7 +9,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://vivorose.com/</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -39,19 +39,19 @@
   </url>
   <url>
     <loc>https://vivorose.com/congrats-card</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://vivorose.com/support-card</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://vivorose.com/just-because-card</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -62,50 +62,104 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://vivorose.com/group-card</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/en/</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://vivorose.com/blog/birthday-wishes</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/love-messages</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/thank-you-messages</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/congrats-wishes</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/support-words</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/just-because-messages</loc>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/sympathy-messages</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/birthday-wishes</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/love-messages</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/thank-you-messages</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/en/congrats-wishes</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/en/support-words</loc>
+    <lastmod>2026-09-05</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://vivorose.com/blog/en/just-because-messages</loc>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/sympathy-messages</loc>
-    <lastmod>2026-08-31</lastmod>
+    <lastmod>2026-09-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>

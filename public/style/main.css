@@ -1240,3 +1240,15 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 }
 .article-cta p{margin-bottom:16px; opacity:.85;}
 .article-cta .btn{display:inline-block; text-decoration:none;}
+
+/* Хаб-страница блога (/blog, /blog/en) — список статей карточками, тот же
+   визуальный язык, что и .wish-list (paper-deep фон, скруглённые углы), но
+   кликабельный целиком и с заголовком+описанием вместо одной строки. */
+.blog-list{list-style:none; padding:0; margin:20px 0 0; display:flex; flex-direction:column; gap:12px;}
+.blog-list a{
+  display:block; background:var(--paper-deep); border:1px solid var(--line); border-radius:14px;
+  padding:18px 20px; text-decoration:none; color:var(--ink); transition:border-color .15s ease;
+}
+.blog-list a:hover{border-color:var(--accent);}
+.blog-list-title{font-family:'Fraunces',serif; font-size:17px; color:var(--ink);}
+.blog-list-desc{font-size:13.5px; opacity:.7; margin-top:4px; line-height:1.5;}
