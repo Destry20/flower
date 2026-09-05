@@ -200,6 +200,18 @@ a{color:var(--accent);}
 .topbar-actions button:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, transparent);}
 .topbar-link{font-size:13.5px; color:var(--ink); opacity:.75; text-decoration:none; cursor:pointer;}
 .topbar-link:hover{opacity:1; color:var(--accent);}
+/* Кнопка Ko-fi в шапке — тот же размер/форма таблетки, что у кнопки "Войти"
+   рядом, но с лёгкой тёплой заливкой цветом повода, чтобы взгляд цеплялся,
+   не превращая её в кричащий CTA-баннер. */
+.topbar-support-btn{
+  display:inline-flex; align-items:center; gap:5px;
+  background:color-mix(in srgb, var(--accent) 12%, var(--paper));
+  border:1px solid var(--line);
+  padding:9px 16px; border-radius:999px;
+  font-size:13.5px; color:var(--ink); text-decoration:none; cursor:pointer; white-space:nowrap;
+  transition:border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+.topbar-support-btn:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 20%, var(--paper));}
 .theme-toggle{
   width:36px; height:36px; border-radius:50%; flex:none; padding:0;
   border:1px solid var(--line); background:var(--paper); color:var(--ink);

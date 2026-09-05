@@ -108,6 +108,7 @@ const EN_STRINGS = {
   'Мои открытки': 'My cards',
   'Написать нам': 'Contact us',
   'Поддержать проект': 'Support the project',
+  'Поддержать': 'Support',
   'Блог': 'Blog',
   'Включить светлую тему': 'Switch to light theme',
   'Включить тёмную тему': 'Switch to dark theme',
@@ -2061,6 +2062,7 @@ function topbarHtml(){
           <a class="topbar-link" href="#mine" onclick="closeTopbarMenu()">${t('Мои открытки')}</a>
         </div>
       </div>
+      <a class="topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">☕ ${t('Поддержать')}</a>
       ${session.user
         ? `<button onclick="location.hash='account'">${esc(session.user.name || session.user.email.split('@')[0])}</button>`
         : `<button onclick="location.hash='login'">${t('Войти')}</button>`}
