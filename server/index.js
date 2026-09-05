@@ -58,18 +58,24 @@ app.use(helmet({
       // defaultSrc, то есть только self, и Google просто не смог бы
       // отрисоваться). Добавлено только когда реально понадобилось — до этого
       // тут стоял один cdnjs (шрифт-иконки QR-кода).
-      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com'],
+      // googletagmanager.com/google-analytics.com — сам GA4 (gtag.js,
+      // подключён в index.html): скрипт грузится с googletagmanager.com,
+      // события уходят на google-analytics.com (оба домена региональные,
+      // *.google-analytics.com — потому что реальный хост события иногда
+      // region1/region2.google-analytics.com, а не голый google-analytics.com).
+      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com', 'https://www.googletagmanager.com'],
       // Вся вёрстка строится через onclick="..." в шаблонах (унаследовано от
       // исходного сайта) — без unsafe-inline здесь браузер молча блокирует
       // каждый клик. scriptSrc при этом остаётся строгим: внешний <script>
-      // можно подключить только с самого сайта, cdnjs или accounts.google.com.
+      // можно подключить только с самого сайта, cdnjs, accounts.google.com
+      // или googletagmanager.com.
       scriptSrcAttr: ["'unsafe-inline'"],
       // accounts.google.com — сама кнопка Google подгружает свой CSS
       // (gsi/style) отдельно от скрипта, тем же запросом, что рисует виджет.
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'", 'https://accounts.google.com'],
+      connectSrc: ["'self'", 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
       frameSrc: ["'self'", 'https://accounts.google.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"]
