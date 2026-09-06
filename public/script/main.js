@@ -314,6 +314,7 @@ const EN_STRINGS = {
   'Собрали для вас новый вариант': 'Put together a new version for you',
   'Не удалось удалить открытку': 'Could not delete the card',
   'Открытка удалена': 'Card deleted',
+  'Точно?': 'Sure?',
 
   'Открытка не найдена': 'Card not found',
   'не найдено': 'not found',
@@ -374,9 +375,9 @@ const EN_STRINGS = {
   'Как используются данные': 'How the data is used',
   'Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.':
     'To log you in and show your cards. We don\'t sell or share your email with third parties except where required by law.',
-  'Cookies и реклама': 'Cookies and advertising',
-  'Один cookie используется для авторизации и не служит для рекламного трекинга. Рекламные сети (например, Google AdSense) могут устанавливать собственные cookies для показа объявлений.':
-    'One cookie is used for authentication and is not used for ad tracking. Ad networks (e.g. Google AdSense) may set their own cookies to serve ads.',
+  'Cookies, реклама и аналитика': 'Cookies, ads and analytics',
+  'Один cookie используется для авторизации и не служит для рекламного трекинга. Мы используем Google Analytics (GA4), чтобы понимать, как люди пользуются сайтом — сколько человек заходит, какие страницы смотрят, с какого устройства; эти данные обезличены и не связаны с вашим аккаунтом или email. Google Analytics устанавливает собственные cookies. Рекламные сети (например, Google AdSense) тоже могут устанавливать свои cookies для показа объявлений.':
+    'One cookie is used for authentication and is not used for ad tracking. We use Google Analytics (GA4) to understand how people use the site — how many visitors, which pages they view, what device they\'re on; this data is anonymized and isn\'t linked to your account or email. Google Analytics sets its own cookies. Ad networks (e.g. Google AdSense) may also set their own cookies to serve ads.',
   'Удаление данных': 'Deleting your data',
   'Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на': 'You can delete any card from your "My cards" list. To delete your whole account, email',
   'Сервис': 'The service',
@@ -3397,7 +3398,7 @@ async function renderMyCards(){
           <div class="mine-actions">
             <button onclick="openCardLink('${item.data}')">${t('Открыть')}</button>
             <button onclick="copyMineLink('${item.data}', ${item.shortId ? `'${item.shortId}'` : 'null'})">${t('Ссылка')}</button>
-            <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'})">${t('Удалить')}</button>
+            <button onclick="deleteMineCard('${item.id}', ${item.server?'true':'false'}, this)">${t('Удалить')}</button>
           </div>
         </div>`;
       }).join('');
@@ -3475,12 +3476,38 @@ function copyMineLink(encodedData, shortId){
     showToast(url);
   }
 }
-async function deleteMineCard(id, isServer){
+// Раньше "Удалить" стирало открытку сразу первым же кликом — без подтверждения
+// и без отмены, один случайный тап и открытка (возможно, с чьими-то тёплыми
+// словами) пропадала навсегда. Отдельное модальное окно ради одной кнопки
+// в списке — перебор, поэтому подтверждение сделано на самой кнопке: первый
+// клик только "взводит" её (меняет подпись на "Точно?" и красит в тревожный
+// цвет на 3 секунды), реальное удаление — только вторым кликом по уже
+// взведённой кнопке. Не успел — кнопка сама возвращается в обычный вид.
+function resetDeleteBtn(btn, label){
+  clearTimeout(btn._deleteArmTimer);
+  btn.textContent = label;
+  btn.classList.remove('btn-danger-confirm');
+  btn.dataset.armed = '0';
+}
+async function deleteMineCard(id, isServer, btn){
+  if(btn.dataset.armed !== '1'){
+    const label = btn.textContent;
+    btn.dataset.armed = '1';
+    btn.textContent = t('Точно?');
+    btn.classList.add('btn-danger-confirm');
+    btn._deleteArmTimer = setTimeout(() => resetDeleteBtn(btn, label), 3000);
+    return;
+  }
+  clearTimeout(btn._deleteArmTimer);
   if(isServer){
     try{
       const res = await fetch('/api/cards/'+encodeURIComponent(id), { method:'DELETE' });
       if(!res.ok) throw new Error();
-    }catch(e){ showToast(t('Не удалось удалить открытку')); return; }
+    }catch(e){
+      showToast(t('Не удалось удалить открытку'));
+      resetDeleteBtn(btn, t('Удалить'));
+      return;
+    }
   } else {
     let list = JSON.parse(localStorage.getItem('my-cards') || '[]');
     list = list.filter(item => item.id !== id);
@@ -3793,8 +3820,8 @@ function renderPrivacy(){
       <h2>${t('Как используются данные')}</h2>
       <p>${t('Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.')}</p>
 
-      <h2>${t('Cookies и реклама')}</h2>
-      <p>${t('Один cookie используется для авторизации и не служит для рекламного трекинга. Рекламные сети (например, Google AdSense) могут устанавливать собственные cookies для показа объявлений.')}</p>
+      <h2>${t('Cookies, реклама и аналитика')}</h2>
+      <p>${t('Один cookie используется для авторизации и не служит для рекламного трекинга. Мы используем Google Analytics (GA4), чтобы понимать, как люди пользуются сайтом — сколько человек заходит, какие страницы смотрят, с какого устройства; эти данные обезличены и не связаны с вашим аккаунтом или email. Google Analytics устанавливает собственные cookies. Рекламные сети (например, Google AdSense) тоже могут устанавливать свои cookies для показа объявлений.')}</p>
 
       <h2>${t('Удаление данных')}</h2>
       <p>${t('Вы можете удалить любую открытку из списка «Мои открытки». Чтобы удалить аккаунт целиком, напишите на')} <a href="mailto:vivorosesupport@gmail.com">vivorosesupport@gmail.com</a>.</p>
