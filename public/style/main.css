@@ -909,6 +909,73 @@ input[type=date], input[type=time]{
 .mine-empty{text-align:center; padding:36px 20px 60px; opacity:.6;}
 .mine-empty-vase{width:130px; margin:0 auto 6px; opacity:.85;}
 
+/* ---------- важные даты (renderDates в main.js, .dates-promo на главной) ---------- */
+.dates-page{max-width:640px; margin:0 auto; padding:56px 24px 90px;}
+.dates-page h1{font-family:'Fraunces',serif; font-size:30px; margin-top:6px; line-height:1.2;}
+.dates-intro{opacity:.75; margin-top:10px; line-height:1.6; font-size:14.5px;}
+.dates-add-panel{margin-top:26px;}
+.dates-list{margin-top:22px; display:flex; flex-direction:column; gap:10px;}
+
+.date-row{
+  display:flex; align-items:center; gap:14px;
+  border:1px solid var(--line); border-radius:12px; padding:12px 14px;
+  background:var(--paper-deep);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.date-row:hover{border-color:var(--rose); box-shadow:0 10px 24px -18px rgba(47,59,42,0.5);}
+.date-row-icon{
+  width:34px; height:34px; border-radius:50%; flex:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.date-row-info{flex:1; min-width:0;}
+.date-row-name{font-size:14px; color:var(--ink);}
+.date-row-meta{font-size:12px; color:var(--ink); opacity:.6; margin-top:2px;}
+/* Цвет обратного отсчёта усиливается по мере приближения даты — сначала
+   нейтральный, за 2 недели тёплый жёлтый, за 3 дня — тревожный розовый, тот
+   же приём привлечения внимания, что и у .dates-promo-badge/.topbar-new-badge. */
+.date-countdown{
+  font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; flex:none;
+  background:var(--paper); color:var(--ink); opacity:.7; white-space:nowrap;
+}
+.date-countdown.near{background:color-mix(in srgb, var(--gold) 22%, var(--paper)); color:var(--gold); opacity:1;}
+.date-countdown.urgent{background:color-mix(in srgb, var(--rose) 24%, var(--paper)); color:var(--rose); opacity:1;}
+.date-row-remove{
+  border:none; background:none; color:var(--ink); opacity:.4; cursor:pointer;
+  font-size:15px; flex:none; padding:4px; line-height:1;
+}
+.date-row-remove:hover{opacity:1; color:var(--rose);}
+
+/* Промо-блок на главной — в отличие от остальных секций витрины, у него
+   свой акцентный фон (не paper) и бейдж "новое" в углу, чтобы новая фича
+   реально бросалась в глаза при скролле, а не терялась между остальными
+   секциями. --plum/--pale/--rose — фирменные цвета, не переопределяются
+   тёмной темой (см. :root[data-theme="dark"] выше), поэтому блок одинаково
+   хорошо читается в обеих темах без отдельных тёмных правил. */
+.dates-promo{
+  max-width:720px; margin:70px auto 0; padding:48px 32px; border-radius:24px;
+  text-align:center; position:relative; overflow:hidden;
+  background:linear-gradient(160deg, color-mix(in srgb, var(--plum) 92%, black), var(--plum));
+  color:var(--pale);
+}
+.dates-promo-badge{
+  position:absolute; top:18px; right:18px; background:var(--rose); color:var(--pale);
+  font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  padding:4px 10px; border-radius:999px;
+}
+.dates-promo-icon{font-size:38px; margin-bottom:6px;}
+.dates-promo h2{font-family:'Fraunces',serif; font-size:26px; color:var(--pale); margin-top:4px;}
+.dates-promo p{opacity:.85; margin-top:12px; max-width:480px; margin-left:auto; margin-right:auto; line-height:1.6; font-size:14.5px;}
+.dates-promo .btn-primary{margin-top:22px; background:var(--pale); color:var(--plum); border-color:var(--pale);}
+.dates-promo .btn-primary:hover{background:#fff; border-color:#fff; color:var(--plum);}
+
+/* Ссылка "Важные даты" в выпадающем меню шапки — бейдж "новое" привлекает
+   внимание к недавно добавленной фиче, тот же цвет, что и .dates-promo-badge. */
+.topbar-link-dates{display:flex; align-items:center; gap:6px;}
+.topbar-new-badge{
+  background:var(--rose); color:var(--pale); font-size:9.5px; font-weight:700;
+  letter-spacing:.04em; text-transform:uppercase; padding:2px 6px; border-radius:999px;
+}
+
 .cta-row{display:flex; gap:12px; margin-top:22px; flex-wrap:wrap;}
 /* font-weight не был задан вовсе — кнопки наследовали обычный текстовый вес
    (400), тот же, что у обычного абзаца. Для кнопки-действия это читается

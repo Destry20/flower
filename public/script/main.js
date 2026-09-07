@@ -315,6 +315,33 @@ const EN_STRINGS = {
   'Не удалось удалить открытку': 'Could not delete the card',
   'Открытка удалена': 'Card deleted',
   'Точно?': 'Sure?',
+  // Важные даты (renderDates и соседние функции) — напоминания о датах близких на почту.
+  'Важные даты': 'Important dates',
+  'новое': 'new',
+  'никогда не забыть': 'never forget',
+  'Важные даты близких': 'Important dates for people you care about',
+  'Добавьте дни рождения и другие даты — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом.':
+    'Add birthdays and other dates — a few days before, we\'ll email you a direct link into the builder, already filled in with the name and occasion.',
+  'Новая дата': 'New date',
+  'Дата': 'Date',
+  'Год значения не имеет — год рождения знать не нужно, напомним в тот же день каждый год':
+    'The year doesn\'t matter — you don\'t need to know a birth year, we\'ll remind you on the same day every year',
+  'Добавить дату': 'Add date',
+  'Пока ни одной даты. Добавьте первую выше — и мы напомним, когда будет пора собирать открытку.':
+    'No dates yet. Add your first one above, and we\'ll remind you when it\'s time to build a card.',
+  'Сегодня!': 'Today!',
+  'через': 'in',
+  'Введите имя': 'Enter a name',
+  'Выберите дату': 'Pick a date',
+  'Не удалось добавить дату': 'Could not add the date',
+  'Дата добавлена': 'Date added',
+  'Не удалось удалить дату': 'Could not delete the date',
+  'Дата удалена': 'Date deleted',
+  'Аккаунт нужен, чтобы напоминания о датах приходили именно вам на почту.':
+    'You need an account so date reminders can be emailed to you.',
+  'Не пропустите ни одной важной даты': 'Never miss an important date again',
+  'Сохраните дни рождения близких — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом. Одна регистрация — и больше не забудете.':
+    'Save the birthdays of people you care about — a few days before, we\'ll email you a direct link into the builder, already filled in. One sign-up, and you\'ll never forget again.',
 
   'Открытка не найдена': 'Card not found',
   'не найдено': 'not found',
@@ -573,7 +600,8 @@ let pendingRoute = null; // куда вернуться после логина
 // человек только что попросил сделать.
 const LOGIN_REASON_TEXT = {
   'group-new': () => t('Аккаунт нужен, чтобы вы потом сами могли закрыть приём подписей и завершить открытку «всей компанией».'),
-  'account': () => t('Войдите, чтобы открыть настройки своего аккаунта.')
+  'account': () => t('Войдите, чтобы открыть настройки своего аккаунта.'),
+  'dates': () => t('Аккаунт нужен, чтобы напоминания о датах приходили именно вам на почту.')
 };
 function authReasonText(fallback){
   const reason = LOGIN_REASON_TEXT[pendingRoute];
@@ -1632,6 +1660,14 @@ function renderHome(){
       </div>
     </div>
 
+    <div class="dates-promo reveal">
+      <div class="dates-promo-badge">${t('новое')}</div>
+      <div class="dates-promo-icon">🔔</div>
+      <h2>${t('Не пропустите ни одной важной даты')}</h2>
+      <p>${t('Сохраните дни рождения близких — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом. Одна регистрация — и больше не забудете.')}</p>
+      <button class="btn btn-primary" onclick="location.hash='dates'">${t('Добавить дату')} →</button>
+    </div>
+
     <div class="home-final-cta reveal">
       <h2>${t('Готовы отправить что-то красивое?')}</h2>
       <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
@@ -2061,6 +2097,7 @@ function topbarHtml(){
           </div>
           <a class="topbar-link" href="#" onclick="event.preventDefault();closeTopbarMenu();scrollToAbout()">${t('О сервисе')}</a>
           <a class="topbar-link" href="#mine" onclick="closeTopbarMenu()">${t('Мои открытки')}</a>
+          <a class="topbar-link topbar-link-dates" href="#dates" onclick="closeTopbarMenu()">🔔 ${t('Важные даты')}<span class="topbar-new-badge">${t('новое')}</span></a>
         </div>
       </div>
       <a class="topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">☕ ${t('Поддержать')}</a>
@@ -3517,6 +3554,150 @@ async function deleteMineCard(id, isServer, btn){
   showToast(t('Открытка удалена'));
 }
 
+/* ====================== ВАЖНЫЕ ДАТЫ (напоминания на почту) ======================
+   Аккаунт заводит список дат близких (день рождения, годовщина и т.п.) — за
+   REMINDER_LEAD_DAYS (server/dateReminders.js) до даты на почту уходит письмо
+   со ссылкой прямо в конструктор, с уже подставленными именем и поводом (см.
+   ?to=&occasion= в bootstrap() выше). Год не хранится — только месяц/день,
+   напоминание повторяется каждый год без необходимости пересоздавать запись.
+   Требует аккаунта (нужен email, куда слать) — как и "всей компанией",
+   гостя при заходе на #dates отправляем на логин с объяснением причины
+   (см. LOGIN_REASON_TEXT['dates']). */
+
+const dateFormState = { occasion: 'birthday' };
+
+function setDateOccasion(id){
+  dateFormState.occasion = id;
+  document.querySelectorAll('#dateOccasionChips .chip').forEach(el=>{
+    const active = el.dataset.occasion === id;
+    el.classList.toggle('active', active);
+    el.setAttribute('aria-pressed', String(active));
+    el.querySelector('.chip-ic').innerHTML = occasionIconSvg(el.dataset.occasion, active ? '#FAF3E7' : occasionById(el.dataset.occasion).color);
+  });
+}
+
+// "12 марта" / "March 12" — год не важен ни разу во всей этой фиче, поэтому
+// произвольный (2024, високосный — чтобы 29 февраля тоже форматировалось).
+function formatMonthDay(month, day){
+  const d = new Date(2024, month - 1, day);
+  return d.toLocaleDateString(uiLang==='ru' ? 'ru-RU' : 'en-US', { day:'numeric', month:'long' });
+}
+
+function dateUrgencyClass(daysUntil){
+  if(daysUntil <= 3) return 'urgent';
+  if(daysUntil <= 14) return 'near';
+  return '';
+}
+function dateCountdownText(daysUntil){
+  if(daysUntil === 0) return t('Сегодня!');
+  if(uiLang === 'ru') return `${t('через')} ${daysUntil} ${pluralizeRu(daysUntil, 'день', 'дня', 'дней')}`;
+  return `in ${daysUntil} ${daysUntil===1?'day':'days'}`;
+}
+
+function dateItemHtml(item){
+  const occ = occasionById(item.occasion) || OCCASIONS[0];
+  return `<div class="date-row">
+    <div class="date-row-icon" style="background:${occ.color}">${occasionIconSvg(occ.id, '#FAF3E7')}</div>
+    <div class="date-row-info">
+      <div class="date-row-name">${esc(item.name)}</div>
+      <div class="date-row-meta">${tr(occ.label)} · ${formatMonthDay(item.month, item.day)}</div>
+    </div>
+    <div class="date-countdown ${dateUrgencyClass(item.daysUntil)}">${dateCountdownText(item.daysUntil)}</div>
+    <button class="date-row-remove" onclick="deleteDateReminder('${item.id}')" aria-label="${t('Удалить')}">✕</button>
+  </div>`;
+}
+
+async function loadDateReminders(){
+  const wrap = document.getElementById('datesList');
+  if(!wrap) return;
+  let list = [];
+  try{
+    const res = await fetch('/api/dates');
+    const json = await res.json();
+    list = json.dates || [];
+  }catch(e){ list = []; }
+  if(!wrap) return; // ушли со страницы, пока шёл запрос
+  wrap.innerHTML = list.length
+    ? list.map(dateItemHtml).join('')
+    : `<div class="mine-empty">${t('Пока ни одной даты. Добавьте первую выше — и мы напомним, когда будет пора собирать открытку.')}</div>`;
+}
+
+async function submitDateReminder(){
+  const nameEl = document.getElementById('dateName');
+  const whenEl = document.getElementById('dateWhen');
+  const errEl = document.getElementById('dateAddError');
+  const name = nameEl.value.trim();
+  errEl.textContent = '';
+  if(!name){ errEl.textContent = t('Введите имя'); return; }
+  if(!whenEl.value){ errEl.textContent = t('Выберите дату'); return; }
+  const [, month, day] = whenEl.value.split('-').map(Number);
+  const btn = document.getElementById('dateAddBtn');
+  btn.disabled = true;
+  try{
+    const res = await fetch('/api/dates', {
+      method:'POST', headers:{'Content-Type':'application/json','X-Lang':uiLang},
+      body: JSON.stringify({ name, occasion: dateFormState.occasion, month, day })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось добавить дату'));
+    nameEl.value = '';
+    whenEl.value = '';
+    showToast(t('Дата добавлена'));
+    loadDateReminders();
+  }catch(e){
+    errEl.textContent = e.message;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function deleteDateReminder(id){
+  try{
+    const res = await fetch('/api/dates/'+encodeURIComponent(id), { method:'DELETE' });
+    if(!res.ok) throw new Error();
+  }catch(e){
+    showToast(t('Не удалось удалить дату'));
+    return;
+  }
+  showToast(t('Дата удалена'));
+  loadDateReminders();
+}
+
+function renderDates(){
+  if(!session.user){ pendingRoute = 'dates'; location.hash = 'login'; return; }
+  setPageTitle(t('Важные даты'));
+  document.getElementById('app').innerHTML = `
+    ${topbarHtml()}
+    <div class="wrap dates-page">
+      <div class="eyebrow">${t('никогда не забыть')}</div>
+      <h1>🔔 ${t('Важные даты близких')}</h1>
+      <p class="dates-intro">${t('Добавьте дни рождения и другие даты — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом.')}</p>
+
+      <div class="panel dates-add-panel">
+        <span class="field-label">${t('Новая дата')}</span>
+        <div class="row2" style="margin-top:10px;">
+          <input type="text" id="dateName" maxlength="30" placeholder="${t('Имя')}">
+          <input type="date" id="dateWhen" aria-label="${t('Дата')}">
+        </div>
+        <p class="hint" style="margin-top:6px;">${t('Год значения не имеет — год рождения знать не нужно, напомним в тот же день каждый год')}</p>
+        <span class="field-label" id="dateOccasionLabel" style="margin-top:16px;">${t('Повод')}</span>
+        <div class="chip-row" id="dateOccasionChips" role="group" aria-labelledby="dateOccasionLabel"></div>
+        <button class="btn btn-primary" id="dateAddBtn" style="margin-top:18px;" onclick="submitDateReminder()">${t('Добавить дату')} +</button>
+        <div class="auth-error" id="dateAddError"></div>
+      </div>
+
+      <div class="dates-list" id="datesList"></div>
+    </div>
+    <footer class="site-footer">${footerHtml()}</footer>
+  `;
+  document.getElementById('dateOccasionChips').innerHTML = OCCASIONS.map(o =>
+    `<div class="chip ${dateFormState.occasion===o.id?'active':''}" data-occasion="${o.id}" tabindex="0" role="button" aria-pressed="${dateFormState.occasion===o.id}" onclick="setDateOccasion('${o.id}')" onkeydown="activateOnKey(event)">
+      <span class="chip-ic">${occasionIconSvg(o.id, dateFormState.occasion===o.id ? '#FAF3E7' : o.color)}</span>${tr(o.label)}
+    </div>`
+  ).join('');
+  loadDateReminders();
+}
+
 /* ====================== АККАУНТ (вход/регистрация/профиль) ====================== */
 
 // Google Identity Services грузится не тегом <script> в index.html, а по
@@ -3875,6 +4056,7 @@ function renderRoute(){
   if(hash === '#privacy') return renderPrivacy();
   if(hash === '#terms') return renderTerms();
   if(hash === '#group-new') return renderGroupCreate();
+  if(hash === '#dates') return renderDates();
   // #create — сам конструктор (раньше жил прямо на "/", см. renderHome).
   if(hash === '#create') return renderCreator();
 
@@ -3922,6 +4104,14 @@ async function bootstrap(){
   // клике по чужому поводу (setOccasion сам же и вызывает renderCreator()).
   const landing = seoLanding();
   if(landing) state.occasion = landing.occasion;
+  // Ссылка из письма-напоминания о дате (server/dateReminders.js) —
+  // "/?to=Имя&occasion=birthday#create" — подставляем оба поля один раз, до
+  // первого рендера, тем же приёмом, что и повод SEO-лендинга выше.
+  const prefill = new URLSearchParams(location.search);
+  const prefillOccasion = prefill.get('occasion');
+  if(prefillOccasion && OCCASIONS.some(o => o.id === prefillOccasion)) state.occasion = prefillOccasion;
+  const prefillTo = prefill.get('to');
+  if(prefillTo) state.to = prefillTo.slice(0, 30);
   await Promise.all([loadMe(), loadConfig()]);
   window.addEventListener('hashchange', renderRoute);
   window.addEventListener('popstate', renderRoute); // кнопки назад/вперёд для ?data=-ссылок

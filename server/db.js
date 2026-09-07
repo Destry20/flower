@@ -16,7 +16,7 @@ const TRAFFIC_RETENTION_DAYS = 90;
 
 function defaultData(){
   return {
-    users: [], cards: [], groupCards: [],
+    users: [], cards: [], groupCards: [], dates: [],
     meta: { siteEnabled: true },
     traffic: { byDay: {}, byDayBot: {}, recent: [] },
     errors: []
@@ -48,6 +48,7 @@ let data = load();
 // в нём просто нет) — без этого recordVisit упал бы на "Cannot set properties of undefined".
 if(!data.traffic.byDayBot) data.traffic.byDayBot = {};
 if(!data.groupCards) data.groupCards = [];
+if(!data.dates) data.dates = [];
 // Публичный счётчик "открыток создано" для главной — считает и гостевые
 // открытки тоже (см. incrementCardsCreated ниже), в отличие от data.cards
 // (там только сохранённые за аккаунтом). Гостевые никогда не хранились, так
@@ -303,6 +304,82 @@ function addGroupContribution(shortId, { name, message, flowerType, flowerColor 
   group.contributions.push(entry);
   persist();
   return { ok:true, group };
+}
+
+/* ---------------- important dates (напоминания о датах) ---------------- */
+// Список дат близких за аккаунтом ("день рождения Ани — 12 марта") — раз в
+// год, за REMINDER_LEAD_DAYS до даты (см. server/dateReminders.js), на почту
+// уходит письмо со ссылкой прямо в конструктор с уже подставленным именем и
+// поводом. Хранится плоским списком (как cards/groupCards), а не вложенным
+// в user — так проще пройтись по всем записям сразу в шедулере, не обходя
+// каждого пользователя отдельно.
+
+const MAX_DATES_PER_USER = 20;
+
+// Год не хранится вообще — только месяц/день, повторяется ежегодно. Если для
+// месяца/дня в текущем году такой даты уже не существует (29 февраля не в
+// високосный год), Date сама нормализует её на 1 марта — редкий и предсказуемый
+// крайний случай, отдельно не обрабатываем.
+function nextOccurrence(month, day){
+  const now = new Date();
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let candidate = new Date(now.getFullYear(), month - 1, day);
+  if(candidate < todayMidnight){
+    candidate = new Date(now.getFullYear() + 1, month - 1, day);
+  }
+  const daysUntil = Math.round((candidate - todayMidnight) / (24 * 60 * 60 * 1000));
+  return { daysUntil, year: candidate.getFullYear() };
+}
+
+function listDatesByUser(userId){
+  return data.dates
+    .filter(d => d.userId === userId)
+    .map(d => ({ ...d, daysUntil: nextOccurrence(d.month, d.day).daysUntil }))
+    .sort((a,b) => a.daysUntil - b.daysUntil);
+}
+function countDatesByUser(userId){
+  return data.dates.filter(d => d.userId === userId).length;
+}
+function createDateReminder({ userId, name, occasion, month, day, lang }){
+  const entry = {
+    id: uid(),
+    userId,
+    name: String(name || '').slice(0, 30),
+    occasion: String(occasion || '').slice(0, 20),
+    month, day,
+    lang: lang === 'en' ? 'en' : 'ru',
+    createdAt: Date.now(),
+    lastNotifiedYear: null
+  };
+  data.dates.push(entry);
+  persist();
+  return { ...entry, daysUntil: nextOccurrence(month, day).daysUntil };
+}
+function deleteDateReminder(id, userId){
+  const before = data.dates.length;
+  data.dates = data.dates.filter(d => !(d.id === id && d.userId === userId));
+  const removed = data.dates.length !== before;
+  if(removed) persist();
+  return removed;
+}
+// Зовётся из планировщика (server/dateReminders.js) раз в час — отдаёт записи,
+// для которых пора слать письмо: до даты осталось не больше leadDays, и за
+// ЭТО же будущее наступление (year) письмо ещё не уходило. lastNotifiedYear
+// (не просто булев флаг) — чтобы одно и то же напоминание честно присылалось
+// каждый год заново, а не только один раз за всю жизнь записи.
+function listDueDateReminders(leadDays){
+  return data.dates
+    .map(d => {
+      const { daysUntil, year } = nextOccurrence(d.month, d.day);
+      return { ...d, daysUntil, occurrenceYear: year };
+    })
+    .filter(d => d.daysUntil <= leadDays && d.lastNotifiedYear !== d.occurrenceYear);
+}
+function markDateReminderNotified(id, occurrenceYear){
+  const entry = data.dates.find(d => d.id === id);
+  if(!entry) return;
+  entry.lastNotifiedYear = occurrenceYear;
+  persist();
 }
 
 /* ---------------- admin: site status ---------------- */
@@ -608,6 +685,7 @@ module.exports = {
   setResetToken, findUserByResetTokenHash, updateUserPassword,
   listCardsByUser, createCard, deleteCard, findCardByShortId, markCardOpened,
   createGroupCard, findGroupCardByShortId, listGroupCardsByUser, isGroupCardClosed, addGroupContribution, closeGroupCard, MAX_CONTRIBUTIONS,
+  listDatesByUser, countDatesByUser, createDateReminder, deleteDateReminder, listDueDateReminders, markDateReminderNotified, MAX_DATES_PER_USER,
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors, deleteClientError,

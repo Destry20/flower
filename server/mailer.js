@@ -62,4 +62,24 @@ async function sendBackupEmail(to, snapshotJson){
   });
 }
 
-module.exports = { sendPasswordResetEmail, sendBackupEmail };
+// Напоминание о важной дате близкого (см. server/dateReminders.js) — прямая
+// ссылка ведёт в конструктор с уже подставленными именем и поводом (см.
+// ?to=&occasion= в bootstrap(), public/script/main.js), чтобы от письма до
+// готовой открытки было минимум кликов.
+async function sendDateReminderEmail(to, lang, { name, daysUntil, url }){
+  const strings = STRINGS[lang] || STRINGS.ru;
+  const t = getTransporter();
+  if(!t){
+    console.log(`\n[mailer] SMTP не настроен — напоминание о дате не отправлено (${to}): ${name}, через ${daysUntil} дн. ${url}\n`);
+    return;
+  }
+  await t.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    to,
+    subject: strings.dateReminderSubject(name),
+    text: strings.dateReminderBodyText(name, daysUntil, url),
+    html: strings.dateReminderBodyHtml(name, daysUntil, url)
+  });
+}
+
+module.exports = { sendPasswordResetEmail, sendBackupEmail, sendDateReminderEmail };
