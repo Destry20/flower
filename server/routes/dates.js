@@ -19,7 +19,7 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', createLimiter, (req, res) => {
-  const { name, occasion, month, day } = req.body || {};
+  const { name, occasion, month, day, note } = req.body || {};
   const m = Number(month), d = Number(day);
   if(typeof name !== 'string' || !name.trim() || !Number.isInteger(m) || m < 1 || m > 12 || !Number.isInteger(d) || d < 1 || d > 31){
     return res.status(400).json({ error: tServer(req, 'dateInvalid') });
@@ -32,7 +32,8 @@ router.post('/', createLimiter, (req, res) => {
     name: name.trim(),
     occasion: String(occasion || 'birthday'),
     month: m, day: d,
-    lang: pickLang(req)
+    lang: pickLang(req),
+    note: typeof note === 'string' ? note.trim() : ''
   });
   res.status(201).json({ date: entry });
 });

@@ -33,8 +33,8 @@ const STRINGS = {
     mailBodyText: (url) => `Чтобы задать новый пароль, перейдите по ссылке: ${url}\n\nЕсли вы не запрашивали сброс пароля, просто проигнорируйте это письмо.`,
     mailBodyHtml: (url) => `<p>Чтобы задать новый пароль, перейдите по ссылке:</p><p><a href="${url}">${url}</a></p><p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>`,
     dateReminderSubject: (name) => `Скоро день Х у ${name} — не забудьте про открытку · VivoRose`,
-    dateReminderBodyText: (name, daysUntil, url) => `Через ${daysUntil} ${daysUntil===1?'день':(daysUntil>=2&&daysUntil<=4?'дня':'дней')} — важная дата у ${name}. Соберите открытку с букетом за пару минут: ${url}\n\nНе хотите больше получать эти напоминания — удалите дату в разделе "Важные даты" на сайте.`,
-    dateReminderBodyHtml: (name, daysUntil, url) => `<p>Через ${daysUntil} ${daysUntil===1?'день':(daysUntil>=2&&daysUntil<=4?'дня':'дней')} — важная дата у <b>${name}</b>.</p><p><a href="${url}">Собрать открытку с букетом</a> — это займёт пару минут.</p><p style="color:#888;font-size:13px;">Не хотите больше получать эти напоминания — удалите дату в разделе «Важные даты» на сайте.</p>`,
+    dateReminderBodyText: (name, daysUntil, url, note) => `Через ${daysUntil} ${daysUntil===1?'день':(daysUntil>=2&&daysUntil<=4?'дня':'дней')} — важная дата у ${name}.${note ? `\n\nВаша заметка: ${note}` : ''}\n\nСоберите открытку с букетом за пару минут: ${url}\n\nНе хотите больше получать эти напоминания — удалите дату в разделе "Важные даты" на сайте.`,
+    dateReminderBodyHtml: (name, daysUntil, url, note) => `<p>Через ${daysUntil} ${daysUntil===1?'день':(daysUntil>=2&&daysUntil<=4?'дня':'дней')} — важная дата у <b>${name}</b>.</p>${note ? `<p style="background:#F5F0E6;padding:10px 14px;border-radius:8px;">Ваша заметка: ${note}</p>` : ''}<p><a href="${url}">Собрать открытку с букетом</a> — это займёт пару минут.</p><p style="color:#888;font-size:13px;">Не хотите больше получать эти напоминания — удалите дату в разделе «Важные даты» на сайте.</p>`,
     occasionStamps: {
       foryou: 'Для тебя', birthday: 'С днём рождения', love: 'С любовью',
       thanks: 'Спасибо тебе', congrats: 'Поздравляю', sorry: 'Я рядом', justbecause: 'Просто так',
@@ -72,8 +72,8 @@ const STRINGS = {
     mailBodyText: (url) => `To set a new password, follow this link: ${url}\n\nIf you didn't request a password reset, just ignore this email.`,
     mailBodyHtml: (url) => `<p>To set a new password, follow this link:</p><p><a href="${url}">${url}</a></p><p>If you didn't request a password reset, just ignore this email.</p>`,
     dateReminderSubject: (name) => `${name}'s big day is coming up — don't forget a card · VivoRose`,
-    dateReminderBodyText: (name, daysUntil, url) => `In ${daysUntil} ${daysUntil===1?'day':'days'} — an important date for ${name}. Build a card with a bouquet in a couple of minutes: ${url}\n\nDon't want these reminders anymore? Delete the date in "Important Dates" on the site.`,
-    dateReminderBodyHtml: (name, daysUntil, url) => `<p>In ${daysUntil} ${daysUntil===1?'day':'days'} — an important date for <b>${name}</b>.</p><p><a href="${url}">Build a card with a bouquet</a> — it only takes a couple of minutes.</p><p style="color:#888;font-size:13px;">Don't want these reminders anymore? Delete the date in "Important Dates" on the site.</p>`,
+    dateReminderBodyText: (name, daysUntil, url, note) => `In ${daysUntil} ${daysUntil===1?'day':'days'} — an important date for ${name}.${note ? `\n\nYour note: ${note}` : ''}\n\nBuild a card with a bouquet in a couple of minutes: ${url}\n\nDon't want these reminders anymore? Delete the date in "Important Dates" on the site.`,
+    dateReminderBodyHtml: (name, daysUntil, url, note) => `<p>In ${daysUntil} ${daysUntil===1?'day':'days'} — an important date for <b>${name}</b>.</p>${note ? `<p style="background:#F5F0E6;padding:10px 14px;border-radius:8px;">Your note: ${note}</p>` : ''}<p><a href="${url}">Build a card with a bouquet</a> — it only takes a couple of minutes.</p><p style="color:#888;font-size:13px;">Don't want these reminders anymore? Delete the date in "Important Dates" on the site.</p>`,
     occasionStamps: {
       foryou: 'For you', birthday: 'Happy Birthday', love: 'With love',
       thanks: 'Thank you', congrats: 'Congratulations', sorry: "I'm here", justbecause: 'Just because',

@@ -340,13 +340,18 @@ function listDatesByUser(userId){
 function countDatesByUser(userId){
   return data.dates.filter(d => d.userId === userId).length;
 }
-function createDateReminder({ userId, name, occasion, month, day, lang }){
+function createDateReminder({ userId, name, occasion, month, day, lang, note }){
   const entry = {
     id: uid(),
     userId,
     name: String(name || '').slice(0, 30),
     occasion: String(occasion || '').slice(0, 20),
     month, day,
+    // Заметка "для себя" — необязательная (идея подарка, что любит человек
+    // и т.п.). В отличие от name/occasion, никак не участвует в логике (не
+    // идёт в конструктор через ?to=/&occasion=) — только собственная память
+    // отправителя, поэтому и не подставляется в ссылку из письма.
+    note: String(note || '').slice(0, 200),
     lang: lang === 'en' ? 'en' : 'ru',
     createdAt: Date.now(),
     lastNotifiedYear: null

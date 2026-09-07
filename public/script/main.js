@@ -339,6 +339,9 @@ const EN_STRINGS = {
   'Дата удалена': 'Date deleted',
   'Аккаунт нужен, чтобы напоминания о датах приходили именно вам на почту.':
     'You need an account so date reminders can be emailed to you.',
+  'Заметка': 'Note',
+  'необязательно — идея подарка, что нравится и т.п.': 'optional — a gift idea, what they like, etc.',
+  'Например: любит тюльпаны, хотела книгу...': 'E.g.: loves tulips, wanted a book...',
   'Не пропустите ни одной важной даты': 'Never miss an important date again',
   'Сохраните дни рождения близких — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом. Одна регистрация — и больше не забудете.':
     'Save the birthdays of people you care about — a few days before, we\'ll email you a direct link into the builder, already filled in. One sign-up, and you\'ll never forget again.',
@@ -2095,15 +2098,15 @@ function topbarHtml(){
             </div>
             <button class="theme-toggle" onclick="closeTopbarMenu();toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
           </div>
-          <a class="topbar-link" href="#" onclick="event.preventDefault();closeTopbarMenu();scrollToAbout()">${t('О сервисе')}</a>
-          <a class="topbar-link" href="#mine" onclick="closeTopbarMenu()">${t('Мои открытки')}</a>
-          <a class="topbar-link topbar-link-dates" href="#dates" onclick="closeTopbarMenu()">🔔 ${t('Важные даты')}<span class="topbar-new-badge">${t('новое')}</span></a>
+          <a class="topbar-pill" href="#" onclick="event.preventDefault();closeTopbarMenu();scrollToAbout()">${badgeIconSvg('info','currentColor',16)}${t('О сервисе')}</a>
+          <a class="topbar-pill" href="#mine" onclick="closeTopbarMenu()">${badgeIconSvg('envelope','currentColor',16)}${t('Мои открытки')}</a>
+          <a class="topbar-pill" href="#dates" onclick="closeTopbarMenu()">${badgeIconSvg('bell','currentColor',16)}${t('Важные даты')}<span class="topbar-new-badge">${t('новое')}</span></a>
         </div>
       </div>
-      <a class="topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">☕ ${t('Поддержать')}</a>
+      <a class="topbar-pill topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">${badgeIconSvg('coffee','currentColor',16)}${t('Поддержать')}</a>
       ${session.user
-        ? `<button onclick="location.hash='account'">${esc(session.user.name || session.user.email.split('@')[0])}</button>`
-        : `<button onclick="location.hash='login'">${t('Войти')}</button>`}
+        ? `<button class="topbar-pill" onclick="location.hash='account'">${badgeIconSvg('you','currentColor',16)}${esc(session.user.name || session.user.email.split('@')[0])}</button>`
+        : `<button class="topbar-pill" onclick="location.hash='login'">${badgeIconSvg('you','currentColor',16)}${t('Войти')}</button>`}
     </div>
   </div>`;
 }
@@ -2188,7 +2191,15 @@ function iconShapeMarkup(name, color){
     // Не привязан ни к одному поводу (нет в OCCASION_ICON) — используется
     // только как самостоятельная декоративная иконка "отправки" (см.
     // badgeIconSvg/шаг "Отправьте ссылкой" на главной).
-    envelope:`<rect x="1.6" y="3.6" width="12.8" height="9" rx="1.2" fill="none" stroke="${color}" stroke-width="1.2"/><path d="M2.2 4.3L8 9L13.8 4.3" fill="none" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>`
+    envelope:`<rect x="1.6" y="3.6" width="12.8" height="9" rx="1.2" fill="none" stroke="${color}" stroke-width="1.2"/><path d="M2.2 4.3L8 9L13.8 4.3" fill="none" stroke="${color}" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>`,
+    // Ниже — иконки для шапки сайта (topbarHtml), не поводов: раньше три из
+    // пяти кнопок были голым текстом без иконки, а две другие — с эмодзи
+    // (☕/🔔) вместо нарисованной вручную "азбуки" фигур, что и создавало
+    // ощущение вразнобой (разные шрифты/цвета эмодзи против монохромных
+    // иконок). Теперь все пять — один и тот же рисованный язык.
+    info:`<circle cx="8" cy="8" r="6.3" fill="none" stroke="${color}" stroke-width="1.2"/><circle cx="8" cy="5.1" r=".9" fill="${color}"/><line x1="8" y1="7.4" x2="8" y2="11.4" stroke="${color}" stroke-width="1.3" stroke-linecap="round"/>`,
+    bell:`<path d="M8 2.3C5.6 2.3 4.8 4.6 4.8 7.2C4.8 9.6 4.2 10.6 3.4 11.3H12.6C11.8 10.6 11.2 9.6 11.2 7.2C11.2 4.6 10.4 2.3 8 2.3Z" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round"/><path d="M6.5 12.6C6.5 13.5 7.2 14.1 8 14.1C8.8 14.1 9.5 13.5 9.5 12.6" fill="none" stroke="${color}" stroke-width="1.2" stroke-linecap="round"/>`,
+    coffee:`<path d="M3.2 6.2H10.8V10.2C10.8 11.6 9.7 12.6 8.4 12.6H5.6C4.3 12.6 3.2 11.6 3.2 10.2V6.2Z" fill="none" stroke="${color}" stroke-width="1.2"/><path d="M10.8 7.3H11.7C12.6 7.3 13.2 8 13.2 8.8C13.2 9.6 12.6 10.3 11.7 10.3H10.8" fill="none" stroke="${color}" stroke-width="1.1"/><path d="M5.6 4.6C5.6 4 6.1 3.8 6.1 3.2C6.1 2.8 5.8 2.6 5.8 2.2" stroke="${color}" stroke-width=".9" stroke-linecap="round" fill="none" opacity=".6"/><path d="M8.4 4.6C8.4 4 8.9 3.8 8.9 3.2C8.9 2.8 8.6 2.6 8.6 2.2" stroke="${color}" stroke-width=".9" stroke-linecap="round" fill="none" opacity=".6"/>`
   };
   return paths[name] || '';
 }
@@ -3601,6 +3612,7 @@ function dateItemHtml(item){
     <div class="date-row-info">
       <div class="date-row-name">${esc(item.name)}</div>
       <div class="date-row-meta">${tr(occ.label)} · ${formatMonthDay(item.month, item.day)}</div>
+      ${item.note ? `<div class="date-row-note">${esc(item.note)}</div>` : ''}
     </div>
     <div class="date-countdown ${dateUrgencyClass(item.daysUntil)}">${dateCountdownText(item.daysUntil)}</div>
     <button class="date-row-remove" onclick="deleteDateReminder('${item.id}')" aria-label="${t('Удалить')}">✕</button>
@@ -3625,6 +3637,7 @@ async function loadDateReminders(){
 async function submitDateReminder(){
   const nameEl = document.getElementById('dateName');
   const whenEl = document.getElementById('dateWhen');
+  const noteEl = document.getElementById('dateNote');
   const errEl = document.getElementById('dateAddError');
   const name = nameEl.value.trim();
   errEl.textContent = '';
@@ -3636,12 +3649,13 @@ async function submitDateReminder(){
   try{
     const res = await fetch('/api/dates', {
       method:'POST', headers:{'Content-Type':'application/json','X-Lang':uiLang},
-      body: JSON.stringify({ name, occasion: dateFormState.occasion, month, day })
+      body: JSON.stringify({ name, occasion: dateFormState.occasion, month, day, note: noteEl.value.trim() })
     });
     const json = await res.json();
     if(!res.ok) throw new Error(json.error || t('Не удалось добавить дату'));
     nameEl.value = '';
     whenEl.value = '';
+    noteEl.value = '';
     showToast(t('Дата добавлена'));
     loadDateReminders();
   }catch(e){
@@ -3682,6 +3696,8 @@ function renderDates(){
         <p class="hint" style="margin-top:6px;">${t('Год значения не имеет — год рождения знать не нужно, напомним в тот же день каждый год')}</p>
         <span class="field-label" id="dateOccasionLabel" style="margin-top:16px;">${t('Повод')}</span>
         <div class="chip-row" id="dateOccasionChips" role="group" aria-labelledby="dateOccasionLabel"></div>
+        <label class="field-label" for="dateNote" style="margin-top:16px;">${t('Заметка')} <span class="hint">${t('необязательно — идея подарка, что нравится и т.п.')}</span></label>
+        <input type="text" id="dateNote" maxlength="200" placeholder="${t('Например: любит тюльпаны, хотела книгу...')}" style="margin-top:8px;">
         <button class="btn btn-primary" id="dateAddBtn" style="margin-top:18px;" onclick="submitDateReminder()">${t('Добавить дату')} +</button>
         <div class="auth-error" id="dateAddError"></div>
       </div>

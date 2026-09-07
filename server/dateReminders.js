@@ -43,7 +43,8 @@ async function checkDateReminders(){
       await sendDateReminderEmail(user.email, item.lang, {
         name: item.name,
         daysUntil: item.daysUntil,
-        url: buildPrefillUrl(item.name, item.occasion)
+        url: buildPrefillUrl(item.name, item.occasion),
+        note: item.note
       });
       db.markDateReminderNotified(item.id, item.occurrenceYear);
       console.log(`[dateReminders] Напоминание отправлено: ${user.email} — ${item.name}`);

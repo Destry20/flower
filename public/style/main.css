@@ -191,27 +191,31 @@ a{color:var(--accent);}
 }
 .brand svg{flex:none;}
 .topbar-actions{display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:10px 16px; position:relative;}
-.topbar-actions button{
-  background:var(--paper);border:1px solid var(--line);
-  padding:9px 18px; border-radius:999px; cursor:pointer;
-  font-size:13.5px; color:var(--ink);
+/* Раньше в этом ряду было три разных стиля кнопок вперемешку (голая ссылка
+   без фона у "О сервисе"/"Мои открытки", своя тонированная таблетка у
+   Ko-fi, обычная таблетка у "Войти") — вместе с тем, что иконка была только
+   у половины кнопок (и то эмодзи, а не рисованные), ряд читался как набор
+   случайных элементов, а не одна панель. .topbar-pill — общий стиль для
+   всех: одна форма, один размер, иконка+текст у каждой. */
+.topbar-pill{
+  display:inline-flex; align-items:center; gap:6px;
+  background:var(--paper); border:1px solid var(--line);
+  padding:9px 16px; border-radius:999px; cursor:pointer;
+  font-size:13.5px; color:var(--ink); text-decoration:none; white-space:nowrap;
   transition:border-color .15s ease, color .15s ease, background-color .15s ease;
 }
-.topbar-actions button:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, transparent);}
+.topbar-pill svg{flex:none; display:block;}
+.topbar-pill:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, transparent);}
+/* Ссылка на статью блога у SEO-лендинга ("Не знаете, что написать?") и на
+   форму "всей компанией" в конструкторе — обычный текст-ссылка в потоке
+   абзаца, не кнопка шапки. Не переименовано в topbar-pill намеренно: разные
+   контексты, разный вид (см. использование в renderCreator). */
 .topbar-link{font-size:13.5px; color:var(--ink); opacity:.75; text-decoration:none; cursor:pointer;}
 .topbar-link:hover{opacity:1; color:var(--accent);}
-/* Кнопка Ko-fi в шапке — тот же размер/форма таблетки, что у кнопки "Войти"
-   рядом, но с лёгкой тёплой заливкой цветом повода, чтобы взгляд цеплялся,
-   не превращая её в кричащий CTA-баннер. */
-.topbar-support-btn{
-  display:inline-flex; align-items:center; gap:5px;
-  background:color-mix(in srgb, var(--accent) 12%, var(--paper));
-  border:1px solid var(--line);
-  padding:9px 16px; border-radius:999px;
-  font-size:13.5px; color:var(--ink); text-decoration:none; cursor:pointer; white-space:nowrap;
-  transition:border-color .15s ease, color .15s ease, background-color .15s ease;
-}
-.topbar-support-btn:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 20%, var(--paper));}
+/* Кнопка Ko-fi в шапке — тот же topbar-pill, но с лёгкой тёплой заливкой,
+   чтобы взгляд цеплялся, не превращая её в кричащий CTA-баннер. */
+.topbar-support-btn{background:color-mix(in srgb, var(--accent) 12%, var(--paper));}
+.topbar-support-btn:hover{background:color-mix(in srgb, var(--accent) 20%, var(--paper));}
 .theme-toggle{
   width:36px; height:36px; border-radius:50%; flex:none; padding:0;
   border:1px solid var(--line); background:var(--paper); color:var(--ink);
@@ -262,7 +266,14 @@ a{color:var(--accent);}
     align-items:center; gap:10px;
     padding-bottom:10px; margin-bottom:6px; border-bottom:1px solid var(--line);
   }
-  .topbar-more-panel .topbar-link{padding:9px 4px;}
+  /* Внутри выпадающей панели пилюли распрямляются в обычный вертикальный
+     список — три отдельные "таблетки" подряд в столбик смотрелись бы
+     тяжеловесно там, где и так уже есть общая рамка панели вокруг них. */
+  .topbar-more-panel .topbar-pill{
+    background:none; border:none; padding:9px 4px; border-radius:0;
+    width:100%; justify-content:flex-start;
+  }
+  .topbar-more-panel .topbar-pill:hover{background:none;}
 }
 
 .lang-switch{
@@ -930,6 +941,7 @@ input[type=date], input[type=time]{
 .date-row-info{flex:1; min-width:0;}
 .date-row-name{font-size:14px; color:var(--ink);}
 .date-row-meta{font-size:12px; color:var(--ink); opacity:.6; margin-top:2px;}
+.date-row-note{font-size:12px; color:var(--ink); opacity:.5; margin-top:3px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 /* Цвет обратного отсчёта усиливается по мере приближения даты — сначала
    нейтральный, за 2 недели тёплый жёлтый, за 3 дня — тревожный розовый, тот
    же приём привлечения внимания, что и у .dates-promo-badge/.topbar-new-badge. */
@@ -970,7 +982,6 @@ input[type=date], input[type=time]{
 
 /* Ссылка "Важные даты" в выпадающем меню шапки — бейдж "новое" привлекает
    внимание к недавно добавленной фиче, тот же цвет, что и .dates-promo-badge. */
-.topbar-link-dates{display:flex; align-items:center; gap:6px;}
 .topbar-new-badge{
   background:var(--rose); color:var(--pale); font-size:9.5px; font-weight:700;
   letter-spacing:.04em; text-transform:uppercase; padding:2px 6px; border-radius:999px;

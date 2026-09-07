@@ -66,7 +66,7 @@ async function sendBackupEmail(to, snapshotJson){
 // ссылка ведёт в конструктор с уже подставленными именем и поводом (см.
 // ?to=&occasion= в bootstrap(), public/script/main.js), чтобы от письма до
 // готовой открытки было минимум кликов.
-async function sendDateReminderEmail(to, lang, { name, daysUntil, url }){
+async function sendDateReminderEmail(to, lang, { name, daysUntil, url, note }){
   const strings = STRINGS[lang] || STRINGS.ru;
   const t = getTransporter();
   if(!t){
@@ -77,8 +77,8 @@ async function sendDateReminderEmail(to, lang, { name, daysUntil, url }){
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to,
     subject: strings.dateReminderSubject(name),
-    text: strings.dateReminderBodyText(name, daysUntil, url),
-    html: strings.dateReminderBodyHtml(name, daysUntil, url)
+    text: strings.dateReminderBodyText(name, daysUntil, url, note),
+    html: strings.dateReminderBodyHtml(name, daysUntil, url, note)
   });
 }
 
