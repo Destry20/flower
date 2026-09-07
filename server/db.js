@@ -16,7 +16,7 @@ const TRAFFIC_RETENTION_DAYS = 90;
 
 function defaultData(){
   return {
-    users: [], cards: [], groupCards: [], dates: [],
+    users: [], cards: [], groupCards: [], dates: [], savedCards: [],
     meta: { siteEnabled: true },
     traffic: { byDay: {}, byDayBot: {}, recent: [] },
     errors: []
@@ -49,6 +49,7 @@ let data = load();
 if(!data.traffic.byDayBot) data.traffic.byDayBot = {};
 if(!data.groupCards) data.groupCards = [];
 if(!data.dates) data.dates = [];
+if(!data.savedCards) data.savedCards = [];
 // Публичный счётчик "открыток создано" для главной — считает и гостевые
 // открытки тоже (см. incrementCardsCreated ниже), в отличие от data.cards
 // (там только сохранённые за аккаунтом). Гостевые никогда не хранились, так
@@ -387,6 +388,51 @@ function markDateReminderNotified(id, occurrenceYear){
   persist();
 }
 
+/* ---------------- "мой сад" (открытки, сохранённые получателем) ----------------
+   Раньше получатель открывал букет и на этом всё — если не сохранить саму
+   ссылку/скриншот, открытка просто терялась. Теперь любой вошедший в
+   аккаунт может сохранить ЛЮБУЮ открытую им открытку (свою или чужую,
+   с короткой или с длинной "?data=" ссылки — оба варианта в итоге дают
+   один и тот же encodedData на клиенте, см. saveToGarden в main.js) в свой
+   личный "сад". Не путать с data.cards — там открытки, которые человек
+   САМ собрал и отправил; тут — которые ему прислали и он захотел оставить
+   у себя, это принципиально другое направление и другой список пользователей
+   (получатели, а не только отправители). */
+
+const MAX_GARDEN_PER_USER = 60;
+
+function listGardenByUser(userId){
+  return data.savedCards
+    .filter(c => c.userId === userId)
+    .sort((a,b) => b.savedAt - a.savedAt);
+}
+function countGardenByUser(userId){
+  return data.savedCards.filter(c => c.userId === userId).length;
+}
+// Один и тот же клик "сохранить" не должен плодить дубликаты в саду (не
+// такая уж редкость — человек мог уже сохранить открытку раньше, забыл и
+// нажал снова, или у него открыто несколько вкладок с одной и той же
+// ссылкой). encodedData у одной и той же открытки всегда побайтово
+// одинаков (что у короткой ссылки — сервер отдаёт то же самое каждый раз,
+// что у длинной — она прямо в URL), так что точное совпадение строки —
+// уже достаточная и самая простая проверка, без хеширования.
+function findGardenDuplicate(userId, encodedData){
+  return data.savedCards.find(c => c.userId === userId && c.encodedData === encodedData) || null;
+}
+function createGardenEntry({ userId, encodedData }){
+  const entry = { id: uid(), userId, encodedData, savedAt: Date.now() };
+  data.savedCards.push(entry);
+  persist();
+  return entry;
+}
+function deleteGardenEntry(id, userId){
+  const before = data.savedCards.length;
+  data.savedCards = data.savedCards.filter(c => !(c.id === id && c.userId === userId));
+  const removed = data.savedCards.length !== before;
+  if(removed) persist();
+  return removed;
+}
+
 /* ---------------- admin: site status ---------------- */
 
 function getSiteEnabled(){
@@ -691,6 +737,7 @@ module.exports = {
   listCardsByUser, createCard, deleteCard, findCardByShortId, markCardOpened,
   createGroupCard, findGroupCardByShortId, listGroupCardsByUser, isGroupCardClosed, addGroupContribution, closeGroupCard, MAX_CONTRIBUTIONS,
   listDatesByUser, countDatesByUser, createDateReminder, deleteDateReminder, listDueDateReminders, markDateReminderNotified, MAX_DATES_PER_USER,
+  listGardenByUser, countGardenByUser, findGardenDuplicate, createGardenEntry, deleteGardenEntry, MAX_GARDEN_PER_USER,
   getSiteEnabled, setSiteEnabled,
   recordVisit, getTrafficSummary,
   recordClientError, listClientErrors, clearClientErrors, deleteClientError,

@@ -162,6 +162,16 @@ const EN_STRINGS = {
   'Не удалось добавить подпись': 'Couldn’t add your signature',
   'Открытки всей компанией': 'Group cards',
   'Пока нет ни одной. Начните — ссылка «Собрать всей компанией» есть на главной.': 'None yet. Get started — the "Build it as a group" link is on the homepage.',
+  'Мой сад': 'My garden',
+  'Открытки, которые прислали вам — сохраняйте прямо со страницы просмотра, и они останутся здесь.': 'Cards people sent you — save one right from the viewing page and it stays here.',
+  'Сохранить в свой сад': 'Save to my garden',
+  'От': 'From',
+  'Убрать из сада': 'Remove from garden',
+  'Здесь появятся открытки, которые вам пришлют — откройте любую и нажмите «Сохранить в свой сад».': 'Cards people send you will show up here — open any one and tap "Save to my garden".',
+  'Эта открытка уже у вас в саду': 'This card is already in your garden',
+  'Сохранено в ваш сад': 'Saved to your garden',
+  'Не удалось сохранить': 'Couldn’t save it',
+  'Не удалось убрать открытку': 'Couldn’t remove the card',
   'Закрыта': 'Closed',
   'Достигнут лимит открыток': 'You\'ve reached the card limit',
   'Цветы ещё не добавлены': 'No flowers added yet',
@@ -371,6 +381,7 @@ const EN_STRINGS = {
   'Чтобы открытки сохранялись за вами, а не только в этом браузере.': 'So your cards are saved to you, not just to this browser.',
   'Аккаунт нужен, чтобы вы потом сами могли закрыть приём подписей и завершить открытку «всей компанией».': 'An account is needed so you can later close the group card yourself once everyone has signed it.',
   'Войдите, чтобы открыть настройки своего аккаунта.': 'Log in to open your account settings.',
+  'Аккаунт нужен, чтобы этот букет остался у вас и не потерялся.': 'An account is needed so this bouquet stays with you and doesn’t get lost.',
   'Email': 'Email',
   'Пароль': 'Password',
   'Нет аккаунта?': 'No account yet?',
@@ -604,7 +615,8 @@ let pendingRoute = null; // куда вернуться после логина
 const LOGIN_REASON_TEXT = {
   'group-new': () => t('Аккаунт нужен, чтобы вы потом сами могли закрыть приём подписей и завершить открытку «всей компанией».'),
   'account': () => t('Войдите, чтобы открыть настройки своего аккаунта.'),
-  'dates': () => t('Аккаунт нужен, чтобы напоминания о датах приходили именно вам на почту.')
+  'dates': () => t('Аккаунт нужен, чтобы напоминания о датах приходили именно вам на почту.'),
+  'garden-save': () => t('Аккаунт нужен, чтобы этот букет остался у вас и не потерялся.')
 };
 function authReasonText(fallback){
   const reason = LOGIN_REASON_TEXT[pendingRoute];
@@ -1164,6 +1176,17 @@ function buildBouquetSVG(cfg, size){
   const cx = size/2;
   const vaseTopY = size*0.62;
   const tieY = vaseTopY - 4; // все стебли сходятся в одну точку у горлышка — как перевязанный букет
+  // Ваза (vaseSvg) рисуется в фиксированных пиксельных смещениях от cx/topY,
+  // не зависящих от size — на холсте ~300 (родной масштаб) это ровно то, под
+  // что она нарисована, но на маленьком холсте (миниатюры сада, превью вазы
+  // при сборке "всей компанией" — оба сейчас на 150) та же самая по размеру
+  // ваза съедает почти весь холст и выглядит непропорционально огромной
+  // рядом с честно уменьшенным куполом цветов. vaseScale стягивает вазу (и
+  // её тень) к её же горлышку — единственной точке, где она должна остаться
+  // на месте, ведь именно туда сходятся стебли. При size=300 и крупнее
+  // scale=1 — ничего не меняется для уже работающих мест (просмотр открытки,
+  // карточки на главной).
+  const vaseScale = Math.min(1, size/300);
 
   const flowerEntries = Object.entries(cfg.flowers).filter(([,v])=>v.count>0);
   const heads = [];
@@ -1225,12 +1248,18 @@ function buildBouquetSVG(cfg, size){
     headsSvg += flowerHead(p.type, p.x, p.y, p.color, rot, Math.max(0.78, p.scale) * 1.35);
   });
 
-  const vase = vaseSvg(cfg.vase, cx, vaseTopY);
+  // Масштабируем вазу вокруг её собственного горлышка (cx, vaseTopY) — та же
+  // точка, где заканчиваются стебли, поэтому даже сильно уменьшенная ваза
+  // остаётся "надетой" на букет, а не съезжает и не повисает в воздухе.
+  const vaseRaw = vaseSvg(cfg.vase, cx, vaseTopY);
+  const vase = vaseScale === 1 ? vaseRaw
+    : `<g transform="translate(${cx} ${vaseTopY}) scale(${vaseScale}) translate(${-cx} ${-vaseTopY})">${vaseRaw}</g>`;
   const leaves = n > 0 ? leafSpray(cx, tieY) : '';
   const bow = ribbonBow(cx, vaseTopY-2, cfg.ribbon);
   const charm = cfg.charm ? bouquetCharmSvg(cx, vaseTopY-2, cfg.occasion) : '';
-  // мягкая тень под вазой — без неё композиция выглядела "приклеенной" к верху холста
-  const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94}" rx="46" ry="7" fill="#000000" opacity=".08"/>`;
+  // мягкая тень под вазой — без неё композиция выглядела "приклеенной" к верху холста.
+  // Смещение и радиусы тоже завязаны на полноразмерную вазу — уменьшаем вместе с ней.
+  const shadow = `<ellipse cx="${cx}" cy="${vaseTopY+94*vaseScale}" rx="${46*vaseScale}" ry="${7*vaseScale}" fill="#000000" opacity=".08"/>`;
   // Мягкая тень под каждой головкой цветка — раньше светлые/кремовые лепестки
   // (белая ромашка/гвоздика и т.п.) визуально сливались с фоном карточки,
   // у которой похожий тёплый кремовый тон. Тень даёт край независимо от того,
@@ -3190,6 +3219,10 @@ function renderViewer(encodedData){
   // более старой/новой версии сайта — sanitizeCardData подставляет безопасные
   // значения по умолчанию для всего, что не проходит проверку, вместо падения.
   const data = sanitizeCardData(rawData);
+  // "Сохранить в сад" (см. saveToGarden ниже) шлёт ровно эту строку на сервер —
+  // не пересобранные данные, а тот же encodedData, что уже проверен выше и
+  // будет так же честно открываться при просмотре сада, как открылся сейчас.
+  currentViewerEncodedData = encodedData;
 
   const occ = occasionById(data.occasion);
   setPageTitle(data.to ? `${t('Открытка для')} ${data.to}` : t('Открытка'));
@@ -3225,6 +3258,7 @@ function renderViewer(encodedData){
           <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
           <div class="view-footer">
             <button class="btn btn-primary" onclick="goCreate()">${t('Создать свою открытку')}</button>
+            <button class="btn btn-ghost" onclick="saveToGarden()">🌷 ${t('Сохранить в свой сад')}</button>
             <p class="view-footer-note">${t('Бесплатно, за пару минут — на')} <a href="#" onclick="goHome();return false;">${BRAND}</a></p>
           </div>
         </div>
@@ -3400,7 +3434,11 @@ async function renderMyCards(){
       <div class="mine-list" id="mineList"><p style="opacity:.6;">${t('Загрузка…')}</p></div>
 
       ${session.user ? `
-      <h2 style="font-size:18px;margin-top:36px;font-family:'Fraunces',serif;font-weight:500;">${t('Открытки всей компанией')}</h2>
+      <h2 class="mine-section-title">🌷 ${t('Мой сад')}</h2>
+      <p class="mine-section-sub">${t('Открытки, которые прислали вам — сохраняйте прямо со страницы просмотра, и они останутся здесь.')}</p>
+      <div class="garden-grid" id="gardenGrid"><p style="opacity:.6;">${t('Загрузка…')}</p></div>
+
+      <h2 class="mine-section-title">${t('Открытки всей компанией')}</h2>
       <div class="mine-list" id="groupMineList" style="margin-top:16px;"><p style="opacity:.6;">${t('Загрузка…')}</p></div>` : ''}
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
@@ -3453,7 +3491,10 @@ async function renderMyCards(){
     }
   }
 
-  if(session.user) await renderMyGroupCards();
+  if(session.user){
+    await renderMyGarden();
+    await renderMyGroupCards();
+  }
 }
 
 async function renderMyGroupCards(){
@@ -3712,6 +3753,104 @@ function renderDates(){
     </div>`
   ).join('');
   loadDateReminders();
+}
+
+/* ====================== МОЙ САД (открытки, сохранённые получателем) ======================
+   До этого получатель открывал букет и уходил — сохранить открытку можно
+   было только сохранив саму ссылку. Теперь на просмотре любой открытки
+   (см. кнопку в renderViewer) можно оставить её у себя — растущий "сад" из
+   букетов, которые прислали разные люди, живёт здесь же, на "Мои открытки",
+   третьей секцией рядом с "Отправленные" и "Всей компанией" (а не отдельной
+   страницей в шапке — та и так недавно расчищена от лишних пунктов). */
+
+let currentViewerEncodedData = null; // что показывает renderViewer прямо сейчас — то, что уйдёт в сад по клику
+let pendingGardenSave = null; // encodedData, отложенный до входа в аккаунт (см. saveToGarden/completeGardenSave)
+
+function saveToGarden(){
+  if(!currentViewerEncodedData) return;
+  if(!session.user){
+    pendingGardenSave = currentViewerEncodedData;
+    pendingRoute = 'garden-save';
+    location.hash = 'login';
+    return;
+  }
+  doSaveToGarden(currentViewerEncodedData);
+}
+
+async function doSaveToGarden(encodedData){
+  try{
+    const res = await fetch('/api/garden', {
+      method:'POST', headers:{'Content-Type':'application/json','X-Lang':uiLang},
+      body: JSON.stringify({ encodedData })
+    });
+    const json = await res.json();
+    if(!res.ok) throw new Error(json.error || t('Не удалось сохранить'));
+    showToast(json.duplicate ? t('Эта открытка уже у вас в саду') : t('Сохранено в ваш сад'));
+  }catch(e){
+    showToast(e.message);
+  }
+}
+
+// Хэш-маршрут '#garden-save' (см. renderRoute) — сюда ведёт login/register
+// после того, как saveToGarden отправил незалогиненного человека на #login
+// с pendingRoute='garden-save' (тот же общий приём, что и у group-new/dates,
+// см. LOGIN_REASON_TEXT). Довершает отложенное сохранение и приземляет на
+// "Мои открытки", где теперь и живёт сад.
+async function completeGardenSave(){
+  const encodedData = pendingGardenSave;
+  pendingGardenSave = null;
+  if(encodedData) await doSaveToGarden(encodedData);
+  location.hash = 'mine';
+  renderRoute();
+}
+
+function gardenItemHtml(entry){
+  let data;
+  try{
+    data = sanitizeCardData(decodeCardData(entry.encodedData));
+  }catch(e){
+    return ''; // повреждённая/несовместимая запись — тихо пропускаем, не роняем весь сад
+  }
+  const occ = occasionById(data.occasion);
+  const bg = BACKGROUNDS.find(b=>b.id===data.background) || BACKGROUNDS[0];
+  const dateLocale = uiLang === 'ru' ? 'ru-RU' : 'en-US';
+  const d = new Date(entry.savedAt);
+  return `<div class="garden-item">
+    <div class="garden-item-stage ${bg.dark?'stage-dark':''}" style="background:${bg.css}">
+      <div class="garden-item-bouquet">${buildBouquetSVG(data, 150)}</div>
+    </div>
+    <div class="garden-item-info">
+      <div class="garden-item-from">${data.from ? `${t('От')} ${esc(data.from)}` : tr(occ.label)}</div>
+      <div class="garden-item-date">${d.toLocaleDateString(dateLocale,{day:'numeric',month:'long'})}</div>
+    </div>
+    <button class="garden-item-open" onclick="openCardLink('${entry.encodedData}')">${t('Открыть')}</button>
+    <button class="garden-item-remove" onclick="removeFromGarden('${entry.id}')" aria-label="${t('Убрать из сада')}">✕</button>
+  </div>`;
+}
+
+async function renderMyGarden(){
+  const wrap = document.getElementById('gardenGrid');
+  if(!wrap) return;
+  let list = [];
+  try{
+    const res = await fetch('/api/garden');
+    const json = await res.json();
+    list = json.cards || [];
+  }catch(e){ list = []; }
+  if(!wrap) return; // ушли со страницы, пока шёл запрос
+  const itemsHtml = list.map(gardenItemHtml).filter(Boolean).join('');
+  wrap.innerHTML = itemsHtml || `<div class="mine-empty">${t('Здесь появятся открытки, которые вам пришлют — откройте любую и нажмите «Сохранить в свой сад».')}</div>`;
+}
+
+async function removeFromGarden(id){
+  try{
+    const res = await fetch('/api/garden/'+encodeURIComponent(id), { method:'DELETE' });
+    if(!res.ok) throw new Error();
+  }catch(e){
+    showToast(t('Не удалось убрать открытку'));
+    return;
+  }
+  renderMyGarden();
 }
 
 /* ====================== АККАУНТ (вход/регистрация/профиль) ====================== */
@@ -4073,6 +4212,7 @@ function renderRoute(){
   if(hash === '#terms') return renderTerms();
   if(hash === '#group-new') return renderGroupCreate();
   if(hash === '#dates') return renderDates();
+  if(hash === '#garden-save') return completeGardenSave();
   // #create — сам конструктор (раньше жил прямо на "/", см. renderHome).
   if(hash === '#create') return renderCreator();
 

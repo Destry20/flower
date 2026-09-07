@@ -920,6 +920,51 @@ input[type=date], input[type=time]{
 .mine-empty{text-align:center; padding:36px 20px 60px; opacity:.6;}
 .mine-empty-vase{width:130px; margin:0 auto 6px; opacity:.85;}
 
+/* Заголовок доп.секций на "Мои открытки" ("Мой сад", "Открытки всей
+   компанией") — раньше у единственной такой секции стиль был инлайновым,
+   теперь их две, вынесли в общий класс. */
+.mine-section-title{
+  font-size:18px; margin-top:36px; font-family:'Fraunces',serif; font-weight:500;
+}
+.mine-section-sub{ font-size:12.5px; color:var(--ink); opacity:.6; margin-top:4px; line-height:1.5; }
+
+/* ---------- мой сад (открытки, сохранённые получателем — см. renderMyGarden в main.js) ---------- */
+.garden-grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:14px;
+  margin-top:16px;
+}
+.garden-item{
+  position:relative; border:1px solid var(--line); border-radius:14px; overflow:hidden;
+  background:var(--paper-deep); transition:border-color .15s ease, box-shadow .15s ease;
+}
+.garden-item:hover{ border-color:var(--rose); box-shadow:0 10px 24px -18px rgba(47,59,42,0.5); }
+.garden-item-stage{
+  display:flex; align-items:center; justify-content:center; padding:14px 8px;
+}
+.garden-item-bouquet{width:100%; max-width:150px;}
+.garden-item-bouquet svg{width:100%; height:auto; display:block;}
+.garden-item-info{padding:8px 12px 12px;}
+.garden-item-from{font-size:12.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.garden-item-date{font-size:11px; color:var(--ink); opacity:.55; margin-top:2px;}
+.garden-item-open{
+  display:block; width:calc(100% - 24px); margin:0 12px 12px; border:1px solid var(--line);
+  background:var(--paper); border-radius:999px; padding:6px 0; font-size:12px; color:var(--ink); cursor:pointer;
+}
+.garden-item-open:hover{border-color:var(--accent); color:var(--accent);}
+.garden-item-remove{
+  position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%;
+  border:none; background:rgba(0,0,0,0.35); color:#fff; font-size:12px; line-height:1;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  opacity:0; transition:opacity .15s ease;
+}
+.garden-item:hover .garden-item-remove{opacity:1;}
+.garden-item-remove:hover{background:var(--rose);}
+@media (max-width:680px){
+  /* На тач-экранах ":hover" не срабатывает надёжно — крестик всегда виден,
+     иначе на телефоне открытку из сада вообще нечем убрать. */
+  .garden-item-remove{opacity:1;}
+}
+
 /* ---------- важные даты (renderDates в main.js, .dates-promo на главной) ---------- */
 .dates-page{max-width:640px; margin:0 auto; padding:56px 24px 90px;}
 .dates-page h1{font-family:'Fraunces',serif; font-size:30px; margin-top:6px; line-height:1.2;}
@@ -1161,6 +1206,10 @@ input[type=date], input[type=time]{
   margin-top:44px; padding-top:26px; border-top:1px solid var(--line);
   text-align:center;
 }
+/* Второй кнопки ("Сохранить в свой сад") тут раньше не было — только один
+   центрированный CTA. text-align:center уже разводит два инлайновых button
+   по ширине, но на переносе строки (узкий экран) им нужен небольшой зазор. */
+.view-footer .btn{margin:0 4px 10px;}
 .view-footer-note{
   margin-top:14px; font-size:13px; color:var(--ink); opacity:.6;
 }
