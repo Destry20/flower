@@ -229,51 +229,51 @@ a{color:var(--accent);}
 .theme-toggle svg{width:18px; height:18px; flex:none; display:block;}
 .theme-toggle:hover{border-color:var(--accent); color:var(--accent); background:color-mix(in srgb, var(--accent) 6%, transparent);}
 
-/* Кнопка-меню и панель "ещё" (RU/EN, тема, "О сервисе", "Мои открытки") —
-   на широких экранах эти три обёртки прозрачны для раскладки (display:contents),
-   так что лежащие внутри элементы ведут себя ровно как раньше, простыми
-   элементами topbar-actions. Схлопываются в выпадающую панель только по
-   медиа-запросу ниже — на телефоне шапка в один ряд не помещалась и
-   разваливалась на 3 строки, съедая ~19% экрана до любого контента. */
-.topbar-menu-btn{display:none;}
-.topbar-more, .topbar-more-row, .topbar-more-panel{display:contents;}
-.topbar-more-backdrop{display:none;}
-@media (max-width:680px){
-  .topbar-menu-btn{
-    display:flex; width:36px; height:36px; border-radius:50%; flex:none; padding:0;
-    border:1px solid var(--line); background:var(--paper); color:var(--ink);
-    align-items:center; justify-content:center; cursor:pointer;
-    transition:border-color .15s ease, color .15s ease, background-color .15s ease;
-  }
-  .topbar-menu-btn svg{width:18px; height:18px; flex:none; display:block;}
-  .topbar-menu-btn:hover{border-color:var(--accent); color:var(--accent);}
+/* Кнопка-меню и панель "ещё" — теперь всегда выпадающее меню, не только на
+   мобильном (раньше на широких экранах эти обёртки были прозрачны для
+   раскладки, display:contents, и разворачивались в общий ряд наравне с
+   остальными кнопками). С единым стилем кнопок (.topbar-pill) сам ряд стал
+   опрятнее, но 5 таблиц подряд в одну линию всё равно читались как список,
+   а не панель — поэтому то, чем пользуются реже ("О сервисе", "Мои
+   открытки"), теперь всегда за одной кнопкой. RU/EN, тема, "Важные даты" и
+   "Поддержать" наружу не убираем: языком/темой пользуются часто, донат
+   почти никогда не прячут, а "Важные даты" — нарочно на виду как новая фича. */
+.topbar-menu-btn{
+  display:flex; width:36px; height:36px; border-radius:50%; flex:none; padding:0;
+  border:1px solid var(--line); background:var(--paper); color:var(--ink);
+  align-items:center; justify-content:center; cursor:pointer;
+  transition:border-color .15s ease, color .15s ease, background-color .15s ease;
+}
+.topbar-menu-btn svg{width:18px; height:18px; flex:none; display:block;}
+.topbar-menu-btn:hover{border-color:var(--accent); color:var(--accent);}
 
-  .topbar-more{display:none;}
-  .topbar-more.open{display:block;}
-  /* Клик по прозрачной подложке вне самой панели закрывает меню — тот же
-     приём, что и у .flower-modal-backdrop (event.target===this). */
-  .topbar-more.open .topbar-more-backdrop{display:block; position:fixed; inset:0; z-index:60; background:transparent;}
-  .topbar-more.open .topbar-more-row,
-  .topbar-more.open .topbar-more-panel{display:flex;}
-  .topbar-more-panel{
-    flex-direction:column; gap:4px;
-    position:absolute; top:calc(100% + 8px); right:0;
-    background:var(--paper); border:1px solid var(--line); border-radius:14px;
-    box-shadow:0 20px 45px -18px rgba(47,59,42,0.35);
-    padding:12px; min-width:200px; z-index:61;
-  }
-  .topbar-more-row{
-    align-items:center; gap:10px;
-    padding-bottom:10px; margin-bottom:6px; border-bottom:1px solid var(--line);
-  }
-  /* Внутри выпадающей панели пилюли распрямляются в обычный вертикальный
-     список — три отдельные "таблетки" подряд в столбик смотрелись бы
-     тяжеловесно там, где и так уже есть общая рамка панели вокруг них. */
-  .topbar-more-panel .topbar-pill{
-    background:none; border:none; padding:9px 4px; border-radius:0;
-    width:100%; justify-content:flex-start;
-  }
-  .topbar-more-panel .topbar-pill:hover{background:none;}
+.topbar-more{position:relative;}
+.topbar-more-backdrop, .topbar-more-panel{display:none;}
+/* Клик по прозрачной подложке вне самой панели закрывает меню — тот же
+   приём, что и у .flower-modal-backdrop (event.target===this). */
+.topbar-more.open .topbar-more-backdrop{display:block; position:fixed; inset:0; z-index:60; background:transparent;}
+.topbar-more.open .topbar-more-panel{
+  display:flex; flex-direction:column; gap:2px;
+  position:absolute; top:calc(100% + 8px); right:0;
+  background:var(--paper); border:1px solid var(--line); border-radius:14px;
+  box-shadow:0 20px 45px -18px rgba(47,59,42,0.35);
+  padding:8px; min-width:190px; z-index:61;
+}
+/* Внутри выпадающей панели пилюли распрямляются в обычный вертикальный
+   список с лёгкой подсветкой на hover — как в обычном выпадающем меню,
+   а не отдельные "таблетки" подряд, что смотрелось бы тяжеловесно там, где
+   и так уже есть общая рамка панели вокруг них. */
+.topbar-more-panel .topbar-pill{
+  background:none; border:none; padding:9px 10px; border-radius:8px;
+  width:100%; justify-content:flex-start;
+}
+.topbar-more-panel .topbar-pill:hover{background:color-mix(in srgb, var(--accent) 8%, transparent); border-color:transparent;}
+/* Переключатель языка — тоже в меню (реже, чем сама навигация, но не
+   "таблетка"-ссылка, а сегментированный контрол, поэтому своя обёртка с
+   отступом и полосой-разделителем от пунктов меню под ним). */
+.topbar-more-lang{
+  display:flex; justify-content:center;
+  padding:4px 4px 10px; margin-bottom:4px; border-bottom:1px solid var(--line);
 }
 
 .lang-switch{

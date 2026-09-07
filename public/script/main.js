@@ -2087,23 +2087,23 @@ function topbarHtml(){
   return `<div class="topbar">
     <div class="brand" tabindex="0" role="link" onclick="goHome()" onkeydown="activateOnKey(event)" style="cursor:pointer;">${leafIcon()}${BRAND}</div>
     <div class="topbar-actions">
-      <button class="topbar-menu-btn" onclick="toggleTopbarMenu()" aria-expanded="${topbarMenuOpen}" aria-label="${t('Меню')}">${menuIconSvg()}</button>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
+      <a class="topbar-pill" href="#dates">${badgeIconSvg('bell','currentColor',16)}${t('Важные даты')}<span class="topbar-new-badge">${t('новое')}</span></a>
+      <a class="topbar-pill topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">${badgeIconSvg('coffee','currentColor',16)}${t('Поддержать')}</a>
       <div class="topbar-more ${topbarMenuOpen?'open':''}" id="topbarMore">
+        <button class="topbar-menu-btn" onclick="toggleTopbarMenu()" aria-expanded="${topbarMenuOpen}" aria-label="${t('Меню')}">${menuIconSvg()}</button>
         <div class="topbar-more-backdrop" onclick="if(event.target===this) closeTopbarMenu()"></div>
         <div class="topbar-more-panel">
-          <div class="topbar-more-row">
+          <div class="topbar-more-lang">
             <div class="lang-switch" role="group" aria-label="Language / Язык">
               <button class="lang-btn ${uiLang==='ru'?'active':''}" aria-pressed="${uiLang==='ru'}" onclick="closeTopbarMenu();setLang('ru')">RU</button>
               <button class="lang-btn ${uiLang==='en'?'active':''}" aria-pressed="${uiLang==='en'}" onclick="closeTopbarMenu();setLang('en')">EN</button>
             </div>
-            <button class="theme-toggle" onclick="closeTopbarMenu();toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
           </div>
           <a class="topbar-pill" href="#" onclick="event.preventDefault();closeTopbarMenu();scrollToAbout()">${badgeIconSvg('info','currentColor',16)}${t('О сервисе')}</a>
           <a class="topbar-pill" href="#mine" onclick="closeTopbarMenu()">${badgeIconSvg('envelope','currentColor',16)}${t('Мои открытки')}</a>
-          <a class="topbar-pill" href="#dates" onclick="closeTopbarMenu()">${badgeIconSvg('bell','currentColor',16)}${t('Важные даты')}<span class="topbar-new-badge">${t('новое')}</span></a>
         </div>
       </div>
-      <a class="topbar-pill topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">${badgeIconSvg('coffee','currentColor',16)}${t('Поддержать')}</a>
       ${session.user
         ? `<button class="topbar-pill" onclick="location.hash='account'">${badgeIconSvg('you','currentColor',16)}${esc(session.user.name || session.user.email.split('@')[0])}</button>`
         : `<button class="topbar-pill" onclick="location.hash='login'">${badgeIconSvg('you','currentColor',16)}${t('Войти')}</button>`}
