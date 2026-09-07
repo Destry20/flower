@@ -76,7 +76,12 @@ app.use(helmet({
       // (gsi/style) отдельно от скрипта, тем же запросом, что рисует виджет.
       styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com'],
       fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-      imgSrc: ["'self'", 'data:'],
+      // GA4 не всегда шлёт события через fetch/sendBeacon (то, что покрывает
+      // connectSrc ниже) — часть хитов (например, с googletagmanager.com/td)
+      // уходит обычной картинкой-пикселем, без img-src такие просто молча
+      // блокировались (в консоли — "violates img-src 'self' data:"), сама
+      // аналитика при этом не ломалась, но часть событий терялась.
+      imgSrc: ["'self'", 'data:', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
       connectSrc: ["'self'", 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
       frameSrc: ["'self'", 'https://accounts.google.com'],
       objectSrc: ["'none'"],
