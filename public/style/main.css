@@ -1347,6 +1347,17 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 .promo-tag{
   font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; opacity:.45; margin-bottom:8px;
 }
+/* Отдельный блок под статьи блога (blog.js вставляет его после вступления,
+   перед первым <h2> — см. комментарий там же) — 728x90, а не 300x250, как
+   у .promo-box: тот квадратный формат в узкой текстовой колонке статьи
+   смотрелся бы непропорционально высоким. iframe растянут на 100% ширины
+   колонки, а высоту держит через aspect-ratio — сама реклама внутри (см.
+   public/x/n3.html) масштабируется под эту ширину уже своим скриптом. */
+.promo-wide{ max-width:680px; margin:28px auto; text-align:center; }
+.promo-wide iframe{
+  display:block; width:100%; max-width:728px; margin:0 auto;
+  aspect-ratio:728/90; border:0;
+}
 
 /* ---------- legal pages ---------- */
 .legal-wrap{max-width:680px; margin:0 auto; padding:40px 36px 90px; line-height:1.7;}

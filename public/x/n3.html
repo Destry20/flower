@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  html,body{margin:0;padding:0;background:transparent;overflow:hidden;}
+</style>
+</head>
+<body>
+<!-- Реклама Adsterra 728x90 (отдельная зона под блог, не n2 из конструктора —
+     чтобы статистика по блогу не мешалась со статистикой конструктора).
+     728px не влезает ни в одну колонку статьи блога (.legal-wrap max-width:
+     680px, а на мобильном и того меньше) — сам родительский <iframe>
+     (см. blog.js) растянут на 100% ширины колонки и держит высоту через CSS
+     aspect-ratio:728/90, а здесь просто масштабируем те же фиксированные
+     728x90 (так задано в atOptions, их нельзя поменять без потери самого
+     объявления) под фактическую ширину документа — она и есть факти­ческая
+     ширина iframe, раз он сам растянут на 100%. -->
+<div id="scaleWrap" style="width:728px;height:90px;transform-origin:0 0;">
+<script>
+  atOptions = {
+    'key' : '1498561f580ae1334dd027e56e830e98',
+    'format' : 'iframe',
+    'height' : 90,
+    'width' : 728,
+    'params' : {}
+  };
+</script>
+<script src="https://www.highrevenueformat.com/1498561f580ae1334dd027e56e830e98/invoke.js"></script>
+</div>
+<script>
+  function fit(){
+    var w = document.documentElement.clientWidth || 728;
+    var scale = Math.min(1, w / 728);
+    document.getElementById('scaleWrap').style.transform = 'scale(' + scale + ')';
+  }
+  fit();
+  window.addEventListener('resize', fit);
+</script>
+</body>
+</html>

@@ -105,7 +105,7 @@ app.use(helmet({
 // поэтому запрещать им конкретные домены бессмысленно; изоляция от
 // остального сайта обеспечивается не этой политикой, а sandbox-атрибутом
 // на <iframe> в index.html.
-const AD_PAGE_PATHS = new Set(['/x/n1.html', '/x/n2.html']);
+const AD_PAGE_PATHS = new Set(['/x/n1.html', '/x/n2.html', '/x/n3.html']);
 const AD_CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https:; connect-src https:; img-src https: data:; style-src 'unsafe-inline'; frame-src https:";
 app.use((req, res, next) => {
   if(AD_PAGE_PATHS.has(req.path)) res.setHeader('Content-Security-Policy', AD_CSP);
