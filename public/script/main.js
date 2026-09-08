@@ -693,6 +693,44 @@ function darken(hex, amt){
   return hslToHex(h, s, newL);
 }
 function lighten(hex, amt){ return darken(hex, -amt); }
+
+// Цвет текста для "штампа" повода (плашка "С днём рождения" и т.п. поверх
+// occ.color — на самой открытке, в конструкторе, на карточках-примерах).
+// Раньше текст на ней всегда был бледно-кремовым — на тёмных цветах повода
+// (love) это честные ~11:1, но на светлых пастелях (розовый/золотой/светлый
+// шалфей/серо-синий) контраст падал до ~2.5-2.9 при требуемых WCAG AA 4.5:1 —
+// то есть половина поводов давала почти нечитаемый текст на самом заметном
+// элементе открытки. occ.color — это цветовая палитра бренда, а не заранее
+// подобранные пары "фон+текст", поэтому вместо одного фиксированного цвета
+// текста здесь честный расчёт по формуле контраста: пробуем тёмный и светлый
+// вариант, берём тот, что лучше, а если даже он не дотягивает до 4.5 (типичная
+// история у мидтоновых пастелей — света мало что тёмному, что светлому
+// тексту) — по чуть-чуть (шагами по 8 из 255 светлоты) подстраиваем фон
+// именно бейджа в сторону текста, максимум на ~9%, дальше это уже был бы
+// другой цвет. Сам occ.color для вазы/конверта/ленты/точки-метки не трогаем —
+// правка касается только текстовых плашек, использующих этот хелпер.
+function relLuminance(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  const lin = v => { v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+  return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+}
+function contrastRatio(hexA, hexB){
+  const L1 = relLuminance(hexA)+0.05, L2 = relLuminance(hexB)+0.05;
+  return L1>L2 ? L1/L2 : L2/L1;
+}
+function occasionBadgeStyle(hex){
+  const INK = '#2F3B2A', PAPER = '#FAF3E7';
+  const inkRatio = contrastRatio(INK, hex), paperRatio = contrastRatio(PAPER, hex);
+  const color = inkRatio >= paperRatio ? INK : PAPER;
+  let bg = hex, ratio = Math.max(inkRatio, paperRatio), steps = 0;
+  while(ratio < 4.5 && steps < 20){
+    bg = color === INK ? lighten(bg, 8) : darken(bg, 8);
+    ratio = contrastRatio(color, bg);
+    steps++;
+  }
+  return { bg, color };
+}
 function uid(){ return 'c' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
 function esc(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function showToast(msg){
@@ -1623,11 +1661,12 @@ function homeExampleCardHtml(ex, i){
   // заголовка, а не случайный цвет).
   const patternColor = bg.dark ? '#F3EEE3' : occ.color;
   const patternOpacity = bg.dark ? 0.3 : 0.22;
+  const bandStyle = occasionBadgeStyle(occ.color);
   return `<div class="home-card ${ex.featured?'featured':''}" style="--tilt:${ex.tilt}deg; --lift:${ex.lift}px; z-index:${i+1};" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${labelText}" onclick="applyExample('${ex.id}')" onkeydown="activateOnKey(event)">
     <div class="home-card-stage" style="background:${bg.css}">
       ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity)}
       <div class="home-card-inner">
-        <div class="home-card-band" style="background:${occ.color}">${stampText}</div>
+        <div class="home-card-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${stampText}</div>
         <div class="home-card-bouquet">${buildBouquetSVG(ex, size)}</div>
         <div class="home-card-msg">
           <div class="to">${t('Для')} ${esc(tr(ex.to))}</div>
@@ -1724,6 +1763,13 @@ const PANEL_ACCENTS = ['var(--rose)', 'var(--gold)', 'var(--sage-dark)', 'var(--
 // см. рассуждение у BADGE_ICON_COLOR) — и картинка на бейдже каждой панели,
 // подарок/росток/конверт/звезда, вместо голой цифры шага.
 const PANEL_ACCENT_HEX = ['#C97B86', '#B98A4A', '#5C7457', '#4B2E3D'];
+// {bg,color} для кружка с номером ТЕКУЩЕГО шага (.step-bar-item.active
+// .step-bar-num) — раньше это всегда был белый текст на PANEL_ACCENTS
+// как есть, а первые два акцента (rose/gold) с ним дают только ~2.8:1 при
+// требуемых WCAG 4.5:1 (см. дизайн-ревью, тот же класс проблемы, что и у
+// штампа повода). Тот же occasionBadgeStyle — фон кружка либо остаётся как
+// есть с тёмным текстом, либо чуть светлеет, если и тёмный текст не спасает.
+const PANEL_ACCENT_BADGE = PANEL_ACCENT_HEX.map(occasionBadgeStyle);
 const PANEL_ICONS = ['gift', 'sprout', 'envelope', 'star'];
 
 // Разметка заголовка панели-аккордеона — иконка-бейдж (та же azбука
@@ -1871,7 +1917,7 @@ function stepBarHtml(){
     {n:3, panel:'panelMessage', label:t('Послание')},
     {n:4, panel:'panelExtra', label:t('Дополнительно')}
   ];
-  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${openPanelId===s.panel?'active':''}" style="--panel-accent:${PANEL_ACCENTS[i]};" data-panel="${s.panel}" onclick="event.preventDefault(); togglePanel('${s.panel}');"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
+  return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${openPanelId===s.panel?'active':''}" style="--panel-accent:${PANEL_ACCENTS[i]};--panel-accent-badge-bg:${PANEL_ACCENT_BADGE[i].bg};--panel-accent-badge-text:${PANEL_ACCENT_BADGE[i].color};" data-panel="${s.panel}" onclick="event.preventDefault(); togglePanel('${s.panel}');"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
 }
 function renderCreator(){
   const landing = seoLanding();
@@ -1891,6 +1937,7 @@ function renderCreator(){
   const previewBg = BACKGROUNDS.find(b=>b.id===state.background);
   const previewPatternColor = previewBg.dark ? '#F3EEE3' : occ.color;
   const previewPatternOpacity = previewBg.dark ? 0.28 : 0.2;
+  const previewBandStyle = occasionBadgeStyle(occ.color);
   parkInlineAd();
   document.getElementById('app').innerHTML = `
   ${topbarHtml()}
@@ -2008,7 +2055,7 @@ function renderCreator(){
           <div class="preview-hero">
             ${stagePatternSvg(OCCASION_ICON[occ.id], previewPatternColor, previewPatternOpacity)}
             <div class="preview-card">
-              <div class="preview-occasion-band" id="pvBand" style="background:${occ.color}">${tr(occ.stamp)}</div>
+              <div class="preview-occasion-band" id="pvBand" style="background:${previewBandStyle.bg};color:${previewBandStyle.color}">${tr(occ.stamp)}</div>
               <div class="preview-bouquet-wrap" id="pvBouquetWrap"><div class="preview-bouquet" id="pvBouquet"></div></div>
               <div class="preview-msg">
                 <div class="to" id="pvTo"></div>
@@ -2370,7 +2417,9 @@ function updatePreviewText(){
   document.getElementById('pvTo').textContent = state.to ? `${t('Для')} ${state.to}` : '';
   document.getElementById('pvText').innerHTML = esc(state.message) || `<span style="opacity:.4">${t('Текст пожелания появится здесь…')}</span>`;
   document.getElementById('pvFrom').textContent = state.from ? `— ${state.from}` : '';
-  document.getElementById('pvBand').style.background = occ.color;
+  const bandStyle = occasionBadgeStyle(occ.color);
+  document.getElementById('pvBand').style.background = bandStyle.bg;
+  document.getElementById('pvBand').style.color = bandStyle.color;
   document.getElementById('pvBand').textContent = tr(occ.stamp);
 }
 
@@ -3018,12 +3067,13 @@ function renderGroupPageBody(shortId, group){
   if(!el) return; // ушли со страницы, пока грузился fetch
   const occ = occasionById(group.occasion);
   const bouquetSvg = buildBouquetSVG({ flowers: mergeGroupFlowers(group.contributions), vase: group.vase, ribbon: occ.color }, 260);
+  const bandStyle = occasionBadgeStyle(occ.color);
 
   if(group.closed){
     el.innerHTML = `
       <div class="eyebrow" style="text-align:center;display:block;">${t('вместе')}</div>
       <div style="text-align:center;">
-        <div class="view-occasion-band" style="background:${occ.color};color:var(--pale);">${tr(occ.stamp)}</div>
+        <div class="view-occasion-band" style="background:${bandStyle.bg};color:${bandStyle.color};">${tr(occ.stamp)}</div>
       </div>
       <h1 style="font-size:22px;margin-top:14px;text-align:center;">${esc(group.to)}</h1>
       <div class="preview-card" style="max-width:260px;margin:16px auto 0;padding:18px;">${bouquetSvg}</div>
@@ -3225,6 +3275,7 @@ function renderViewer(encodedData){
   currentViewerEncodedData = encodedData;
 
   const occ = occasionById(data.occasion);
+  const bandStyle = occasionBadgeStyle(occ.color);
   setPageTitle(data.to ? `${t('Открытка для')} ${data.to}` : t('Открытка'));
   setMeta(`${t('Вам открытка от')} ${data.from || t('кого-то особенного')} 🌿`, `${tr(occ.stamp)}. ${t('Нажмите, чтобы открыть букет и пожелание.')}`);
 
@@ -3252,7 +3303,7 @@ function renderViewer(encodedData){
           <div class="view-open-hint">${t('Нажмите, чтобы открыть')}</div>
         </button>
         <div class="view-content" id="viewContent">
-          <div class="view-occasion-band" style="background:${occ.color}">${tr(occ.stamp)}</div>
+          <div class="view-occasion-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${tr(occ.stamp)}</div>
           <div class="view-bouquet-wrap" id="viewBouquet">${buildBouquetSVG(data, 300)}</div>
           <div class="view-msg" id="viewMsg" style="${messageFontStyleAttr(data.messageFont)}">${esc(data.message)}</div>
           <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
