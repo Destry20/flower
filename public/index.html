@@ -114,6 +114,16 @@
 <meta name="twitter:description" content="A virtual bouquet that never wilts — pick the flowers, write your message, and share it with one link.">
 <meta name="twitter:image" content="https://vivorose.com/og-image.png">
 
+<!-- Шрифты. Раньше подключались через @import в первой строке main.css — это
+     давало последовательную цепочку загрузки (main.css → googleapis → gstatic)
+     и притормаживало отрисовку заголовка первого экрана (LCP). Здесь запрос
+     стартует сразу с разбором <head>, параллельно с main.css; preconnect
+     заранее открывает соединение к gstatic, откуда придут сами файлы шрифтов.
+     display=swap уже в URL — текст виден сразу дефолтным шрифтом, без FOIT. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=Caveat:wght@500;600&display=swap">
+
 <link rel="stylesheet" href="/style/main.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>

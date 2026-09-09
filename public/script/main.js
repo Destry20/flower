@@ -1696,7 +1696,7 @@ function renderHome(){
         <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
         <a class="btn btn-ghost" href="#examples" onclick="event.preventDefault(); document.getElementById('examples').scrollIntoView({behavior:'smooth',block:'start'})">${t('Смотреть примеры')}</a>
       </div>
-      <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:14px;"></p>
+      <p id="heroCardCount" style="font-size:13px; color:var(--ink-mute); margin-top:14px;"></p>
     </div>
 
     <div class="home-examples reveal" id="examples">
@@ -1947,7 +1947,7 @@ function renderCreator(){
         <h1>${landing ? t(landing.h1) : t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
         <p>${landing ? t(landing.sub) : t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
         ${landing && landing.blogSlug ? `<a href="/blog/${uiLang==='ru'?'':'en/'}${landing.blogSlug}" class="topbar-link" style="display:inline-block;margin-top:14px;">${t(landing.blogLabel)}</a>` : ''}
-        <p id="heroCardCount" style="font-size:13px; opacity:.55; margin-top:10px;"></p>
+        <p id="heroCardCount" style="font-size:13px; color:var(--ink-mute); margin-top:10px;"></p>
       </div>
       <div class="hero-stamp">${tr(occ.stamp)}</div>
     </div>
@@ -1989,7 +1989,7 @@ function renderCreator(){
             <div class="toggle-line" style="margin-top:18px; padding-top:18px; border-top:1px solid var(--line);">
               <div>
                 <div style="font-size:14px;" id="charmLabel">${t('Подвеска на ленте')}</div>
-                <div style="font-size:12px;opacity:.6;">${t('Форма и цвет — под ваш повод: сердце, звезда, лист…')}</div>
+                <div style="font-size:12px;color:var(--ink-soft);">${t('Форма и цвет — под ваш повод: сердце, звезда, лист…')}</div>
               </div>
               <div class="switch ${state.charm?'on':''}" id="charmSwitch" tabindex="0" role="switch" aria-checked="${state.charm}" aria-labelledby="charmLabel" onclick="toggleCharm()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
             </div>
@@ -2017,7 +2017,7 @@ function renderCreator(){
             <div class="toggle-line">
               <div>
                 <div style="font-size:14px;" id="musicLabel">${t('Нежная мелодия при открытии')}</div>
-                <div style="font-size:12px;opacity:.6;">${t('Короткий сгенерированный перезвон, без сторонних файлов')}</div>
+                <div style="font-size:12px;color:var(--ink-soft);">${t('Короткий сгенерированный перезвон, без сторонних файлов')}</div>
               </div>
               <div class="switch ${state.music?'on':''}" id="musicSwitch" tabindex="0" role="switch" aria-checked="${state.music}" aria-labelledby="musicLabel" onclick="toggleMusic()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
             </div>
@@ -2028,7 +2028,7 @@ function renderCreator(){
             <div class="toggle-line">
               <div>
                 <div style="font-size:14px;" id="revealLabel">${t('Открыть в определённый момент')}</div>
-                <div style="font-size:12px;opacity:.6;">${t('До этого времени получатель увидит только конверт')}</div>
+                <div style="font-size:12px;color:var(--ink-soft);">${t('До этого времени получатель увидит только конверт')}</div>
               </div>
               <div class="switch ${state.revealEnabled?'on':''}" id="revealSwitch" tabindex="0" role="switch" aria-checked="${state.revealEnabled}" aria-labelledby="revealLabel" onclick="toggleReveal()" onkeydown="activateOnKey(event)"><div class="dot"></div></div>
             </div>
@@ -2611,8 +2611,11 @@ function replayPreview(){
     if(stage) dropParticles(occ.anim, stage);
   }, 500));
 
-  previewReplayTimers.push(setTimeout(() => { to.style.opacity = '.6'; text.style.opacity = '1'; }, 950));
-  previewReplayTimers.push(setTimeout(() => { from.style.opacity = '.6'; }, 1150));
+  // Приглушённость "Для кого"/"от кого" теперь несёт сам цвет (--ink-soft в
+  // CSS), а не opacity — на анимации открытия просто доводим до полной
+  // непрозрачности, как и текст сообщения.
+  previewReplayTimers.push(setTimeout(() => { to.style.opacity = '1'; text.style.opacity = '1'; }, 950));
+  previewReplayTimers.push(setTimeout(() => { from.style.opacity = '1'; }, 1150));
 }
 
 /* ====================== SAVE + SHARE (без сервера — данные лежат прямо в ссылке) ====================== */
@@ -2773,8 +2776,8 @@ function renderShareScreen(url, expiresAt){
         <button class="btn btn-ghost" onclick="location.href=location.pathname">${t('Создать ещё одну')}</button>
         ${state.occasion !== 'sympathy' ? `<button class="btn btn-ghost" onclick="downloadReminderIcs()">${t('Напомнить в следующем году')}</button>` : ''}
       </div>
-      ${state.occasion !== 'sympathy' ? `<p style="font-size:12.5px;opacity:.6;margin-top:10px;text-align:center;">${t('Скачается файл-напоминание — откройте его, и он сам добавится в ваш календарь: через год в этот день придёт обычное напоминание собрать открытку снова.')}</p>` : ''}
-      <p style="font-size:12.5px;opacity:.5;margin-top:30px;">${shareFootnote(isShortLink, isGuestShortLink)}</p>
+      ${state.occasion !== 'sympathy' ? `<p style="font-size:12.5px;color:var(--ink-soft);margin-top:10px;text-align:center;">${t('Скачается файл-напоминание — откройте его, и он сам добавится в ваш календарь: через год в этот день придёт обычное напоминание собрать открытку снова.')}</p>` : ''}
+      <p style="font-size:12.5px;color:var(--ink-mute);margin-top:30px;">${shareFootnote(isShortLink, isGuestShortLink)}</p>
     </div>
   `;
   try{

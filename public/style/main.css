@@ -1,4 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&family=Caveat:wght@500;600&display=swap');
+/* Шрифты (Fraunces/Inter/Caveat) грузятся через <link> в <head> index.html,
+   не через @import здесь: @import — последовательная цепочка (HTML → этот
+   файл скачать+распарсить → только потом запрос на googleapis → потом на
+   gstatic за самими файлами), из-за чего заголовок-LCP отрисовывался своим
+   шрифтом с задержкой. В <head> те же запросы стартуют сразу и параллельно
+   с main.css, плюс preconnect заранее открывает соединение к gstatic. */
 
 :root{
   --paper:#FAF3E7;
@@ -11,6 +16,16 @@
   --sage-dark:#5C7457;
   --line: rgba(47,59,42,0.16);
   --focus: rgba(75,46,61,0.35);
+  /* Приглушённый текст — раньше повсеместно делался через opacity поверх
+     --ink (.55–.72). Проблема: реальный контраст так не проверить, и он
+     разный на --paper и --paper-deep и между темами (ту же "лёгкую
+     блёклость" .5 у .step-bar-item уже ловили — давала 2.6:1). Эти два
+     токена посчитаны по формуле контраста и держат ≥4.5:1 на ОБОИХ
+     оттенках фона в ОБЕИХ темах: --ink-soft ~6.5:1 (вторичный текст —
+     подписи, подзаголовки), --ink-mute ~5.5:1 (третичный — счётчики,
+     метки-даты). opacity остаётся для рамок/иконок/декора, но не для текста. */
+  --ink-soft:#515A46;
+  --ink-mute:#5C6650;
   /* --accent — акцентный текст/ссылки/обводки (то, что должно оставаться
      читаемым на фоне страницы), в тёмной теме переопределяется на светлее
      (см. ниже). --pale — светлый текст поверх сплошной заливки (кнопки,
@@ -48,6 +63,11 @@
   --line: rgba(237,230,239,0.14);
   --focus: rgba(227,169,196,0.35);
   --accent:#E3A9C4;
+  /* На тёмном фоне это светлые лиловато-серые — тот же приглушённый регистр,
+     что и в светлой теме, но читаемый: --ink-soft ~8:1, --ink-mute ~6:1 на
+     обоих оттенках тёмного фона. */
+  --ink-soft:#B8B1C4;
+  --ink-mute:#A49CB0;
 }
 /* Приколачиваем открытку (предпросмотр при сборке, то, что видит получатель,
    и карточки-примеры на витрине) обратно к светлым значениям внутри тёмной
@@ -63,6 +83,11 @@
   --line: rgba(47,59,42,0.16);
   --focus: rgba(75,46,61,0.35);
   --accent: var(--plum);
+  /* Открытка приколочена к светлым значениям — приглушённый текст на ней
+     (подпись "Для кого"/"от кого") тоже должен вернуться к светлым, а не
+     остаться светло-лиловым из тёмной темы сайта. */
+  --ink-soft:#515A46;
+  --ink-mute:#5C6650;
 }
 /* .scene-picker/.envelope-picker сидят внутри .preview-stage (пин выше), но
    это не часть самой открытки — это органы управления самого сайта ("Фон
@@ -81,6 +106,10 @@
   --line: rgba(237,230,239,0.14);
   --focus: rgba(227,169,196,0.35);
   --accent:#E3A9C4;
+  /* Панель вернулась к тёмному фону — значит и приглушённый текст на ней
+     должен быть светлым, а не унаследовать светлый --ink-soft от .preview-stage. */
+  --ink-soft:#B8B1C4;
+  --ink-mute:#A49CB0;
   /* Полупрозрачная, а не сплошная заливка — сцена под ней (кремовая/румяна/
      шалфей/ночь) чуть просвечивает, панель мягче отделяется от фона, а не
      режет глаз плоским тёмным блоком. 70% проверено по контрасту текста
@@ -104,6 +133,8 @@
   --ink:#2F3B2A;
   --line: rgba(47,59,42,0.16);
   --accent: var(--plum);
+  --ink-soft:#515A46;
+  --ink-mute:#5C6650;
 }
 /* Кружки "Фон сцены" — тёмный образец ("Ночь") на тёмной панели light по
    светлоте почти сливается с самой панелью (контраст ~2.7). Внутреннее
@@ -205,9 +236,9 @@ a{color:var(--accent);}
    случайных элементов, а не одна панель. .topbar-pill — общий стиль для
    всех: одна форма, один размер, иконка+текст у каждой. */
 .topbar-pill{
-  display:inline-flex; align-items:center; gap:6px;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
   background:var(--paper); border:1px solid var(--line);
-  padding:9px 16px; border-radius:999px; cursor:pointer;
+  padding:9px 16px; min-height:40px; border-radius:999px; cursor:pointer;
   font-size:13.5px; color:var(--ink); text-decoration:none; white-space:nowrap;
   transition:border-color .15s ease, color .15s ease, background-color .15s ease;
 }
@@ -223,8 +254,11 @@ a{color:var(--accent);}
    чтобы взгляд цеплялся, не превращая её в кричащий CTA-баннер. */
 .topbar-support-btn{background:color-mix(in srgb, var(--accent) 12%, var(--paper));}
 .topbar-support-btn:hover{background:color-mix(in srgb, var(--accent) 20%, var(--paper));}
+/* 40×40 — комфортная тач-цель (было 36; WCAG-минимум 24 проходил, но на
+   телефоне 36 тесновато). Тот же размер, что и у .topbar-pill (min-height:40)
+   и .topbar-menu-btn — ряд шапки выровнен по высоте. */
 .theme-toggle{
-  width:36px; height:36px; border-radius:50%; flex:none; padding:0;
+  width:40px; height:40px; border-radius:50%; flex:none; padding:0;
   border:1px solid var(--line); background:var(--paper); color:var(--ink);
   display:flex; align-items:center; justify-content:center; cursor:pointer;
   transition:border-color .15s ease, color .15s ease, background-color .15s ease;
@@ -246,7 +280,7 @@ a{color:var(--accent);}
    "Поддержать" наружу не убираем: языком/темой пользуются часто, донат
    почти никогда не прячут, а "Важные даты" — нарочно на виду как новая фича. */
 .topbar-menu-btn{
-  display:flex; width:36px; height:36px; border-radius:50%; flex:none; padding:0;
+  display:flex; width:40px; height:40px; border-radius:50%; flex:none; padding:0;
   border:1px solid var(--line); background:var(--paper); color:var(--ink);
   align-items:center; justify-content:center; cursor:pointer;
   transition:border-color .15s ease, color .15s ease, background-color .15s ease;
@@ -287,36 +321,40 @@ a{color:var(--accent);}
   display:flex; border:1px solid var(--line); border-radius:999px; padding:2px; flex:none;
 }
 .lang-btn{
-  background:none; border:none; border-radius:999px; padding:5px 10px;
-  font-size:11.5px; font-weight:600; letter-spacing:.02em; color:var(--ink); opacity:.55;
-  cursor:pointer; transition:background-color .15s ease, color .15s ease, opacity .15s ease;
+  background:none; border:none; border-radius:999px; padding:8px 15px;
+  font-size:11.5px; font-weight:600; letter-spacing:.02em; color:var(--ink-mute);
+  cursor:pointer; transition:background-color .15s ease, color .15s ease;
 }
-.lang-btn:hover{opacity:.85;}
-.lang-btn.active{background:var(--plum); color:var(--pale); opacity:1;}
+.lang-btn:hover{color:var(--ink);}
+.lang-btn.active{background:var(--plum); color:var(--pale);}
 
 /* ---------- layout ---------- */
 .wrap{max-width:1180px;margin:0 auto;padding:0 36px 80px;}
+/* Хиро страницы конструктора (/create) — намеренно компактнее хиро главной.
+   Главная продаёт (крупный H1 46px, свой отдельный .home-hero), а /create —
+   это уже инструмент: вернувшийся пользователь пришёл за формой, а не за
+   слоганом. Раньше H1 был 54px в 4 строки + штамп 150px и вместе они
+   отжимали сам конструктор на ~430px вниз (ниже сгиба на ноутбуке).
+   40px/2-3 строки + штамп 124px поднимают форму к верху первого экрана.
+   (История большого H1: 44→54 поднимали, чтобы не теряться рядом с
+   заголовками конкурентов — но это довод для витрины, не для инструмента.) */
 .hero{
-  padding:56px 0 36px;
-  display:grid; grid-template-columns:1.1fr .9fr; gap:40px; align-items:end;
+  padding:40px 0 24px;
+  display:grid; grid-template-columns:1.1fr .9fr; gap:36px; align-items:end;
 }
-/* 44px/500 читался заметно тише заголовков конкурентов в этой же нише
-   (72px и 48px/700 у двух проверенных) — не копируем их масштаб один в
-   один (это не в духе спокойной редакционной подачи бренда), но поднимаем
-   и размер, и начертание настолько, чтобы первый экран не терялся рядом. */
-.hero h1{font-size:54px; font-weight:600; line-height:1.08; letter-spacing:-.015em; color:var(--ink);}
+.hero h1{font-size:40px; font-weight:600; line-height:1.14; letter-spacing:-.015em; color:var(--ink);}
 @media (max-width:480px){
-  .hero h1{font-size:36px;}
+  .hero h1{font-size:31px;}
 }
-.hero p{font-size:16px; color:var(--ink); opacity:.72; max-width:46ch; margin-top:14px; line-height:1.65;}
+.hero p{font-size:15.5px; color:var(--ink-soft); max-width:46ch; margin-top:12px; line-height:1.6;}
 .hero-stamp{
   justify-self:end;
-  width:150px;height:150px;border-radius:50%;
+  width:124px;height:124px;border-radius:50%;
   border:1.5px dashed var(--rose);
   display:flex;align-items:center;justify-content:center;
   text-align:center;
   font-family:'Fraunces',serif;font-style:italic;color:var(--rose);
-  font-size:13.5px; line-height:1.5; padding:14px;
+  font-size:12.5px; line-height:1.45; padding:12px;
   transform:rotate(-8deg);
   background:rgba(201,123,134,0.04);
 }
@@ -347,7 +385,9 @@ a{color:var(--accent);}
 @media (max-width:880px){
   .builder{grid-template-columns:1fr;}
   .hero{grid-template-columns:1fr;}
-  .hero-stamp{justify-self:start;margin-top:12px;}
+  /* Штамп уходит под заголовок (одна колонка) — держим ещё меньше, чтобы он
+     не отжимал форму вниз перед первым экраном. */
+  .hero-stamp{justify-self:start;margin-top:12px;width:104px;height:104px;font-size:11.5px;}
   /* Живой предпросмотр — самая мотивирующая часть (видно, как букет
      складывается) — раньше на мобильном оказывался в самом низу, после всей
      формы (просто следующий элемент в разметке). order переставляет его
@@ -368,7 +408,7 @@ a{color:var(--accent);}
   letter-spacing:-.015em; color:var(--ink);
 }
 @media (max-width:480px){ .home-hero h1{font-size:32px;} }
-.home-hero p{font-size:16px; color:var(--ink); opacity:.72; line-height:1.65; margin-top:16px;}
+.home-hero p{font-size:16px; color:var(--ink-soft); line-height:1.65; margin-top:16px;}
 .home-hero-ctas{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:26px;}
 
 .home-examples{padding:28px 0 8px;}
@@ -376,9 +416,9 @@ a{color:var(--accent);}
   font-family:'Fraunces',serif; font-weight:500; font-size:26px; letter-spacing:-.01em; color:var(--ink); text-align:center;
 }
 .home-examples .examples-sub{
-  font-size:14px; color:var(--ink); opacity:.65; margin:8px auto 0; max-width:52ch; line-height:1.55; text-align:center;
+  font-size:14px; color:var(--ink-soft); margin:8px auto 0; max-width:52ch; line-height:1.55; text-align:center;
 }
-.examples-swipe-hint{opacity:.7; white-space:nowrap;}
+.examples-swipe-hint{color:var(--ink-mute); white-space:nowrap;}
 
 /* Ряд карточек внахлёст, по образцу веера открыток на витринах Papier/Minted
    — вместо ровной сетки "как в каталоге". Вырывается на все 100vw (приём
@@ -468,11 +508,11 @@ a{color:var(--accent);}
 }
 .home-card-bouquet{padding:11px 22px 0;}
 .home-card-msg{padding:4px 26px 25px; text-align:center;}
-.home-card-msg .to{font-size:14px; color:var(--ink); opacity:.6; margin-bottom:8px;}
+.home-card-msg .to{font-size:14px; color:var(--ink-soft); margin-bottom:8px;}
 .home-card-msg .text{
   font-family:'Fraunces',serif; font-size:18px; line-height:1.5; color:var(--ink); font-style:italic;
 }
-.home-card-msg .from{margin-top:12px; font-size:14px; color:var(--ink); opacity:.6;}
+.home-card-msg .from{margin-top:12px; font-size:14px; color:var(--ink-soft);}
 .home-card-foot{
   display:flex; align-items:center; justify-content:center; gap:9px;
   padding:17px 7px 0;
@@ -517,7 +557,7 @@ a{color:var(--accent);}
   font-family:'Fraunces',serif; font-style:italic; font-size:14px; color:var(--accent); opacity:.8;
 }
 .home-how-title{font-family:'Fraunces',serif; font-weight:500; font-size:17px; color:var(--ink); margin-top:6px;}
-.home-how-text{font-size:13.5px; color:var(--ink); opacity:.65; line-height:1.55; margin-top:8px;}
+.home-how-text{font-size:13.5px; color:var(--ink-soft); line-height:1.55; margin-top:8px;}
 
 /* Общий кружок-бейдж под декоративную иконку (badgeIconSvg в main.js) —
    переиспользуется и в "Как это работает" (.home-how-step), и в карточках
@@ -580,11 +620,11 @@ a{color:var(--accent);}
    говорит, что уже выбрано, чтобы свёрнутая панель не превращалась в чёрный
    ящик. Текст сама panelSummaryHtml в main.js. */
 .panel-summary{
-  flex:none; max-width:38%; font-size:12.5px; color:var(--ink); opacity:.6;
+  flex:none; max-width:38%; font-size:12.5px; color:var(--ink-soft);
   text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 .panel-chevron{
-  flex:none; font-size:16px; color:var(--ink); opacity:.45;
+  flex:none; font-size:16px; color:var(--ink-mute);
   transition:transform .2s ease;
 }
 .panel-step.open .panel-chevron{ transform:rotate(180deg); }
@@ -648,13 +688,13 @@ a{color:var(--accent);}
 .step-bar-line{flex:1 1 auto; height:1px; background:var(--line); margin:0 8px; min-width:6px;}
 @media (max-width:480px){ .step-bar-label{display:none;} }
 .panel-title{font-family:'Fraunces',serif; font-weight:500; font-size:17px; color:var(--ink);}
-.panel-sub{font-size:12px; color:var(--ink); opacity:.55; margin-top:2px;}
+.panel-sub{font-size:12px; color:var(--ink-soft); margin-top:2px;}
 
 .field-label{
   font-size:13px; font-weight:500; color:var(--ink);
   margin-bottom:10px; display:block;
 }
-.field-label .hint{font-weight:400; color:var(--ink); opacity:.55; font-size:12px; margin-left:6px;}
+.field-label .hint{font-weight:400; color:var(--ink-soft); font-size:12px; margin-left:6px;}
 
 .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
 .chip{
@@ -680,7 +720,7 @@ a{color:var(--accent);}
 
 .flower-summary{display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-bottom:18px;}
 .flower-summary-dot{width:22px; height:22px; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(47,59,42,0.15), 0 1px 2px rgba(0,0,0,0.08);}
-.flower-summary-empty{font-size:13px; color:var(--ink); opacity:.55; font-style:italic;}
+.flower-summary-empty{font-size:13px; color:var(--ink-soft); font-style:italic;}
 
 /* Кнопка "Добавить/Изменить цветы" — намеренно заметнее обычных ghost-кнопок
    (пунктирная рамка + цветной кружок-иконка), чтобы читалось как явное
@@ -878,7 +918,7 @@ input[type=date], input[type=time]{
 }
 
 .char-count{
-  text-align:right; font-size:11.5px; color:var(--ink); opacity:.45; margin-top:6px;
+  text-align:right; font-size:11.5px; color:var(--ink-mute); margin-top:6px;
 }
 .char-count.warn{color:var(--rose); opacity:.9;}
 
@@ -909,7 +949,7 @@ input[type=date], input[type=time]{
 /* ---------- my cards ---------- */
 .mine-wrap{max-width:720px; margin:0 auto; padding:40px 36px 80px;}
 .mine-note{
-  margin-top:10px; font-size:12.5px; color:var(--ink); opacity:.6;
+  margin-top:10px; font-size:12.5px; color:var(--ink-soft);
   background:var(--paper-deep); border:1px solid var(--line); border-radius:10px;
   padding:10px 14px; line-height:1.5;
 }
@@ -924,10 +964,10 @@ input[type=date], input[type=time]{
 .mine-dot{width:12px;height:12px;border-radius:50%;flex:none;}
 .mine-info{flex:1; min-width:0;}
 .mine-info .mi-to{font-size:14px; color:var(--ink);}
-.mine-info .mi-date{font-size:12px; color:var(--ink); opacity:.55; margin-top:2px;}
+.mine-info .mi-date{font-size:12px; color:var(--ink-mute); margin-top:2px;}
 .mi-status{font-size:12px; margin-top:4px;}
 .mi-status.opened{color:var(--sage-dark);}
-.mi-status.pending{color:var(--ink); opacity:.45;}
+.mi-status.pending{color:var(--ink-mute);}
 .mine-actions{display:flex; gap:8px; flex:none;}
 .mine-actions button{
   border:1px solid var(--line); background:var(--paper); border-radius:999px;
@@ -938,8 +978,8 @@ input[type=date], input[type=time]{
    см. deleteMineCard/resetDeleteBtn в main.js. */
 .mine-actions button.btn-danger-confirm{ background:var(--badge-rose-bg); border-color:var(--badge-rose-bg); color:var(--badge-rose-ink); }
 .mine-actions button.btn-danger-confirm:hover{ color:var(--badge-rose-ink); border-color:var(--badge-rose-bg); }
-.mine-empty{text-align:center; padding:36px 20px 60px; opacity:.6;}
-.mine-empty-vase{width:130px; margin:0 auto 6px; opacity:.85;}
+.mine-empty{text-align:center; padding:36px 20px 60px; color:var(--ink-soft);}
+.mine-empty-vase{width:130px; margin:0 auto 6px; opacity:.7;}
 
 /* Заголовок доп.секций на "Мои открытки" ("Мой сад", "Открытки всей
    компанией") — раньше у единственной такой секции стиль был инлайновым,
@@ -947,7 +987,7 @@ input[type=date], input[type=time]{
 .mine-section-title{
   font-size:18px; margin-top:36px; font-family:'Fraunces',serif; font-weight:500;
 }
-.mine-section-sub{ font-size:12.5px; color:var(--ink); opacity:.6; margin-top:4px; line-height:1.5; }
+.mine-section-sub{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
 
 /* ---------- мой сад (открытки, сохранённые получателем — см. renderMyGarden в main.js) ---------- */
 .garden-grid{
@@ -966,7 +1006,7 @@ input[type=date], input[type=time]{
 .garden-item-bouquet svg{width:100%; height:auto; display:block;}
 .garden-item-info{padding:8px 12px 12px;}
 .garden-item-from{font-size:12.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-.garden-item-date{font-size:11px; color:var(--ink); opacity:.55; margin-top:2px;}
+.garden-item-date{font-size:11px; color:var(--ink-mute); margin-top:2px;}
 .garden-item-open{
   display:block; width:calc(100% - 24px); margin:0 12px 12px; border:1px solid var(--line);
   background:var(--paper); border-radius:999px; padding:6px 0; font-size:12px; color:var(--ink); cursor:pointer;
@@ -989,7 +1029,7 @@ input[type=date], input[type=time]{
 /* ---------- важные даты (renderDates в main.js, .dates-promo на главной) ---------- */
 .dates-page{max-width:640px; margin:0 auto; padding:56px 24px 90px;}
 .dates-page h1{font-family:'Fraunces',serif; font-size:30px; margin-top:6px; line-height:1.2;}
-.dates-intro{opacity:.75; margin-top:10px; line-height:1.6; font-size:14.5px;}
+.dates-intro{color:var(--ink-soft); margin-top:10px; line-height:1.6; font-size:14.5px;}
 .dates-add-panel{margin-top:26px;}
 .dates-list{margin-top:22px; display:flex; flex-direction:column; gap:10px;}
 
@@ -1006,22 +1046,23 @@ input[type=date], input[type=time]{
 }
 .date-row-info{flex:1; min-width:0;}
 .date-row-name{font-size:14px; color:var(--ink);}
-.date-row-meta{font-size:12px; color:var(--ink); opacity:.6; margin-top:2px;}
-.date-row-note{font-size:12px; color:var(--ink); opacity:.5; margin-top:3px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.date-row-meta{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+.date-row-note{font-size:12px; color:var(--ink-mute); margin-top:3px; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 /* Цвет обратного отсчёта усиливается по мере приближения даты — сначала
    нейтральный, за 2 недели тёплый жёлтый, за 3 дня — тревожный розовый, тот
    же приём привлечения внимания, что и у .dates-promo-badge/.topbar-new-badge. */
 .date-countdown{
   font-size:12.5px; font-weight:600; padding:5px 11px; border-radius:999px; flex:none;
-  background:var(--paper); color:var(--ink); opacity:.7; white-space:nowrap;
+  background:var(--paper); color:var(--ink-soft); white-space:nowrap;
 }
 .date-countdown.near{background:color-mix(in srgb, var(--gold) 22%, var(--paper)); color:var(--gold); opacity:1;}
 .date-countdown.urgent{background:color-mix(in srgb, var(--rose) 24%, var(--paper)); color:var(--rose); opacity:1;}
 .date-row-remove{
-  border:none; background:none; color:var(--ink); opacity:.4; cursor:pointer;
+  border:none; background:none; color:var(--ink-mute); cursor:pointer;
   font-size:15px; flex:none; padding:4px; line-height:1;
+  transition:color .15s ease;
 }
-.date-row-remove:hover{opacity:1; color:var(--rose);}
+.date-row-remove:hover{color:var(--rose);}
 
 /* Промо-блок на главной — в отличие от остальных секций витрины, у него
    свой акцентный фон (не paper) и бейдж "новое" в углу, чтобы новая фича
@@ -1126,16 +1167,16 @@ input[type=date], input[type=time]{
 .preview-msg{
   padding:6px 22px 22px; text-align:center;
 }
-.preview-msg .to{font-size:12px; color:var(--ink); opacity:.6; margin-bottom:6px; transition:opacity .8s ease;}
+.preview-msg .to{font-size:12px; color:var(--ink-soft); margin-bottom:6px; transition:opacity .8s ease;}
 .preview-msg .text{
   font-family:'Fraunces',serif; font-size:16px; line-height:1.55; color:var(--ink);
   white-space:pre-wrap; transition:opacity .8s ease;
 }
 .preview-msg .from{
-  margin-top:12px; font-size:12px; color:var(--ink); opacity:.6; transition:opacity .8s ease;
+  margin-top:12px; font-size:12px; color:var(--ink-soft); transition:opacity .8s ease;
 }
 .preview-note{
-  margin-top:16px; font-size:12.5px; color:var(--ink); opacity:.6; text-align:center; max-width:320px;
+  margin-top:16px; font-size:12.5px; color:var(--ink-soft); text-align:center; max-width:320px;
 }
 /* Конверт поверх карточки во время replayPreview — обычно скрыт (display:none),
    .preview-card{overflow:hidden} на всякий случай подрежет его точно по
@@ -1173,7 +1214,7 @@ input[type=date], input[type=time]{
   border:1px solid var(--line); border-radius:14px;
 }
 .qr-box img, .qr-box canvas{display:block; margin:0 auto;}
-.qr-label{font-size:11px; color:var(--ink); opacity:.55; margin-top:8px;}
+.qr-label{font-size:11px; color:var(--ink-mute); margin-top:8px;}
 .toast{
   position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
   background:var(--plum); color:var(--pale); padding:11px 20px; border-radius:999px;
@@ -1198,7 +1239,7 @@ input[type=date], input[type=time]{
   width:180px;height:130px;margin:0 auto 22px; position:relative;
 }
 .view-open-hint{
-  margin-top:18px; font-size:13px; color:var(--ink); opacity:.6; font-family:'Fraunces',serif; font-style:italic;
+  margin-top:18px; font-size:13px; color:var(--ink-soft); font-family:'Fraunces',serif; font-style:italic;
 }
 .view-content{display:none;}
 .view-content.show{display:block; animation:fadein .6s ease both;}
@@ -1215,8 +1256,8 @@ input[type=date], input[type=time]{
   white-space:pre-wrap; opacity:0; transition:opacity 1s ease;
 }
 .view-msg.show{opacity:1;}
-.view-from{margin-top:16px; font-size:13px; color:var(--ink); opacity:0; transition:opacity 1s ease .3s;}
-.view-from.show{opacity:.65;}
+.view-from{margin-top:16px; font-size:13px; color:var(--ink-soft); opacity:0; transition:opacity 1s ease .3s;}
+.view-from.show{opacity:1;}
 /* Раньше это была одна строка мелкого приглушённого текста (13px, 60%
    непрозрачности) со ссылкой на бренд внутри — та самая "кнопка создать
    свою" терялась внизу открытки, получатели её не замечали. Теперь это
@@ -1232,7 +1273,7 @@ input[type=date], input[type=time]{
    по ширине, но на переносе строки (узкий экран) им нужен небольшой зазор. */
 .view-footer .btn{margin:0 4px 10px;}
 .view-footer-note{
-  margin-top:14px; font-size:13px; color:var(--ink); opacity:.6;
+  margin-top:14px; font-size:13px; color:var(--ink-soft);
 }
 .view-footer-note a{font-family:'Fraunces',serif; font-style:italic;}
 .lock-screen{text-align:center; padding:60px 20px;}
@@ -1262,10 +1303,15 @@ input[type=date], input[type=time]{
 }
 
 footer.site-footer{
-  text-align:center; padding:30px 20px; font-size:12.5px; color:var(--ink); opacity:.55;
+  text-align:center; padding:30px 20px; font-size:12.5px; color:var(--ink-soft);
 }
-footer.site-footer a{color:var(--ink); opacity:.85;}
-footer.site-footer a:hover{color:var(--accent); opacity:1;}
+/* Ссылки в футере раньше гасились через opacity (контейнер .55 × ссылка .85 =
+   эффективные ~.47 → контраст всего 2.5:1 в светлой теме, 4.0 в тёмной).
+   Теперь явный проверенный цвет: сам текст футера --ink-soft, ссылки чуть
+   темнее (полный --ink) — читаются как ссылки за счёт контраста с текстом,
+   а не за счёт нечитаемой блёклости. */
+footer.site-footer a{color:var(--ink);}
+footer.site-footer a:hover{color:var(--accent);}
 
 /* ---------- boot loading ---------- */
 .boot-loading{
@@ -1309,10 +1355,10 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 .password-toggle{
   position:absolute; right:4px; top:50%; transform:translateY(-50%);
   width:32px; height:32px; display:flex; align-items:center; justify-content:center;
-  background:none; border:none; cursor:pointer; color:var(--ink); opacity:.45; padding:0;
-  transition:opacity .15s ease;
+  background:none; border:none; cursor:pointer; color:var(--ink-mute); padding:0;
+  transition:color .15s ease;
 }
-.password-toggle:hover{opacity:.8;}
+.password-toggle:hover{color:var(--ink);}
 .auth-error{color:var(--rose); font-size:13px; min-height:1px;}
 .auth-note{
   color:var(--sage-dark); font-size:13.5px; background:var(--paper-deep);
@@ -1328,7 +1374,7 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 .google-btn-slot{display:flex; justify-content:center; min-height:44px; margin-top:22px;}
 .auth-divider{
   display:flex; align-items:center; gap:12px; margin-top:18px;
-  font-size:12.5px; color:var(--ink); opacity:.5; text-transform:uppercase; letter-spacing:.04em;
+  font-size:12.5px; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.04em;
 }
 .auth-divider::before, .auth-divider::after{content:''; flex:1; height:1px; background:var(--line);}
 
@@ -1345,7 +1391,7 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 }
 .promo-box iframe{ max-width:100%; }
 .promo-tag{
-  font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; opacity:.45; margin-bottom:8px;
+  font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-mute); margin-bottom:8px;
 }
 /* Отдельный блок под статьи блога (blog.js вставляет его после вступления,
    перед первым <h2> — см. комментарий там же) — 728x90, а не 300x250, как
@@ -1361,7 +1407,7 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 
 /* ---------- legal pages ---------- */
 .legal-wrap{max-width:680px; margin:0 auto; padding:40px 36px 90px; line-height:1.7;}
-.legal-updated{font-size:12.5px; opacity:.55; margin-top:6px;}
+.legal-updated{font-size:12.5px; color:var(--ink-mute); margin-top:6px;}
 .legal-wrap h1{font-family:'Fraunces',serif; font-weight:600; font-size:36px; line-height:1.15; color:var(--ink); letter-spacing:-.01em; margin-bottom:6px;}
 .legal-wrap h2{font-family:'Fraunces',serif; font-weight:500; font-size:18px; margin-top:30px; margin-bottom:8px; color:var(--ink);}
 .legal-wrap p{font-size:14px; opacity:.8; margin:0;}
@@ -1380,7 +1426,7 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
   font-size:26px; font-weight:500; letter-spacing:-.01em; color:var(--ink); text-align:center;
 }
 .about-intro{
-  font-size:14.5px; line-height:1.7; opacity:.75; max-width:62ch; margin:14px auto 0; text-align:center;
+  font-size:14.5px; line-height:1.7; color:var(--ink-soft); max-width:62ch; margin:14px auto 0; text-align:center;
 }
 .about-faq{
   display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; margin-top:40px;
@@ -1394,10 +1440,10 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 .about-faq-item h3{
   font-family:'Fraunces',serif; font-weight:500; font-size:16px; color:var(--ink); margin:0 0 8px;
 }
-.about-faq-item p{font-size:13.5px; line-height:1.6; opacity:.72; margin:0;}
+.about-faq-item p{font-size:13.5px; line-height:1.6; color:var(--ink-soft); margin:0;}
 .about-links{margin-top:44px; padding-top:28px; border-top:1px solid var(--line); text-align:center;}
-.about-links h3{font-family:'Fraunces',serif; font-weight:500; font-size:15px; color:var(--ink); opacity:.85; margin:0 0 10px;}
-.about-links p{font-size:13.5px; line-height:1.8; opacity:.75; margin:0;}
+.about-links h3{font-family:'Fraunces',serif; font-weight:500; font-size:15px; color:var(--ink-soft); margin:0 0 10px;}
+.about-links p{font-size:13.5px; line-height:1.8; color:var(--ink-soft); margin:0;}
 
 /* ---------- blog articles (public/blog/*.html — статические страницы,
    не часть SPA: своя простая шапка вместо topbar, без переключателя
@@ -1445,7 +1491,7 @@ footer.site-footer a:hover{color:var(--accent); opacity:1;}
 }
 .blog-list a:hover{border-color:var(--accent);}
 .blog-list-title{font-family:'Fraunces',serif; font-size:17px; color:var(--ink); display:flex; align-items:center; gap:9px;}
-.blog-list-desc{font-size:13.5px; opacity:.7; margin-top:4px; line-height:1.5;}
+.blog-list-desc{font-size:13.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5;}
 /* Цветная точка перед заголовком — цвет повода из OCCASIONS (main.js), чтобы
    список статей сканировался глазами быстрее, а не читался одним сплошным
    текстовым блоком одного цвета. */
