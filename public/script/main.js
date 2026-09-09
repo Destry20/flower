@@ -1585,17 +1585,17 @@ function aboutSectionHtml(){
 
     <div class="about-faq reveal-stagger">
       <div class="about-faq-item">
-        <div class="icon-badge">${badgeIconSvg('you', BADGE_ICON_COLOR)}</div>
+        <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[0]};">${badgeIconSvg('you', HOME_BADGE_ACCENTS[0])}</div>
         <h3>${t('Нужна ли регистрация')}</h3>
         <p>${t('Нет — собрать и отправить открытку можно без аккаунта, вся она целиком умещается в самой ссылке. Регистрация нужна только если хотите, чтобы список ваших открыток сохранялся и был доступен с любого устройства.')}</p>
       </div>
       <div class="about-faq-item">
-        <div class="icon-badge">${badgeIconSvg('star', BADGE_ICON_COLOR)}</div>
+        <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[1]};">${badgeIconSvg('star', HOME_BADGE_ACCENTS[1])}</div>
         <h3>${t('Это бесплатно?')}</h3>
         <p>${t('Да, полностью. Все цветы, вазы, ленты, конверты и фоны доступны бесплатно — сервис существует за счёт показа рекламных баннеров, а не платных подписок.')}</p>
       </div>
       <div class="about-faq-item">
-        <div class="icon-badge">${badgeIconSvg('heart', BADGE_ICON_COLOR)}</div>
+        <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[2]};">${badgeIconSvg('heart', HOME_BADGE_ACCENTS[2])}</div>
         <h3>${t('Для каких поводов')}</h3>
         <p>${t('Дни рождения, признания в любви, слова благодарности, поздравления, слова поддержки и соболезнования, или просто открытка "потому что вспомнили о человеке" — под каждый повод есть свой набор цветов, цвет ленты и тон открытки.')}</p>
       </div>
@@ -1710,7 +1710,7 @@ function heroShowcaseCardHtml(){
     </div>`;
 }
 function homeHeroHtml(){
-  return `<div class="home-hero">
+  return `<div class="home-hero home-hero--showcase">
       <div class="home-hero-text">
         <h1>${t('Открытка, которая распускается прямо на экране')}</h1>
         <p>${t('Соберите букет из живых на вид цветов, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов, без установки приложений.')}</p>
@@ -1744,19 +1744,19 @@ function renderHome(){
       <h2>${t('Как это работает')}</h2>
       <div class="home-how-grid reveal-stagger">
         <div class="home-how-step">
-          <div class="icon-badge">${badgeIconSvg('gift', BADGE_ICON_COLOR)}</div>
+          <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[0]};">${badgeIconSvg('gift', HOME_BADGE_ACCENTS[0])}</div>
           <span class="home-how-num">01</span>
           <div class="home-how-title">${t('Выберите повод')}</div>
           <div class="home-how-text">${t('День рождения, любовь, спасибо, поддержка — под каждый свой тон и набор цветов.')}</div>
         </div>
         <div class="home-how-step">
-          <div class="icon-badge">${badgeIconSvg('sprout', BADGE_ICON_COLOR)}</div>
+          <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[1]};">${badgeIconSvg('sprout', HOME_BADGE_ACCENTS[1])}</div>
           <span class="home-how-num">02</span>
           <div class="home-how-title">${t('Соберите букет')}</div>
           <div class="home-how-text">${t('Ваза, цветы, лента, конверт и фон — на свой вкус, за пару минут.')}</div>
         </div>
         <div class="home-how-step">
-          <div class="icon-badge">${badgeIconSvg('envelope', BADGE_ICON_COLOR)}</div>
+          <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[2]};">${badgeIconSvg('envelope', HOME_BADGE_ACCENTS[2])}</div>
           <span class="home-how-num">03</span>
           <div class="home-how-title">${t('Отправьте ссылкой')}</div>
           <div class="home-how-text">${t('Получатель откроет её как настоящую открытку — с разворотом и цветением, без установки приложений.')}</div>
@@ -1793,7 +1793,7 @@ function renderHome(){
 const PANEL_ACCENTS = ['var(--rose)', 'var(--gold)', 'var(--sage-dark)', 'var(--plum)'];
 // Те же 4 цвета литералом (hex) — для самих SVG-иконок (badgeIconSvg
 // собирает fill/stroke прямо в разметку, CSS-переменная там не пригодится,
-// см. рассуждение у BADGE_ICON_COLOR) — и картинка на бейдже каждой панели,
+// см. рассуждение у HOME_BADGE_ACCENTS) — и картинка на бейдже каждой панели,
 // подарок/росток/конверт/звезда, вместо голой цифры шага.
 const PANEL_ACCENT_HEX = ['#C97B86', '#B98A4A', '#5C7457', '#4B2E3D'];
 // {bg,color} для кружка с номером ТЕКУЩЕГО шага (.step-bar-item.active
@@ -2273,15 +2273,16 @@ function mountInlineAd(slotId){
 }
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout', sympathy:'leaf'};
-// Цвет декоративных бейджей вне контекста повода (см. badgeIconSvg) — тот же
-// оттенок, что и CSS-переменная --rose. Литерал, а не var(--rose): значения
-// внутри inline-SVG собираются в JS до вставки в DOM, откуда CSS-переменные
-// не читаются напрямую (нет прецедента такого в проекте — остальные цвета
-// иконок тоже всегда приходят готовым hex, см. OCCASIONS). --rose — один из
-// фирменных акцентов, не меняющихся между светлой/тёмной темой (см.
-// комментарий у :root[data-theme="dark"] в main.css), так что литерал тут
-// не "разъедется" с темой.
-const BADGE_ICON_COLOR = '#C97B86';
+// Цвета декоративных бейджей вне контекста повода ("Как это работает", FAQ на
+// главной, "всей компанией") — три фирменных акцента: роза / золото / шалфей,
+// те же, что у первых панелей конструктора (PANEL_ACCENT_HEX). Раньше тут был
+// один розовый на все 6 кружков подряд — читались одним пятном; теперь по
+// одному на шаг/вопрос, в пределах уже существующей палитры.
+// Литералы hex, а не var(--rose) и т.п.: значения inline-SVG собираются в JS
+// до вставки в DOM, где CSS-переменные не читаются; эти акценты в тёмной теме
+// не переопределяются (см. :root[data-theme="dark"] в main.css), так что не
+// "разъедутся".
+const HOME_BADGE_ACCENTS = ['#C97B86', '#B98A4A', '#5C7457'];
 // Сами фигуры (в системе координат 0..16) вынесены отдельно от occasionIconSvg —
 // нужны в двух местах: маленькая иконка повода (чипы, подпись под карточкой)
 // и рассыпанный узор на карточках-примерах на витрине (см. stagePatternSvg).
@@ -2944,19 +2945,19 @@ function renderGroupLanding(){
         <h2>${t('Как это работает')}</h2>
         <div class="home-how-grid reveal-stagger">
           <div class="home-how-step">
-            <div class="icon-badge">${badgeIconSvg('gift', BADGE_ICON_COLOR)}</div>
+            <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[0]};">${badgeIconSvg('gift', HOME_BADGE_ACCENTS[0])}</div>
             <span class="home-how-num">01</span>
             <div class="home-how-title">${t('Задайте основу')}</div>
             <div class="home-how-text">${t('Выберите повод и вазу — это увидит каждый, кто подпишет открытку.')}</div>
           </div>
           <div class="home-how-step">
-            <div class="icon-badge">${badgeIconSvg('sprout', BADGE_ICON_COLOR)}</div>
+            <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[1]};">${badgeIconSvg('sprout', HOME_BADGE_ACCENTS[1])}</div>
             <span class="home-how-num">02</span>
             <div class="home-how-title">${t('Разошлите ссылку')}</div>
             <div class="home-how-text">${t('Каждый по ссылке добавляет своё имя, пожелание и один цветок — без регистрации.')}</div>
           </div>
           <div class="home-how-step">
-            <div class="icon-badge">${badgeIconSvg('envelope', BADGE_ICON_COLOR)}</div>
+            <div class="icon-badge" style="--panel-accent:${HOME_BADGE_ACCENTS[2]};">${badgeIconSvg('envelope', HOME_BADGE_ACCENTS[2])}</div>
             <span class="home-how-num">03</span>
             <div class="home-how-title">${t('Закройте и отправьте')}</div>
             <div class="home-how-text">${t('Букет растёт по мере того, как подписывают открытку. Закройте приём подписей, когда решите, что готово, и отправьте получателю.')}</div>
