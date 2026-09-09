@@ -1683,21 +1683,54 @@ function homeExampleCardHtml(ex, i){
   </div>`;
 }
 
+// Карточка-образец в первом экране главной (см. .home-hero / .hero-showcase
+// в main.css) — та же «love»/«Для тебя» открытка, что и featured-пример в
+// ленте ниже, но без нижней строки с иконкой/CTA. Клик ведёт в конструктор
+// с этим же букетом (applyExample), ровно как у карточек-примеров.
+function heroShowcaseCardHtml(){
+  const ex = EXAMPLES.find(e=>e.id==='love');
+  const occ = occasionById(ex.occasion);
+  const bg = BACKGROUNDS.find(b=>b.id===ex.background);
+  const bandStyle = occasionBadgeStyle(occ.color);
+  const line = tr(ex.textOverride) || tr(occ.placeholder).replace(/\.\.\.$/, '');
+  const patternColor = bg.dark ? '#F3EEE3' : occ.color;
+  return `<div class="hero-showcase" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${tr(ex.labelOverride)}" onclick="applyExample('love')" onkeydown="activateOnKey(event)">
+      <div class="hero-showcase-stage" style="background:${bg.css}">
+        ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22)}
+        <div class="hero-showcase-inner">
+          <div class="hero-showcase-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${tr(ex.stampOverride)}</div>
+          <div class="hero-showcase-bouquet">${buildBouquetSVG(ex, 300)}</div>
+          <div class="hero-showcase-msg">
+            <div class="to">${t('Для')} ${esc(tr(ex.to))}</div>
+            <div class="text">${esc(line)}</div>
+            <div class="from">— ${esc(tr(ex.from))}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+function homeHeroHtml(){
+  return `<div class="home-hero">
+      <div class="home-hero-text">
+        <h1>${t('Открытка, которая распускается прямо на экране')}</h1>
+        <p>${t('Соберите букет из живых на вид цветов, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов, без установки приложений.')}</p>
+        <div class="home-hero-ctas">
+          <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
+          <a class="btn btn-ghost" href="#examples" onclick="event.preventDefault(); document.getElementById('examples').scrollIntoView({behavior:'smooth',block:'start'})">${t('Смотреть примеры')}</a>
+        </div>
+        <p id="heroCardCount" style="font-size:13px; color:var(--ink-mute); margin-top:14px;"></p>
+      </div>
+      <div class="home-hero-visual">${heroShowcaseCardHtml()}</div>
+    </div>`;
+}
+
 function renderHome(){
   setPageTitle(t('Открытка с виртуальным букетом'));
   setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
   document.getElementById('app').innerHTML = `
   ${topbarHtml()}
   <div class="wrap">
-    <div class="home-hero">
-      <h1>${t('Открытка, которая распускается прямо на экране')}</h1>
-      <p>${t('Соберите букет из живых на вид цветов, добавьте тёплые слова — и отправьте одной ссылкой. Без доставки, без увядших цветов, без установки приложений.')}</p>
-      <div class="home-hero-ctas">
-        <button class="btn btn-primary" onclick="location.hash='create'">${t('Собрать открытку')} →</button>
-        <a class="btn btn-ghost" href="#examples" onclick="event.preventDefault(); document.getElementById('examples').scrollIntoView({behavior:'smooth',block:'start'})">${t('Смотреть примеры')}</a>
-      </div>
-      <p id="heroCardCount" style="font-size:13px; color:var(--ink-mute); margin-top:14px;"></p>
-    </div>
+    ${homeHeroHtml()}
 
     <div class="home-examples reveal" id="examples">
       <h2>${t('Примеры открыток')}</h2>

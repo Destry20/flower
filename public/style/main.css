@@ -400,16 +400,65 @@ a{color:var(--accent);}
    Отдельная страница-витрина на "/" — сам конструктор живёт на #create.
    Порядок разделов: обложка → крупные примеры готовых открыток (с текстом,
    не только цветами) → "как это работает" → финальный призыв → О сервисе/FAQ. */
+/* Первый экран главной — двухколоночный: текст слева, живая карточка-образец
+   справа (см. homeHeroHtml/heroShowcaseCardHtml в main.js). Раньше был
+   центрированный текст без картинки — посетитель не видел продукт, пока не
+   доскроллит до ленты примеров, и между кнопками и лентой зияла пустота. */
 .home-hero{
-  padding:64px 0 40px; text-align:center; max-width:640px; margin:0 auto;
+  max-width:1040px; margin:0 auto; padding:40px 0 30px;
+  display:grid; grid-template-columns:1.08fr .92fr; gap:44px; align-items:center;
 }
 .home-hero h1{
-  font-family:'Fraunces',serif; font-size:46px; font-weight:600; line-height:1.14;
-  letter-spacing:-.015em; color:var(--ink);
+  font-family:'Fraunces',serif; font-size:42px; font-weight:600; line-height:1.14;
+  letter-spacing:-.015em; color:var(--ink); text-wrap:balance;
 }
-@media (max-width:480px){ .home-hero h1{font-size:32px;} }
-.home-hero p{font-size:16px; color:var(--ink-soft); line-height:1.65; margin-top:16px;}
-.home-hero-ctas{display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:26px;}
+.home-hero p{font-size:16px; color:var(--ink-soft); line-height:1.65; margin-top:16px; max-width:44ch;}
+.home-hero-ctas{display:flex; gap:12px; flex-wrap:wrap; margin-top:26px;}
+.home-hero-visual{ width:100%; max-width:286px; justify-self:center; }
+@media (max-width:860px){
+  /* Одна колонка: текст сверху (сначала «что это»), карточка под кнопками
+     и заметно меньше, чтобы не оттеснять ленту примеров вниз. */
+  .home-hero{ grid-template-columns:1fr; text-align:center; gap:22px; padding:30px 0 26px; }
+  .home-hero h1{ font-size:37px; }
+  .home-hero p{ margin-left:auto; margin-right:auto; }
+  .home-hero-ctas{ justify-content:center; }
+  .home-hero-visual{ margin:2px auto 0; max-width:206px; }
+}
+@media (max-width:480px){ .home-hero h1{ font-size:30px; } }
+
+/* Карточка-образец в хиро — тот же двухслойный вид, что в конструкторе и в
+   ленте примеров (сцена + «бумажная» карточка внутри), с лёгким наклоном;
+   на hover/focus выпрямляется и приподнимается. */
+.hero-showcase{
+  display:block; width:100%; cursor:pointer; text-align:center;
+  transform:rotate(-2deg); transition:transform .25s ease;
+}
+.hero-showcase:hover, .hero-showcase:focus-visible{
+  transform:rotate(0) translateY(-5px) scale(1.02); outline:none;
+}
+.hero-showcase-stage{
+  position:relative; z-index:0; overflow:hidden;
+  border-radius:22px; padding:26px 20px 24px;
+  box-shadow:0 28px 56px -24px rgba(47,59,42,0.45);
+  transition:box-shadow .25s ease;
+}
+.hero-showcase:hover .hero-showcase-stage{ box-shadow:0 38px 68px -20px rgba(47,59,42,0.5); }
+.hero-showcase-inner{
+  background:var(--paper); border-radius:15px; overflow:hidden;
+  box-shadow:0 14px 30px -16px rgba(47,59,42,0.4);
+}
+.hero-showcase-band{
+  padding:11px 16px; font-family:'Fraunces',serif; font-style:italic;
+  font-size:14px; text-align:center;
+}
+.hero-showcase-bouquet{ padding:8px 18px 0; }
+.hero-showcase-msg{ padding:2px 22px 20px; text-align:center; }
+.hero-showcase-msg .to{ font-size:12.5px; color:var(--ink-soft); margin-bottom:5px; }
+.hero-showcase-msg .text{
+  font-family:'Fraunces',serif; font-style:italic; font-size:16px;
+  line-height:1.5; color:var(--ink);
+}
+.hero-showcase-msg .from{ margin-top:9px; font-size:12.5px; color:var(--ink-soft); }
 
 .home-examples{padding:28px 0 8px;}
 .home-examples h2, .home-how h2, .home-final-cta h2{
