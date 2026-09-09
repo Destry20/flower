@@ -248,8 +248,8 @@ a{color:var(--accent);}
    форму "всей компанией" в конструкторе — обычный текст-ссылка в потоке
    абзаца, не кнопка шапки. Не переименовано в topbar-pill намеренно: разные
    контексты, разный вид (см. использование в renderCreator). */
-.topbar-link{font-size:13.5px; color:var(--ink); opacity:.75; text-decoration:none; cursor:pointer;}
-.topbar-link:hover{opacity:1; color:var(--accent);}
+.topbar-link{font-size:13.5px; color:var(--ink-soft); text-decoration:none; cursor:pointer;}
+.topbar-link:hover{color:var(--accent);}
 /* Кнопка Ko-fi в шапке — тот же topbar-pill, но с лёгкой тёплой заливкой,
    чтобы взгляд цеплялся, не превращая её в кричащий CTA-баннер. */
 .topbar-support-btn{background:color-mix(in srgb, var(--accent) 12%, var(--paper));}
@@ -655,19 +655,17 @@ a{color:var(--accent);}
 }
 .step-bar-item{
   display:flex; align-items:center; gap:7px; flex:none;
-  text-decoration:none; color:var(--ink); opacity:.75; cursor:pointer;
+  text-decoration:none; color:var(--ink-soft); cursor:pointer;
   font-size:12.5px; white-space:nowrap;
-  transition:opacity .15s ease, color .15s ease;
+  transition:color .15s ease;
 }
-/* .75, а не прежние .5 — на светлой теме полупрозрачный var(--ink) поверх
-   var(--paper-deep) при .5 давал контраст всего ~2.6:1 (в тёмной теме было
-   лучше, ~4.2, из-за того как альфа-смешение ложится на светлый/тёмный текст
-   по-разному — поэтому эта же на вид "лёгкая приглушённость" в двух темах
-   означала разный реальный контраст). .75 даёт ≥4.5:1 в обеих темах;
-   отличить пройденный/текущий шаг от будущих по-прежнему легко — у активного
-   ещё и цвет меняется на --accent, и вес шрифта на 600, не только шаг по opacity. */
-.step-bar-item:hover{opacity:.8;}
-.step-bar-item.active{opacity:1; color:var(--accent); font-weight:600;}
+/* Приглушённый пункт — через --ink-soft (проверенные ≥4.5:1 в обеих темах),
+   а не opacity поверх --ink: раньше .5 давал 2.6:1 в светлой / 4.2 в тёмной
+   (альфа ложится на светлый/тёмный текст по-разному), .75 — компромисс.
+   Токеном контраст одинаков в обеих темах. Активный шаг и так отличается
+   цветом (--accent) и весом (600), не только тоном. */
+.step-bar-item:hover{color:var(--ink);}
+.step-bar-item.active{color:var(--accent); font-weight:600;}
 .step-bar-num{
   flex:none; width:20px; height:20px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
@@ -716,7 +714,7 @@ a{color:var(--accent);}
 .vase-chip:hover{border-color:var(--accent); transform:translateY(-2px);}
 .vase-chip.active{border-color:var(--rose); background:var(--paper-deep); box-shadow:inset 0 0 0 1px var(--rose);}
 .vase-chip svg{display:block; margin:0 auto 6px;}
-.vase-chip span{font-size:11.5px; color:var(--ink); opacity:.8;}
+.vase-chip span{font-size:11.5px; color:var(--ink-soft);}
 
 .flower-summary{display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-bottom:18px;}
 .flower-summary-dot{width:22px; height:22px; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(47,59,42,0.15), 0 1px 2px rgba(0,0,0,0.08);}
@@ -875,7 +873,7 @@ a{color:var(--accent);}
 }
 .envelope-chip:hover{ border-color:var(--accent); transform:translateY(-2px); }
 .envelope-chip.active{ border-color:var(--rose); background:var(--paper-deep); }
-.envelope-chip span{ font-size:11px; color:var(--ink); opacity:.8; }
+.envelope-chip span{ font-size:11px; color:var(--ink-soft); }
 
 textarea, input[type=text], input[type=email], input[type=password]{
   width:100%; border:1px solid var(--line); border-radius:10px;
@@ -1315,7 +1313,7 @@ footer.site-footer a:hover{color:var(--accent);}
 
 /* ---------- boot loading ---------- */
 .boot-loading{
-  padding:120px 20px; text-align:center; opacity:.5;
+  padding:120px 20px; text-align:center; color:var(--ink-soft);
   font-family:'Fraunces',serif; font-style:italic; font-size:15px;
 }
 /* Иконка тут — статичная разметка прямо в index.html (не через main.js:
@@ -1364,7 +1362,7 @@ footer.site-footer a:hover{color:var(--accent);}
   color:var(--sage-dark); font-size:13.5px; background:var(--paper-deep);
   border:1px solid var(--line); border-radius:10px; padding:10px 14px; line-height:1.5;
 }
-.auth-switch{margin-top:18px; font-size:13.5px; opacity:.75; text-align:center;}
+.auth-switch{margin-top:18px; font-size:13.5px; color:var(--ink-soft); text-align:center;}
 
 /* Кнопка "Войти через Google" (см. renderGoogleButton в main.js) рисует
    сама библиотека Google внутрь этого контейнера — тут только его размер и
@@ -1410,7 +1408,7 @@ footer.site-footer a:hover{color:var(--accent);}
 .legal-updated{font-size:12.5px; color:var(--ink-mute); margin-top:6px;}
 .legal-wrap h1{font-family:'Fraunces',serif; font-weight:600; font-size:36px; line-height:1.15; color:var(--ink); letter-spacing:-.01em; margin-bottom:6px;}
 .legal-wrap h2{font-family:'Fraunces',serif; font-weight:500; font-size:18px; margin-top:30px; margin-bottom:8px; color:var(--ink);}
-.legal-wrap p{font-size:14px; opacity:.8; margin:0;}
+.legal-wrap p{font-size:14px; color:var(--ink-soft); margin:0;}
 .legal-wrap a{color:var(--accent);}
 
 /* ---------- "О сервисе" на главной (aboutSectionHtml в main.js) ----------

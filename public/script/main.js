@@ -2059,7 +2059,7 @@ function renderCreator(){
               <div class="preview-bouquet-wrap" id="pvBouquetWrap"><div class="preview-bouquet" id="pvBouquet"></div></div>
               <div class="preview-msg">
                 <div class="to" id="pvTo"></div>
-                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"opacity:.4\">${t('Текст пожелания появится здесь…')}</span>`}</div>
+                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"color:var(--ink-mute)\">${t('Текст пожелания появится здесь…')}</span>`}</div>
                 <div class="from" id="pvFrom"></div>
               </div>
               <div class="preview-envelope-overlay" id="pvEnvelopeOverlay" aria-hidden="true">${envelopeSvg(occ.color, state.envelope, 150, 108)}</div>
@@ -2415,7 +2415,7 @@ function renderPreviewBouquet(){
 function updatePreviewText(){
   const occ = occasionById(state.occasion);
   document.getElementById('pvTo').textContent = state.to ? `${t('Для')} ${state.to}` : '';
-  document.getElementById('pvText').innerHTML = esc(state.message) || `<span style="opacity:.4">${t('Текст пожелания появится здесь…')}</span>`;
+  document.getElementById('pvText').innerHTML = esc(state.message) || `<span style="color:var(--ink-mute)">${t('Текст пожелания появится здесь…')}</span>`;
   document.getElementById('pvFrom').textContent = state.from ? `— ${state.from}` : '';
   const bandStyle = occasionBadgeStyle(occ.color);
   document.getElementById('pvBand').style.background = bandStyle.bg;
@@ -2756,7 +2756,7 @@ function renderShareScreen(url, expiresAt){
     <div class="share-wrap">
       <div class="eyebrow">${t('готово')}</div>
       <h1 style="font-size:30px;margin-top:8px;">${t('Открытка собрана')}</h1>
-      <p style="opacity:.75;margin-top:10px;">${t('Отправьте эту ссылку — она откроется как раскрывающаяся открытка с вашим букетом.')}</p>
+      <p style="color:var(--ink-soft);margin-top:10px;">${t('Отправьте эту ссылку — она откроется как раскрывающаяся открытка с вашим букетом.')}</p>
       <div class="link-box">
         <label for="shareUrl" class="sr-only">${t('Ссылка на открытку')}</label>
         <input type="text" id="shareUrl" readonly value="${url}">
@@ -2957,11 +2957,11 @@ function renderGroupCreate(){
     <div class="mine-wrap">
       <div class="eyebrow">${t('вместе')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Собрать открытку всей компанией')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;line-height:1.6;">${t('Вы задаёте основу — повод и вазу. Дальше отправьте ссылку остальным: каждый добавит своё имя, пожелание и один цветок. Букет соберётся из цветов всех участников — вы сами закроете приём подписей, когда решите, что открытка готова.')}</p>
+      <p style="color:var(--ink-soft);margin-top:8px;font-size:14px;line-height:1.6;">${t('Вы задаёте основу — повод и вазу. Дальше отправьте ссылку остальным: каждый добавит своё имя, пожелание и один цветок. Букет соберётся из цветов всех участников — вы сами закроете приём подписей, когда решите, что открытка готова.')}</p>
 
       <div style="max-width:180px;margin:20px auto 0;text-align:center;">
         <div class="preview-card" style="padding:16px 12px;" id="groupCreatePreview"></div>
-        <p style="opacity:.55;font-size:12px;margin-top:8px;line-height:1.5;">${t('Букет пока пуст — его наполнят цветами те, кто подпишет открытку')}</p>
+        <p style="color:var(--ink-mute);font-size:12px;margin-top:8px;line-height:1.5;">${t('Букет пока пуст — его наполнят цветами те, кто подпишет открытку')}</p>
       </div>
 
       <div class="panel" style="margin-top:24px;">
@@ -3049,7 +3049,7 @@ const groupJoinPick = { name:'', message:'', flowerType: FLOWER_TYPES[0].id, flo
 
 async function renderGroupPage(shortId){
   setPageTitle(t('Открытка всей компанией'));
-  document.getElementById('app').innerHTML = `${topbarHtml()}<div class="mine-wrap" id="groupPageBody"><p style="opacity:.6;">${t('Загрузка…')}</p></div><footer class="site-footer">${footerHtml()}</footer>`;
+  document.getElementById('app').innerHTML = `${topbarHtml()}<div class="mine-wrap" id="groupPageBody"><p style="color:var(--ink-soft);">${t('Загрузка…')}</p></div><footer class="site-footer">${footerHtml()}</footer>`;
   try{
     const res = await fetch('/api/group/' + encodeURIComponent(shortId));
     if(!res.ok) throw new Error('not_found');
@@ -3060,7 +3060,7 @@ async function renderGroupPage(shortId){
     if(body) body.innerHTML = `<div style="text-align:center;">
       ${notFoundIllustrationSvg()}
       <h1 style="font-size:22px;">${t('Открытка не найдена')}</h1>
-      <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или открытка уже удалена.')}</p>
+      <p style="color:var(--ink-soft);margin-top:8px;">${t('Ссылка повреждена или открытка уже удалена.')}</p>
     </div>`;
   }
 }
@@ -3080,7 +3080,7 @@ function renderGroupPageBody(shortId, group){
       </div>
       <h1 style="font-size:22px;margin-top:14px;text-align:center;">${esc(group.to)}</h1>
       <div class="preview-card" style="max-width:260px;margin:16px auto 0;padding:18px;">${bouquetSvg}</div>
-      <p style="opacity:.6;font-size:13px;margin-top:10px;text-align:center;">${t('Приём подписей завершён')} · ${group.contributions.length} ${t('подписал(и)')}</p>
+      <p style="color:var(--ink-soft);font-size:13px;margin-top:10px;text-align:center;">${t('Приём подписей завершён')} · ${group.contributions.length} ${t('подписал(и)')}</p>
       <div class="mine-list" style="margin-top:24px;">
         ${group.contributions.map(c => `
           <div class="mine-row" style="align-items:flex-start;">
@@ -3088,7 +3088,7 @@ function renderGroupPageBody(shortId, group){
               <div class="mi-to" style="font-family:'Fraunces',serif;font-size:16px;white-space:pre-wrap;">${esc(c.message)}</div>
               <div class="mi-date">— ${esc(c.name)}</div>
             </div>
-          </div>`).join('') || `<p style="text-align:center;opacity:.6;">${t('Пока никто не подписал — станьте первым')}</p>`}
+          </div>`).join('') || `<p style="text-align:center;color:var(--ink-soft);">${t('Пока никто не подписал — станьте первым')}</p>`}
       </div>
     `;
     return;
@@ -3097,18 +3097,18 @@ function renderGroupPageBody(shortId, group){
   el.innerHTML = `
     <div class="eyebrow" style="text-align:center;display:block;">${t('вместе')}</div>
     <h1 style="font-size:24px;margin-top:8px;text-align:center;">${esc(group.to)}</h1>
-    <p style="opacity:.7;font-size:13px;margin-top:4px;text-align:center;">${t('Открыта для подписей')}</p>
+    <p style="color:var(--ink-soft);font-size:13px;margin-top:4px;text-align:center;">${t('Открыта для подписей')}</p>
 
-    <p style="text-align:center;font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.5;margin-top:22px;">${t('Букет')} · ${group.contributions.length} ${t('подписал(и)')}</p>
+    <p style="text-align:center;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-mute);margin-top:22px;">${t('Букет')} · ${group.contributions.length} ${t('подписал(и)')}</p>
     <div class="preview-card" style="max-width:220px;margin:8px auto 0;padding:16px;">${bouquetSvg}</div>
-    <p style="text-align:center;opacity:.6;font-size:13px;margin-top:8px;">
+    <p style="text-align:center;color:var(--ink-soft);font-size:13px;margin-top:8px;">
       ${group.contributions.length ? group.contributions.map(c=>esc(c.name)).join(', ') : t('Пока никто не подписал — станьте первым')}
     </p>
 
     ${group.isOwner ? `
     <div class="panel" style="margin-top:24px;">
       <span class="panel-title" style="display:block;">${t('Вы организатор')}</span>
-      <p style="opacity:.65;font-size:13px;margin-top:8px;line-height:1.5;">${t('Когда открытка будет готова, закройте приём подписей — после этого добавить строку будет уже нельзя. Управлять этой открыткой можно и позже, из своего аккаунта.')}</p>
+      <p style="color:var(--ink-soft);font-size:13px;margin-top:8px;line-height:1.5;">${t('Когда открытка будет готова, закройте приём подписей — после этого добавить строку будет уже нельзя. Управлять этой открыткой можно и позже, из своего аккаунта.')}</p>
       <button class="btn btn-ghost" style="width:100%;margin-top:14px;" id="groupCloseBtn" onclick="closeGroupCardSubmit('${shortId}')">${t('Закрыть приём подписей')}</button>
     </div>` : ''}
 
@@ -3118,7 +3118,7 @@ function renderGroupPageBody(shortId, group){
 
     <div class="panel">
       <span class="panel-title" style="display:block;margin-bottom:6px;">${t('Добавить свою подпись')}</span>
-      <p style="opacity:.6;font-size:12.5px;margin-bottom:14px;line-height:1.5;">${t('Каждый добавляет своё имя, пожелание и один цветок — вместе они и складываются в букет выше.')}</p>
+      <p style="color:var(--ink-soft);font-size:12.5px;margin-bottom:14px;line-height:1.5;">${t('Каждый добавляет своё имя, пожелание и один цветок — вместе они и складываются в букет выше.')}</p>
       <label class="sr-only" for="groupJoinName">${t('Ваше имя')}</label>
       <input type="text" id="groupJoinName" maxlength="30" placeholder="${t('Ваше имя')}" value="${esc(groupJoinPick.name)}" style="margin-bottom:12px;">
       <label class="sr-only" for="groupJoinMessage">${t('Ваше пожелание')}</label>
@@ -3240,7 +3240,7 @@ function renderCardNotFound(){
     ${notFoundIllustrationSvg()}
     <div class="eyebrow">${t('не найдено')}</div>
     <h1 style="font-size:24px;margin-top:8px;">${t('Эта открытка недоступна')}</h1>
-    <p style="opacity:.7;margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
+    <p style="color:var(--ink-soft);margin-top:8px;">${t('Ссылка повреждена или указана неверно.')}</p>
     <button class="btn btn-primary" style="margin-top:20px;" onclick="goCreate();">${t('Создать свою')}</button>
   </div></div>`;
 }
@@ -3485,15 +3485,15 @@ async function renderMyCards(){
       <div class="mine-note">${session.user
         ? t('Открытки сохранены за вашим аккаунтом и доступны с любого устройства.')
         : `${t('Этот список хранится только в браузере на этом устройстве и пропадёт при очистке кэша.')} <a href="#login">${t('Войдите')}</a>, ${t('чтобы открытки сохранялись за вами навсегда.')}`}</div>
-      <div class="mine-list" id="mineList"><p style="opacity:.6;">${t('Загрузка…')}</p></div>
+      <div class="mine-list" id="mineList"><p style="color:var(--ink-soft);">${t('Загрузка…')}</p></div>
 
       ${session.user ? `
       <h2 class="mine-section-title">🌷 ${t('Мой сад')}</h2>
       <p class="mine-section-sub">${t('Открытки, которые прислали вам — сохраняйте прямо со страницы просмотра, и они останутся здесь.')}</p>
-      <div class="garden-grid" id="gardenGrid"><p style="opacity:.6;">${t('Загрузка…')}</p></div>
+      <div class="garden-grid" id="gardenGrid"><p style="color:var(--ink-soft);">${t('Загрузка…')}</p></div>
 
       <h2 class="mine-section-title">${t('Открытки всей компанией')}</h2>
-      <div class="mine-list" id="groupMineList" style="margin-top:16px;"><p style="opacity:.6;">${t('Загрузка…')}</p></div>` : ''}
+      <div class="mine-list" id="groupMineList" style="margin-top:16px;"><p style="color:var(--ink-soft);">${t('Загрузка…')}</p></div>` : ''}
     </div>
     <footer class="site-footer">${footerHtml()}</footer>
   `;
@@ -3998,7 +3998,7 @@ function renderLogin(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Вход')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${authReasonText(t('Чтобы открытки сохранялись за вами, а не только в этом браузере.'))}</p>
+      <p style="color:var(--ink-soft);margin-top:8px;font-size:14px;">${authReasonText(t('Чтобы открытки сохранялись за вами, а не только в этом браузере.'))}</p>
       ${appConfig.googleClientId ? `<div id="googleBtnLogin" class="google-btn-slot"></div><div class="auth-divider"><span>${t('или')}</span></div>` : ''}
       <form id="loginForm" class="auth-form">
         <label class="sr-only" for="loginEmail">${t('Email')}</label>
@@ -4042,7 +4042,7 @@ function renderRegister(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Регистрация')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${authReasonText(t('Чтобы открытки сохранялись за вами и были доступны с любого устройства — без аккаунта они живут только в этом браузере. Займёт полминуты.'))}</p>
+      <p style="color:var(--ink-soft);margin-top:8px;font-size:14px;">${authReasonText(t('Чтобы открытки сохранялись за вами и были доступны с любого устройства — без аккаунта они живут только в этом браузере. Займёт полминуты.'))}</p>
       ${appConfig.googleClientId ? `<div id="googleBtnRegister" class="google-btn-slot"></div><div class="auth-divider"><span>${t('или')}</span></div>` : ''}
       <form id="registerForm" class="auth-form">
         <label class="sr-only" for="regName">${t('Имя')}</label>
@@ -4097,7 +4097,7 @@ function renderForgotPassword(){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Восстановление пароля')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Укажите email, на который зарегистрирован аккаунт — пришлём ссылку для сброса пароля.')}</p>
+      <p style="color:var(--ink-soft);margin-top:8px;font-size:14px;">${t('Укажите email, на который зарегистрирован аккаунт — пришлём ссылку для сброса пароля.')}</p>
       <form id="forgotForm" class="auth-form">
         <label class="sr-only" for="forgotEmail">${t('Email')}</label>
         <input type="email" id="forgotEmail" placeholder="${t('Email')}" required autocomplete="username">
@@ -4138,7 +4138,7 @@ function renderResetPassword(token){
     <div class="auth-wrap">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${t('Новый пароль')}</h1>
-      <p style="opacity:.7;margin-top:8px;font-size:14px;">${t('Придумайте новый пароль — не короче 8 символов.')}</p>
+      <p style="color:var(--ink-soft);margin-top:8px;font-size:14px;">${t('Придумайте новый пароль — не короче 8 символов.')}</p>
       <form id="resetForm" class="auth-form">
         <label class="sr-only" for="resetPassword">${t('Новый пароль')}</label>
         ${passwordFieldHtml('resetPassword', t('Новый пароль'), 'new-password')}
@@ -4181,7 +4181,7 @@ function renderAccount(){
     <div class="auth-wrap" style="max-width:520px;">
       <div class="eyebrow">${t('аккаунт')}</div>
       <h1 style="font-size:26px;margin-top:8px;">${esc(session.user.name || session.user.email)}</h1>
-      <p style="opacity:.6;margin-top:4px;font-size:13.5px;">${esc(session.user.email)}</p>
+      <p style="color:var(--ink-soft);margin-top:4px;font-size:13.5px;">${esc(session.user.email)}</p>
 
       <button class="btn btn-ghost" style="margin-top:22px;" onclick="doLogout()">${t('Выйти из аккаунта')}</button>
     </div>
