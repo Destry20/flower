@@ -26,6 +26,13 @@
      метки-даты). opacity остаётся для рамок/иконок/декора, но не для текста. */
   --ink-soft:#515A46;
   --ink-mute:#5C6650;
+  /* --warn — розовый ТЕКСТ предупреждений (счётчик символов на пределе,
+     "ссылка длинновата", ошибка входа, счётчик попыток на замке, срочный
+     обратный отсчёт). Раньше тут был сам --rose (#C97B86) — на кремовом это
+     ~2.9:1, для 11–13px нечитаемо. Это тот же розовый регистр, но затемнён
+     до ≥4.5:1 на обоих оттенках фона (в тёмной теме — наоборот посветлён).
+     Заливки/рамки/выделения по-прежнему на --rose, не трогаются. */
+  --warn:#A83F52;
   /* --accent — акцентный текст/ссылки/обводки (то, что должно оставаться
      читаемым на фоне страницы), в тёмной теме переопределяется на светлее
      (см. ниже). --pale — светлый текст поверх сплошной заливки (кнопки,
@@ -68,6 +75,9 @@
      обоих оттенках тёмного фона. */
   --ink-soft:#B8B1C4;
   --ink-mute:#A49CB0;
+  /* Светлый розовый для тёмного фона (~6:1) — тот же смысл "предупреждение",
+     что и #A83F52 в светлой теме. */
+  --warn:#E58A9A;
 }
 /* Приколачиваем открытку (предпросмотр при сборке, то, что видит получатель,
    и карточки-примеры на витрине) обратно к светлым значениям внутри тёмной
@@ -996,7 +1006,7 @@ input[type=date], input[type=time]{
 .char-count{
   text-align:right; font-size:11.5px; color:var(--ink-mute); margin-top:6px;
 }
-.char-count.warn{color:var(--rose); opacity:.9;}
+.char-count.warn{color:var(--warn);}
 
 .pv-replay{
   margin-top:12px; background:none; border:1px solid var(--line); border-radius:999px;
@@ -1006,7 +1016,7 @@ input[type=date], input[type=time]{
 .pv-replay:hover{border-color:var(--plum); background:rgba(75,46,61,0.05);}
 
 .link-warn{
-  margin-top:8px; font-size:11.5px; color:var(--rose); opacity:.9;
+  margin-top:8px; font-size:11.5px; color:var(--warn);
 }
 
 .share-channels{
@@ -1132,13 +1142,13 @@ input[type=date], input[type=time]{
   background:var(--paper); color:var(--ink-soft); white-space:nowrap;
 }
 .date-countdown.near{background:color-mix(in srgb, var(--gold) 22%, var(--paper)); color:var(--gold); opacity:1;}
-.date-countdown.urgent{background:color-mix(in srgb, var(--rose) 24%, var(--paper)); color:var(--rose); opacity:1;}
+.date-countdown.urgent{background:color-mix(in srgb, var(--rose) 16%, var(--paper)); color:var(--warn); opacity:1;}
 .date-row-remove{
   border:none; background:none; color:var(--ink-mute); cursor:pointer;
   font-size:15px; flex:none; padding:4px; line-height:1;
   transition:color .15s ease;
 }
-.date-row-remove:hover{color:var(--rose);}
+.date-row-remove:hover{color:var(--warn);}
 
 /* Промо-блок на главной — в отличие от остальных секций витрины, у него
    свой акцентный фон (не paper) и бейдж "новое" в углу, чтобы новая фича
@@ -1362,7 +1372,7 @@ input[type=date], input[type=time]{
 }
 .view-footer-note a{font-family:'Fraunces',serif; font-style:italic;}
 .lock-screen{text-align:center; padding:60px 20px;}
-.lock-screen .num{font-family:'Fraunces',serif; font-size:15px; color:var(--rose);}
+.lock-screen .num{font-family:'Fraunces',serif; font-size:15px; color:var(--warn);}
 
 .view-stage.stage-dark .view-open-hint,
 .view-stage.stage-dark .view-msg,
@@ -1444,7 +1454,7 @@ footer.site-footer a:hover{color:var(--accent);}
   transition:color .15s ease;
 }
 .password-toggle:hover{color:var(--ink);}
-.auth-error{color:var(--rose); font-size:13px; min-height:1px;}
+.auth-error{color:var(--warn); font-size:13px; min-height:1px;}
 .auth-note{
   color:var(--sage-dark); font-size:13.5px; background:var(--paper-deep);
   border:1px solid var(--line); border-radius:10px; padding:10px 14px; line-height:1.5;
