@@ -94,4 +94,7 @@ function keyUri(secretBase32, issuer, label){
   return `otpauth://totp/${path}?${params.toString()}`;
 }
 
-module.exports = { randomBase32Secret, verifyTotp, keyUri };
+// totpAt экспортируется только ради теста (test/totp.test.js): проверить
+// verifyTotp можно, лишь имея код на «сейчас», а сгенерировать его больше
+// нечем. В самом приложении используется только verifyTotp.
+module.exports = { randomBase32Secret, verifyTotp, keyUri, totpAt };

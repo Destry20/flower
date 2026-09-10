@@ -2092,7 +2092,7 @@ function renderCreator(){
               <div class="preview-bouquet-wrap" id="pvBouquetWrap"><div class="preview-bouquet" id="pvBouquet"></div></div>
               <div class="preview-msg">
                 <div class="to" id="pvTo"></div>
-                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style=\"color:var(--ink-mute)\">${t('Текст пожелания появится здесь…')}</span>`}</div>
+                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style="color:var(--ink-mute)">${t('Текст пожелания появится здесь…')}</span>`}</div>
                 <div class="from" id="pvFrom"></div>
               </div>
               <div class="preview-envelope-overlay" id="pvEnvelopeOverlay" aria-hidden="true">${envelopeSvg(occ.color, state.envelope, 150, 108)}</div>

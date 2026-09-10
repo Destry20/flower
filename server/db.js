@@ -8,7 +8,10 @@ const path = require('path');
 const crypto = require('crypto');
 
 const DATA_DIR = path.join(__dirname, 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+// По умолчанию — server/data/db.json. VIVOROSE_DB_FILE переопределяет путь:
+// нужно только тестам (test/db.test.js), чтобы работать на одноразовом файле
+// во временной папке и не трогать реальную базу. В проде переменная не задаётся.
+const DB_FILE = process.env.VIVOROSE_DB_FILE || path.join(DATA_DIR, 'db.json');
 
 const MAX_RECENT_VISITS = 200;
 const MAX_CLIENT_ERRORS = 200;
@@ -24,7 +27,8 @@ function defaultData(){
 }
 
 function load(){
-  if(!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const dir = path.dirname(DB_FILE);
+  if(!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   if(!fs.existsSync(DB_FILE)){
     const initial = defaultData();
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf8');
@@ -71,6 +75,11 @@ function persist(){
   })).catch(err => { console.error('db persist failed:', err); });
   return writeQueue;
 }
+
+// Ждёт, пока все поставленные в очередь записи допишутся на диск. Нужно тесту
+// (чтобы не удалять временный файл из-под незавершённого persist()); в самом
+// приложении пригодится для аккуратного завершения по SIGTERM перед редеплоем.
+function flush(){ return writeQueue; }
 
 function uid(){ return crypto.randomUUID(); }
 
@@ -745,5 +754,6 @@ module.exports = {
   adminDeleteCard, adminDeleteGroupCard, adminDeleteUser,
   getAdminTotp, setAdminTotpPending, confirmAdminTotp, disableAdminTotp,
   getCardsCreatedTotal, incrementCardsCreated,
-  getDbSnapshot, getLastBackupAt, setLastBackupAt
+  getDbSnapshot, getLastBackupAt, setLastBackupAt,
+  flush
 };
