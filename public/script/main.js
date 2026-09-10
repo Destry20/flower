@@ -1769,7 +1769,7 @@ function renderHome(){
 
     <div class="dates-promo reveal">
       <div class="dates-promo-badge">${t('новое')}</div>
-      <div class="dates-promo-icon">🔔</div>
+      <div class="dates-promo-icon">${badgeIconSvg('bell','currentColor',34)}</div>
       <h2>${t('Не пропустите ни одной важной даты')}</h2>
       <p>${t('Сохраните дни рождения близких — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом. Одна регистрация — и больше не забудете.')}</p>
       <button class="btn btn-primary" onclick="location.hash='dates'">${t('Добавить дату')} →</button>
@@ -3346,7 +3346,7 @@ function renderViewer(encodedData){
           <div class="view-from" id="viewFrom">${data.to ? `${t('Для')} ${esc(data.to)}` : ''}${data.to && data.from ? ' · ' : ''}${data.from ? `${t('от')} ${esc(data.from)}` : ''}</div>
           <div class="view-footer">
             <button class="btn btn-primary" onclick="goCreate()">${t('Создать свою открытку')}</button>
-            <button class="btn btn-ghost" onclick="saveToGarden()">🌷 ${t('Сохранить в свой сад')}</button>
+            <button class="btn btn-ghost" style="display:inline-flex;align-items:center;gap:7px;" onclick="saveToGarden()">${badgeIconSvg('sprout','currentColor',15)}${t('Сохранить в свой сад')}</button>
             <p class="view-footer-note">${t('Бесплатно, за пару минут — на')} <a href="#" onclick="goHome();return false;">${BRAND}</a></p>
           </div>
         </div>
@@ -3446,6 +3446,22 @@ function openCard(withMusic, occasionId, melodyId){
   setTimeout(()=>document.getElementById('viewBouquet').classList.add('bloom'), 60);
   setTimeout(()=>document.getElementById('viewMsg').classList.add('show'), 500);
   setTimeout(()=>document.getElementById('viewFrom').classList.add('show'), 700);
+  // Когда сообщение и подпись проявились — мягко подводим их в кадр: на
+  // невысоком экране открытая открытка (букет + текст + подпись) не помещается
+  // целиком, получатель остаётся на букете, а само пожелание уходит под сгиб.
+  // Скроллим только если подпись (последняя строка) реально не видна и
+  // прокрутка вообще нужна. Под reduced-motion общий CSS делает
+  // scroll-behavior:auto — переход становится мгновенным, это ок.
+  setTimeout(()=>{
+    const msg = document.getElementById('viewMsg');
+    const from = document.getElementById('viewFrom');
+    const lastLine = (from && from.textContent.trim()) ? from : msg;
+    if(msg && lastLine && window.scrollY < 4 &&
+       document.documentElement.scrollHeight > window.innerHeight + 8 &&
+       lastLine.getBoundingClientRect().bottom > window.innerHeight - 16){
+      msg.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+  }, 1800);
   if(withMusic) playChime(melodyId);
   dropParticles(occasionById(occasionId).anim);
 }
@@ -3522,7 +3538,7 @@ async function renderMyCards(){
       <div class="mine-list" id="mineList"><p style="color:var(--ink-soft);">${t('Загрузка…')}</p></div>
 
       ${session.user ? `
-      <h2 class="mine-section-title">🌷 ${t('Мой сад')}</h2>
+      <h2 class="mine-section-title" style="display:flex;align-items:center;gap:9px;">${badgeIconSvg('sprout','#5C7457',18)}${t('Мой сад')}</h2>
       <p class="mine-section-sub">${t('Открытки, которые прислали вам — сохраняйте прямо со страницы просмотра, и они останутся здесь.')}</p>
       <div class="garden-grid" id="gardenGrid"><p style="color:var(--ink-soft);">${t('Загрузка…')}</p></div>
 
@@ -3813,7 +3829,7 @@ function renderDates(){
     ${topbarHtml()}
     <div class="wrap dates-page">
       <div class="eyebrow">${t('никогда не забыть')}</div>
-      <h1>🔔 ${t('Важные даты близких')}</h1>
+      <h1 style="display:flex;align-items:center;gap:10px;">${badgeIconSvg('bell','currentColor',26)}${t('Важные даты близких')}</h1>
       <p class="dates-intro">${t('Добавьте дни рождения и другие даты — за пару дней пришлём письмо с прямой ссылкой в конструктор, уже с именем и поводом.')}</p>
 
       <div class="panel dates-add-panel">

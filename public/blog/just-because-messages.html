@@ -2,6 +2,12 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<!-- Тема сайта (light/dark) выбирается на главной и хранится в localStorage.
+     Страницы блога — статические, свой main.js не грузят, поэтому ставим
+     data-theme здесь, в самом верху <head>, до подключения стилей — иначе
+     тёмная тема на них не применялась вовсе (пользователь в тёмной теме
+     открывал статью и получал светлую страницу). -->
+<script src="/script/theme-boot.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>28 тёплых слов просто так, без повода · VivoRose</title>
 <meta name="description" content="Тёплые, короткие и с лёгким юмором — 28 фраз, чтобы напомнить кому-то, что вы думаете о нём, без особого повода.">

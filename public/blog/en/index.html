@@ -2,6 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- Тема сайта (light/dark) выбирается на главной и хранится в localStorage.
+     Страницы блога — статические, свой main.js не грузят, поэтому ставим
+     data-theme здесь, в самом верху <head>, до подключения стилей — иначе
+     тёмная тема на них не применялась вовсе (пользователь в тёмной теме
+     открывал статью и получал светлую страницу). -->
+<script src="/script/theme-boot.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ready-Made Card Messages — the VivoRose Blog</title>
 <meta name="description" content="Ready-made wishes and messages for a birthday card, a love confession, thank-you, congratulations, support, sympathy, or just because.">
