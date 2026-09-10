@@ -416,18 +416,23 @@ a{color:var(--accent);}
   display:grid; grid-template-columns:1.08fr .92fr; gap:44px; align-items:center;
   position:relative; z-index:0;
 }
-/* Мягкое цветовое свечение за первым экраном — тот же приём, что у
-   .builder::before на странице конструктора: страница перестаёт быть плоским
-   кремовым полотном, роза и шалфей из палитры чуть проступают за карточкой.
-   z-index:-1 требует, чтобы .home-hero--showcase сам создавал stacking
-   context (z-index:0 выше). Держится в границах блока — без отрицательных
-   left/right, чтобы не давать горизонтальную прокрутку. */
+/* Очень мягкое цветовое свечение за первым экраном — чтобы страница не была
+   плоским кремовым полотном. Круги небольшие и гаснут в прозрачность ЗАДОЛГО
+   до краёв блока (transparent 55%), иначе на краю ::before видна кромка — та
+   самая "розовая дымка-прямоугольник". В тёмной теме роза на тёмном фоне
+   светит слишком заметным пятном — там свечение почти убрано (см. ниже).
+   z-index:-1 работает, т.к. .home-hero--showcase создаёт свой stacking context. */
 .home-hero--showcase::before{
   content:''; position:absolute; z-index:-1; pointer-events:none;
-  left:0; right:0; top:-28px; height:480px;
+  left:0; right:0; top:0; height:400px;
   background:
-    radial-gradient(ellipse 440px 300px at 16% 22%, color-mix(in srgb, var(--rose) 15%, transparent), transparent 70%),
-    radial-gradient(ellipse 400px 280px at 90% 72%, color-mix(in srgb, var(--sage) 14%, transparent), transparent 72%);
+    radial-gradient(circle 260px at 22% 34%, color-mix(in srgb, var(--rose) 9%, transparent), transparent 55%),
+    radial-gradient(circle 240px at 80% 76%, color-mix(in srgb, var(--sage) 8%, transparent), transparent 55%);
+}
+:root[data-theme="dark"] .home-hero--showcase::before{
+  background:
+    radial-gradient(circle 240px at 22% 34%, color-mix(in srgb, var(--accent) 5%, transparent), transparent 55%),
+    radial-gradient(circle 220px at 80% 76%, color-mix(in srgb, var(--sage) 4%, transparent), transparent 55%);
 }
 .home-hero--showcase h1{ font-size:42px; text-wrap:balance; }
 .home-hero--showcase p{ margin-top:16px; max-width:44ch; }
