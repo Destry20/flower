@@ -585,8 +585,12 @@ const state = {
   background: 'cream',
   charm: false
 };
-state.flowers.rose = {color:FLOWER_TYPES[0].colors[0], count:3};
-state.flowers.carnation = {color:FLOWER_TYPES[4].colors[0], count:2};
+// Дефолтный букет — 9 цветков трёх видов с разбросом по цвету (кремово-жёлтые
+// ромашки для контраста к розовым). Раньше было 5 одного тона — на первом
+// экране конструктора читалось как "пара стеблей в горшке", а не букет.
+state.flowers.rose = {color:'#C97B86', count:4};
+state.flowers.carnation = {color:'#D98CAE', count:3};
+state.flowers.daisy = {color:'#E6C88A', count:2};
 
 // Выбор цветов раньше всегда был развёрнут на странице и занимал много места —
 // теперь прячем его за кнопку и всплывающее окошко, открытое/закрытое
@@ -1242,13 +1246,12 @@ function buildBouquetSVG(cfg, size){
   const domeR = n>0 ? Math.min(size*0.27, size*0.085 + Math.sqrt(n)*7.2) : 0;
   // купол подтянут ближе к вазе, но не вплотную — при большом числе цветов
   // нужен запас по высоте, иначе плотный купол ложится прямо на горлышко.
-  // 0.33, а не прежние 0.27 (выше = ближе к верху холста): при паре цветов
-  // (маленький купол) над ним оставалось ~74px пустого холста в карточке
-  // предпросмотра — букет читался мелким и "подвешенным" в воздухе, а не
-  // собранным у вазы. Проверено на обоих концах диапазона: при 2 цветках
-  // отступ сверху ~54px (было 74), при максимуме (7 типов×5=35 головок,
-  // самый большой купол) — ~27px, без обрезки по верхнему краю холста.
-  const domeCenterY = vaseTopY - size*0.33;
+  // 0.30 (выше = ближе к верху холста): раньше было 0.33 — букет "на ногах",
+  // между вазой и головками торчал заметный кусок голого стебля. 0.30 опускает
+  // купол ближе к вазе, стебля видно меньше, читается как перевязанный букет.
+  // При максимуме (7 типов×5=35 головок, самый большой купол) сверху всё ещё
+  // ~24px запаса — без обрезки по верхнему краю холста.
+  const domeCenterY = vaseTopY - size*0.30;
 
   const GOLDEN = 137.508 * Math.PI/180;
   const pts = heads.map((h,i)=>{
@@ -1976,13 +1979,10 @@ function renderCreator(){
   ${topbarHtml()}
   <div class="wrap">
     <div class="hero">
-      <div>
-        <h1>${landing ? t(landing.h1) : t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
-        <p>${landing ? t(landing.sub) : t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
-        ${landing && landing.blogSlug ? `<a href="/blog/${uiLang==='ru'?'':'en/'}${landing.blogSlug}" class="topbar-link" style="display:inline-block;margin-top:14px;">${t(landing.blogLabel)}</a>` : ''}
-        <p id="heroCardCount" style="font-size:13px; color:var(--ink-mute); margin-top:10px;"></p>
-      </div>
-      <div class="hero-stamp">${tr(occ.stamp)}</div>
+      <h1>${landing ? t(landing.h1) : t('Соберите букет и оставьте послание, которое захочется сохранить')}</h1>
+      <p>${landing ? t(landing.sub) : t('Выберите повод, соберите цветы, добавьте пару строк — и отправьте одной ссылкой. Открывается как настоящая открытка: с разворотом и цветением.')}</p>
+      ${landing && landing.blogSlug ? `<a href="/blog/${uiLang==='ru'?'':'en/'}${landing.blogSlug}" class="topbar-link" style="display:inline-block;margin-top:14px;">${t(landing.blogLabel)}</a>` : ''}
+      <p id="heroCardCount" style="font-size:13px; color:var(--ink-mute); margin-top:10px;"></p>
     </div>
 
     <div class="builder" style="--builder-accent:${occ.color};">

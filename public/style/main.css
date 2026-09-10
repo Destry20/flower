@@ -343,31 +343,17 @@ a{color:var(--accent);}
 /* Хиро страницы конструктора (/create) — намеренно компактнее хиро главной.
    Главная продаёт (крупный H1 46px, свой отдельный .home-hero), а /create —
    это уже инструмент: вернувшийся пользователь пришёл за формой, а не за
-   слоганом. Раньше H1 был 54px в 4 строки + штамп 150px и вместе они
-   отжимали сам конструктор на ~430px вниз (ниже сгиба на ноутбуке).
-   40px/2-3 строки + штамп 124px поднимают форму к верху первого экрана.
-   (История большого H1: 44→54 поднимали, чтобы не теряться рядом с
-   заголовками конкурентов — но это довод для витрины, не для инструмента.) */
+   слоганом. Раньше был H1 54px в 4 строки + декоративный штамп-кружок справа
+   (дублировал плашку повода на карточке превью) — вместе отжимали конструктор
+   далеко вниз. Теперь один компактный текстовый блок, форма у верха экрана. */
 .hero{
-  padding:40px 0 24px;
-  display:grid; grid-template-columns:1.1fr .9fr; gap:36px; align-items:end;
+  padding:40px 0 24px; max-width:640px;
 }
 .hero h1{font-size:40px; font-weight:600; line-height:1.14; letter-spacing:-.015em; color:var(--ink);}
 @media (max-width:480px){
   .hero h1{font-size:31px;}
 }
 .hero p{font-size:15.5px; color:var(--ink-soft); max-width:46ch; margin-top:12px; line-height:1.6;}
-.hero-stamp{
-  justify-self:end;
-  width:124px;height:124px;border-radius:50%;
-  border:1.5px dashed var(--rose);
-  display:flex;align-items:center;justify-content:center;
-  text-align:center;
-  font-family:'Fraunces',serif;font-style:italic;color:var(--rose);
-  font-size:12.5px; line-height:1.45; padding:12px;
-  transform:rotate(-8deg);
-  background:rgba(201,123,134,0.04);
-}
 
 .builder{
   display:grid; grid-template-columns:1fr 1fr; gap:36px;
@@ -394,10 +380,6 @@ a{color:var(--accent);}
 }
 @media (max-width:880px){
   .builder{grid-template-columns:1fr;}
-  .hero{grid-template-columns:1fr;}
-  /* Штамп уходит под заголовок (одна колонка) — держим ещё меньше, чтобы он
-     не отжимал форму вниз перед первым экраном. */
-  .hero-stamp{justify-self:start;margin-top:12px;width:104px;height:104px;font-size:11.5px;}
   /* Живой предпросмотр — самая мотивирующая часть (видно, как букет
      складывается) — раньше на мобильном оказывался в самом низу, после всей
      формы (просто следующий элемент в разметке). order переставляет его
