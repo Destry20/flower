@@ -4,6 +4,7 @@ const db = require('../db');
 const { tServer } = require('../i18n');
 const { decodeCardDataServer } = require('../cardMeta');
 const { scanCard } = require('../moderation');
+const { verifyTurnstile } = require('../turnstile');
 
 const router = express.Router();
 
@@ -26,10 +27,18 @@ const createLimiter = rateLimit({
   message: { error: 'Too many cards created. Please wait a bit and try again.' }
 });
 
-router.post('/', createLimiter, (req, res) => {
-  const { encodedData, occasion, to, from } = req.body || {};
+router.post('/', createLimiter, async (req, res) => {
+  const { encodedData, occasion, to, from, turnstileToken } = req.body || {};
   if(typeof encodedData !== 'string' || !encodedData || encodedData.length > MAX_ENCODED_LEN){
     return res.status(400).json({ error: tServer(req, 'cardInvalid') });
+  }
+  // Капча (см. server/turnstile.js) — выключена, пока не задан
+  // TURNSTILE_SECRET_KEY, тогда verifyTurnstile всегда true и эта проверка
+  // не влияет на поведение. Гостевые открытки — самая незащищённая точка
+  // (создать может кто угодно, без аккаунта), поэтому именно здесь она
+  // нужнее всего.
+  if(!(await verifyTurnstile(turnstileToken, req.ip))){
+    return res.status(400).json({ error: tServer(req, 'captchaFailed') });
   }
   // Первый, самый дешёвый уровень модерации (см. server/moderation.js) —
   // сообщение сервер обычно не видит (оно живёт только внутри encodedData,

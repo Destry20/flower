@@ -6,6 +6,7 @@ const db = require('../db');
 const auth = require('../auth');
 const { sendPasswordResetEmail } = require('../mailer');
 const { tServer, pickLang } = require('../i18n');
+const { verifyTurnstile } = require('../turnstile');
 
 const router = express.Router();
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 час
@@ -33,8 +34,8 @@ const authLimiter = rateLimit({
 });
 router.use(authLimiter);
 
-router.post('/register', (req, res) => {
-  const { email, password, name, website } = req.body || {};
+router.post('/register', async (req, res) => {
+  const { email, password, name, website, turnstileToken } = req.body || {};
   // Honeypot: настоящие пользователи это поле не видят и не заполняют (скрыто
   // за экраном, вне табуляции) — заполненное значение почти наверняка бот,
   // слепо забивающий все поля формы. Отвечаем обычной ошибкой валидации,
@@ -50,6 +51,12 @@ router.post('/register', (req, res) => {
   }
   if(db.findUserByEmail(email)){
     return res.status(409).json({ error: tServer(req, 'emailTaken') });
+  }
+  // Капча (см. server/turnstile.js) — после дешёвых проверок выше (честной
+  // форме незачем платить лишним запросом к Cloudflare за то, что и так можно
+  // отклонить мгновенно), но до создания аккаунта.
+  if(!(await verifyTurnstile(turnstileToken, req.ip))){
+    return res.status(400).json({ error: tServer(req, 'captchaFailed') });
   }
   const user = db.createUser({ email, passwordHash: auth.hashPassword(password), name });
   const token = auth.signToken(user);

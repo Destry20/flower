@@ -4,6 +4,7 @@ const db = require('../db');
 const { requireAuth } = require('../auth');
 const { tServer } = require('../i18n');
 const { scanCard } = require('../moderation');
+const { verifyTurnstile } = require('../turnstile');
 
 const router = express.Router();
 
@@ -92,8 +93,8 @@ router.get('/:shortId', readLimiter, (req, res) => {
   res.json({ group: publicGroup(group, req) });
 });
 
-router.post('/:shortId/join', joinLimiter, (req, res) => {
-  const { name, message, flowerType, flowerColor } = req.body || {};
+router.post('/:shortId/join', joinLimiter, async (req, res) => {
+  const { name, message, flowerType, flowerColor, turnstileToken } = req.body || {};
   if(typeof name !== 'string' || !name.trim()){
     return res.status(400).json({ error: tServer(req, 'groupInvalid') });
   }
@@ -103,6 +104,12 @@ router.post('/:shortId/join', joinLimiter, (req, res) => {
   const allowedColors = FLOWER_COLORS[flowerType];
   if(!allowedColors || !allowedColors.includes(flowerColor)){
     return res.status(400).json({ error: tServer(req, 'groupInvalid') });
+  }
+  // Капча (см. server/turnstile.js) — подписать общую открытку может кто
+  // угодно по ссылке-приглашению, без аккаунта, так что это такая же
+  // незащищённая точка, как гостевые открытки.
+  if(!(await verifyTurnstile(turnstileToken, req.ip))){
+    return res.status(400).json({ error: tServer(req, 'captchaFailed') });
   }
   const { flagged, flagReasons } = scanCard({ from: name, message });
   const result = db.addGroupContribution(req.params.shortId, { name, message, flowerType, flowerColor, flagged, flagReasons });

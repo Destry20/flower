@@ -95,7 +95,11 @@ app.use(helmet({
       // события уходят на google-analytics.com (оба домена региональные,
       // *.google-analytics.com — потому что реальный хост события иногда
       // region1/region2.google-analytics.com, а не голый google-analytics.com).
-      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com', 'https://www.googletagmanager.com'],
+      // challenges.cloudflare.com — виджет Cloudflare Turnstile (капча на
+      // гостевых открытках/регистрации/подписи под общей открыткой, см.
+      // server/turnstile.js) — рисуется не всегда (см. appConfig.turnstileSiteKey
+      // в main.js), но домен в CSP нужен заранее, а не только когда включат.
+      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://challenges.cloudflare.com'],
       // Вся вёрстка строится через onclick="..." в шаблонах (унаследовано от
       // исходного сайта) — без unsafe-inline здесь браузер молча блокирует
       // каждый клик. scriptSrc при этом остаётся строгим: внешний <script>
@@ -112,8 +116,11 @@ app.use(helmet({
       // блокировались (в консоли — "violates img-src 'self' data:"), сама
       // аналитика при этом не ломалась, но часть событий терялась.
       imgSrc: ["'self'", 'data:', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
-      connectSrc: ["'self'", 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
-      frameSrc: ["'self'", 'https://accounts.google.com'],
+      // challenges.cloudflare.com в connectSrc/frameSrc — виджет Turnstile
+      // делает свои XHR и рисует сам челлендж во вложенном iframe, как и
+      // Google-кнопка выше.
+      connectSrc: ["'self'", 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://challenges.cloudflare.com'],
+      frameSrc: ["'self'", 'https://accounts.google.com', 'https://challenges.cloudflare.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"]
     }
@@ -172,13 +179,17 @@ app.use((req, res, next) => {
   res.status(503).set('Cache-Control', 'no-store').type('html').send(html);
 });
 
-// Публичная, нечувствительная конфигурация для клиента — сейчас только
-// googleClientId (id клиента, не секрет — Google Client ID и так виден в
-// каждом запросе OAuth-виджета, прятать его незачем). Пусто/null, пока
-// владелец сайта не задаст GOOGLE_CLIENT_ID в .env — тогда клиент просто не
-// показывает кнопку "Войти через Google", а не рендерит нерабочую.
+// Публичная, нечувствительная конфигурация для клиента — оба поля тут не
+// секреты (Google Client ID и Turnstile Site Key видны в каждом запросе
+// соответствующего виджета и не защищают ничего сами по себе — проверка
+// настоящая происходит на сервере через секретный ключ, см. server/turnstile.js).
+// Пусто/null, пока владелец сайта их не задал в .env — тогда клиент просто не
+// показывает кнопку/виджет, а не рендерит нерабочие.
 app.get('/api/config', (req, res) => {
-  res.set('Cache-Control', 'no-store').json({ googleClientId: process.env.GOOGLE_CLIENT_ID || null });
+  res.set('Cache-Control', 'no-store').json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+    turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || null
+  });
 });
 
 app.use('/api/auth', authRoutes);

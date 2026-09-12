@@ -635,17 +635,18 @@ async function loadMe(){
   }catch(e){ session.user = null; }
 }
 
-// Публичная конфигурация с сервера (см. GET /api/config) — сейчас только
-// googleClientId. null, пока владелец сайта не задал GOOGLE_CLIENT_ID в
-// .env — тогда renderGoogleButton() ниже просто ничего не рисует, вместо
-// нерабочей кнопки.
-const appConfig = { googleClientId: null };
+// Публичная конфигурация с сервера (см. GET /api/config) — googleClientId и
+// turnstileSiteKey. Оба null, пока владелец сайта не задал соответствующую
+// переменную в .env — тогда renderGoogleButton()/renderTurnstile() ниже
+// просто ничего не рисуют, вместо нерабочей кнопки/виджета.
+const appConfig = { googleClientId: null, turnstileSiteKey: null };
 async function loadConfig(){
   try{
     const res = await fetch('/api/config');
     const json = await res.json();
     appConfig.googleClientId = json.googleClientId || null;
-  }catch(e){ appConfig.googleClientId = null; }
+    appConfig.turnstileSiteKey = json.turnstileSiteKey || null;
+  }catch(e){ appConfig.googleClientId = null; appConfig.turnstileSiteKey = null; }
 }
 
 /* ====================== HELPERS ====================== */
@@ -2089,6 +2090,7 @@ function renderCreator(){
           </div></div>
         </div>
 
+        ${(!session.user && appConfig.turnstileSiteKey) ? '<div id="createTurnstile" style="margin-top:16px;"></div>' : ''}
         <div class="cta-row">
           <button class="btn btn-primary" onclick="saveAndShare()">${t('Создать ссылку')}</button>
           <button class="btn btn-ghost" onclick="randomizeBouquet()" style="display:inline-flex;align-items:center;gap:7px;">${diceIconSvg()}${t('Собрать наугад')}</button>
@@ -2187,6 +2189,13 @@ function renderCreator(){
   updatePreviewText();
   fetchHeroCardCount();
   initScrollReveal();
+
+  // Капча — только для гостей (см. комментарий у createTurnstileId ниже):
+  // вошедший в аккаунт уже проходил её при регистрации.
+  createTurnstileId = null;
+  if(!session.user && appConfig.turnstileSiteKey){
+    renderTurnstile('createTurnstile').then(id => { createTurnstileId = id; });
+  }
 }
 
 function leafIcon(){
@@ -2751,7 +2760,7 @@ async function saveAndShare(){
   try{
     const res = await fetch('/api/guest-cards', {
       method: 'POST', headers: {'Content-Type':'application/json', 'X-Lang':uiLang},
-      body: JSON.stringify({ encodedData: encoded, occasion: state.occasion, to: state.to, from: state.from })
+      body: JSON.stringify({ encodedData: encoded, occasion: state.occasion, to: state.to, from: state.from, turnstileToken: getTurnstileToken(createTurnstileId) })
     });
     if(res.ok){
       const json = await res.json();
@@ -3175,6 +3184,7 @@ function renderGroupPageBody(shortId, group){
       <div class="vase-row" id="groupFlowerTypeChips"></div>
       <div class="swatches" id="groupFlowerColorSwatches" style="margin-top:12px;"></div>
 
+      ${appConfig.turnstileSiteKey ? '<div id="groupJoinTurnstile" style="margin-top:16px;"></div>' : ''}
       <button class="btn btn-primary" style="width:100%;margin-top:18px;" id="groupJoinBtn" onclick="submitGroupJoin('${shortId}')">${t('Добавить в открытку')}</button>
       <div class="auth-error" id="groupJoinError"></div>
     </div>
@@ -3182,6 +3192,8 @@ function renderGroupPageBody(shortId, group){
 
   document.getElementById('groupJoinName').oninput = e => { groupJoinPick.name = e.target.value; };
   document.getElementById('groupJoinMessage').oninput = e => { groupJoinPick.message = e.target.value; };
+  groupJoinTurnstileId = null;
+  if(appConfig.turnstileSiteKey) renderTurnstile('groupJoinTurnstile').then(id => { groupJoinTurnstileId = id; });
   renderGroupFlowerPicker(shortId);
 }
 
@@ -3248,7 +3260,7 @@ async function submitGroupJoin(shortId){
     const res = await fetch('/api/group/' + encodeURIComponent(shortId) + '/join', {
       method:'POST',
       headers:{'Content-Type':'application/json','X-Lang':uiLang},
-      body: JSON.stringify({ name, message, flowerType: groupJoinPick.flowerType, flowerColor: groupJoinPick.flowerColor })
+      body: JSON.stringify({ name, message, flowerType: groupJoinPick.flowerType, flowerColor: groupJoinPick.flowerColor, turnstileToken: getTurnstileToken(groupJoinTurnstileId) })
     });
     const json = await res.json();
     if(!res.ok) throw new Error(json.error || t('Не удалось добавить подпись'));
@@ -4053,6 +4065,60 @@ async function onGoogleCredential(response){
   }
 }
 
+/* ====================== TURNSTILE (капча) ====================== */
+// Тот же принцип, что и у Google-скрипта выше: грузим по требованию, только
+// когда appConfig.turnstileSiteKey реально задан (см. loadConfig) — иначе
+// страница не тянет внешний скрипт впустую, а форма просто не показывает
+// виджет вместо нерабочего.
+let turnstileScriptPromise = null;
+// Id виджетов на конкретных формах — каждый выставляется соответствующим
+// render*() перед вызовом renderTurnstile (renderCreator для гостя,
+// renderGroupPageBody для подписи), читается непосредственно перед отправкой.
+let createTurnstileId = null;
+let groupJoinTurnstileId = null;
+function loadTurnstileScript(){
+  if(window.turnstile) return Promise.resolve();
+  if(turnstileScriptPromise) return turnstileScriptPromise;
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { turnstileScriptPromise = null; reject(new Error('turnstile load failed')); };
+    document.head.appendChild(s);
+  });
+  return turnstileScriptPromise;
+}
+
+// Рисует виджет в контейнере containerId и возвращает его widgetId — им же
+// потом читаем токен через turnstile.getResponse(widgetId) прямо перед
+// отправкой формы (см. вызовы в saveAndShare/submitGroupJoin/registerForm).
+// Виджет живёт только до следующей перерисовки экрана (main.js каждый раз
+// целиком переписывает innerHTML #app) — вызывающий код зовёт это заново
+// после каждого рендера формы, как и renderGoogleButton.
+// Тихо возвращает null, если капча выключена или скрипт не загрузился
+// (блокировщик и т.п.) — форма всё равно должна остаться отправляемой,
+// сервер сам решит, что делать с пустым токеном (см. server/turnstile.js:
+// пропустит, если капча тоже выключена там, иначе отклонит).
+async function renderTurnstile(containerId){
+  if(!appConfig.turnstileSiteKey) return null;
+  const el = document.getElementById(containerId);
+  if(!el) return null;
+  try{
+    await loadTurnstileScript();
+    return window.turnstile.render(el, {
+      sitekey: appConfig.turnstileSiteKey,
+      theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
+      language: uiLang
+    });
+  }catch(e){ return null; }
+}
+
+function getTurnstileToken(widgetId){
+  if(widgetId == null || !window.turnstile) return '';
+  try{ return window.turnstile.getResponse(widgetId) || ''; }catch(e){ return ''; }
+}
+
 function renderLogin(){
   if(session.user){ goHome(); return; }
   setPageTitle(t('Вход'));
@@ -4117,6 +4183,7 @@ function renderRegister(){
         <label class="sr-only" for="regPasswordConfirm">${t('Повторите пароль')}</label>
         ${passwordFieldHtml('regPasswordConfirm', t('Повторите пароль'), 'new-password')}
         <input type="text" id="regWebsite" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+        ${appConfig.turnstileSiteKey ? '<div id="regTurnstile" style="margin-top:14px;"></div>' : ''}
         <div class="auth-error" id="registerError"></div>
         <button class="btn btn-primary" type="submit" style="width:100%;">${t('Создать аккаунт')}</button>
       </form>
@@ -4124,6 +4191,8 @@ function renderRegister(){
     </div>
   `;
   if(appConfig.googleClientId) renderGoogleButton('googleBtnRegister');
+  let regTurnstileId = null;
+  if(appConfig.turnstileSiteKey) renderTurnstile('regTurnstile').then(id => { regTurnstileId = id; });
   document.getElementById('registerForm').onsubmit = async (e) => {
     e.preventDefault();
     const name = document.getElementById('regName').value.trim();
@@ -4138,7 +4207,7 @@ function renderRegister(){
       return;
     }
     try{
-      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password, name, website }) });
+      const res = await fetch('/api/auth/register', { method:'POST', headers:{'Content-Type':'application/json', 'X-Lang':uiLang}, body: JSON.stringify({ email, password, name, website, turnstileToken: getTurnstileToken(regTurnstileId) }) });
       const json = await res.json();
       if(!res.ok) throw new Error(json.error || t('Не удалось зарегистрироваться'));
       session.user = json.user;

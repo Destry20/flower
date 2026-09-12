@@ -7,6 +7,7 @@
 const STRINGS = {
   ru: {
     invalidEmail: 'Введите корректный email',
+    captchaFailed: 'Проверка «я не робот» не пройдена. Обновите страницу и попробуйте ещё раз.',
     passwordTooShort: 'Пароль должен быть не короче 8 символов',
     emailTaken: 'Этот email уже зарегистрирован',
     invalidLogin: 'Неверный email или пароль',
@@ -47,6 +48,7 @@ const STRINGS = {
   },
   en: {
     invalidEmail: 'Enter a valid email',
+    captchaFailed: 'The "I\'m not a robot" check didn\'t pass. Refresh the page and try again.',
     passwordTooShort: 'Password must be at least 8 characters',
     emailTaken: 'This email is already registered',
     invalidLogin: 'Incorrect email or password',
