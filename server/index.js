@@ -31,6 +31,35 @@ const PORT = process.env.PORT || 3000;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const INDEX_HTML_PATH = path.join(PUBLIC_DIR, 'index.html');
 
+// В продакшене клиентский main.js отдаётся собранным и минифицированным, под
+// именем с хешем содержимого (npm run build -> public/build/main.<hash>.js) —
+// его можно кэшировать надолго (Cache-Control: immutable ниже). Путь берём из
+// manifest.json, который пишет build.js. В разработке — и если сборки почему-то
+// нет — отдаём сырой /script/main.js: правки видно сразу, без пересборки.
+let MAIN_JS_SRC = '/script/main.js';
+if(process.env.NODE_ENV === 'production'){
+  try{
+    const manifest = JSON.parse(fs.readFileSync(path.join(PUBLIC_DIR, 'build', 'manifest.json'), 'utf8'));
+    if(manifest && manifest['main.js']){
+      MAIN_JS_SRC = manifest['main.js'];
+    } else {
+      console.warn('[build] manifest.json без ключа main.js — отдаю сырой /script/main.js');
+    }
+  }catch(e){
+    console.warn('[build] public/build/manifest.json не найден — запустите "npm run build". Отдаю сырой /script/main.js');
+  }
+}
+
+// index.html в гите ссылается на /script/main.js; в проде подменяем на путь к
+// собранному бандлу. Единственная точка подстановки — прогоняем через неё
+// каждый ответ, отдающий index.html (страницы открыток, лендинги, 404, сама
+// главная).
+function withMainJs(html){
+  return MAIN_JS_SRC === '/script/main.js'
+    ? html
+    : html.replace('src="/script/main.js"', `src="${MAIN_JS_SRC}"`);
+}
+
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
@@ -167,26 +196,28 @@ app.use('/api/garden', gardenRoutes);
 // обработчика превью ссылки показывало бы только общее описание сайта вместо
 // "Вам открытка от Ани". Реальным браузерам это не мешает: страница та же
 // самая, просто с уже подставленными meta-тегами, дальше её ведёт main.js.
-app.get('/', (req, res, next) => {
+app.get(['/', '/index.html'], (req, res, next) => {
   const cardData = typeof req.query.data === 'string' ? req.query.data : null;
-  if(!cardData) return next();
   const lang = pickLang(req);
-  const meta = buildShareMeta(cardData, lang);
-  if(!meta) return next(); // битая ссылка — пусть страницу открывает обычным образом, ошибку покажет main.js
+  // Битая "?data=" ссылка -> meta == null -> отдаём обычную главную, ошибку
+  // покажет main.js (раньше это делал next() к express.static).
+  const meta = cardData ? buildShareMeta(cardData, lang) : null;
 
   fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
     if(err) return next();
-    const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.originalUrl);
-    const out = html
-      .replace(/<html lang="[^"]*"/, `<html lang="${lang}"`)
-      .replace(/<title>.*?<\/title>/, `<title>${meta.title}</title>`)
-      .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${meta.title}$2`)
-      .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${meta.title}$2`)
-      .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${meta.description}$2`)
-      .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
-      .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
+    let out = html.replace(/<html lang="[^"]*"/, `<html lang="${lang}"`);
+    if(meta){
+      const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.originalUrl);
+      out = out
+        .replace(/<title>.*?<\/title>/, `<title>${meta.title}</title>`)
+        .replace(/(<meta property="og:title" content=")[^"]*(")/, `$1${meta.title}$2`)
+        .replace(/(<meta name="twitter:title" content=")[^"]*(")/, `$1${meta.title}$2`)
+        .replace(/(<meta property="og:description" content=")[^"]*(")/, `$1${meta.description}$2`)
+        .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
+        .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
+    }
     res.set('Cache-Control', 'no-cache');
-    res.type('html').send(out);
+    res.type('html').send(withMainJs(out));
   });
 });
 
@@ -211,7 +242,7 @@ app.get('/c/:shortId([A-Za-z0-9]{7})', (req, res, next) => {
         .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
     }
     res.set('Cache-Control', 'no-cache');
-    res.type('html').send(out);
+    res.type('html').send(withMainJs(out));
   });
 });
 
@@ -230,7 +261,7 @@ app.get('/group/:shortId([A-Za-z0-9]{7})', (req, res, next) => {
       out = out.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
     }
     res.set('Cache-Control', 'no-cache');
-    res.type('html').send(out);
+    res.type('html').send(withMainJs(out));
   });
 });
 
@@ -303,20 +334,25 @@ app.get(Object.keys(SEO_PAGES), (req, res, next) => {
       .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`)
       .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${fullUrl}$2`);
     res.set('Cache-Control', 'no-cache');
-    res.type('html').send(out);
+    res.type('html').send(withMainJs(out));
   });
 });
 
 app.use(express.static(PUBLIC_DIR, {
   index: 'index.html',
   extensions: ['html'],
-  setHeaders(res){
-    // Проект активно меняется (новая правка — почти каждый запуск сервера),
-    // поэтому пока держим no-cache на всём, включая JS/CSS: иначе браузер может
-    // закэшировать старый script/main.js вместе со свежим style/main.css (или
-    // наоборот) и получится вёрстка "из двух версий" — трудноотличимая от
-    // настоящего бага. Перед реальным продакшеном стоит вернуть долгий кэш +
-    // версионирование имён файлов (например, main.abc123.js).
+  setHeaders(res, filePath){
+    // Файлы в public/build/ названы по хешу содержимого (build.js) — новый
+    // контент = новое имя, поэтому старый URL можно кэшировать бессрочно.
+    if(filePath.split(path.sep).includes('build')){
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return;
+    }
+    // Всё остальное (style/main.css, script/main.js в dev, картинки, блог):
+    // проект активно меняется, поэтому no-cache — браузер каждый раз
+    // перепроверяет свежесть. Иначе легко поймать вёрстку "из двух версий"
+    // (старый main.js + новый main.css), трудноотличимую от настоящего бага.
+    // Долгий кэш включён только для собранного бандла с хешем в имени (выше).
     res.setHeader('Cache-Control', 'no-cache');
   }
 }));
@@ -334,7 +370,7 @@ app.get('*', (req, res, next) => {
   fs.readFile(INDEX_HTML_PATH, 'utf8', (err, html) => {
     if(err) return next();
     const out = html.replace(/<html lang="[^"]*"/, `<html lang="${lang}"`);
-    res.status(404).set('Cache-Control', 'no-cache').type('html').send(out);
+    res.status(404).set('Cache-Control', 'no-cache').type('html').send(withMainJs(out));
   });
 });
 

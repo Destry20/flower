@@ -20,6 +20,8 @@ module.exports = [
   {
     ignores: [
       'node_modules/**',
+      // Собранный минифицированный бандл — генерируется build.js, не исходник.
+      'public/build/**',
       // Рекламные страницы Adsterra — сторонний код, не наш, не проверяем.
       'public/x/**',
       // Внешняя библиотека с CDN, лежит копией — не наша.
@@ -43,7 +45,7 @@ module.exports = [
 
   // Сервер: Node + CommonJS.
   {
-    files: ['server/**/*.js', 'eslint.config.js', 'esbuild.config.js'],
+    files: ['server/**/*.js', 'eslint.config.js', 'build.js'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',

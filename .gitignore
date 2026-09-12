@@ -3,3 +3,7 @@ node_modules/
 server/data/db.json
 npm-debug.log*
 admin pass.txt
+
+# Собранный клиентский бандл — генерируется `npm run build` (и на деплое).
+# В гите не нужен: имя меняется с каждым изменением main.js.
+public/build/
