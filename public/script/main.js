@@ -1508,14 +1508,25 @@ function pingCardCreated(){
 // (не лестница по нарастающей: та тянула бы взгляд по диагонали вниз, а не
 // читалась как веер) плюс чередующийся наклон, по образцу карточек на
 // витрине Papier/Minted.
-// to/from — одна и та же пара имён на всех карточках (не разные люди на
-// каждой): читается как один и тот же человек отправляет открытки на разные
-// поводы, а не случайная витрина чужих переписок.
+// to/from — у каждой карточки своя пара имён (не одна и та же на всех):
+// одинаковые "Насти"/"Дениса" на всех 6 карточках подряд читались не как
+// витрина разных готовых открыток, а как одна и та же переписка, скопированная
+// шесть раз. Имена подобраны так, чтобы легко и однозначно склонялись
+// ("для Софьи", "от Ивана" — без "Артёма"-подобных на слух спорных форм).
 // textOverride — у 'thanks'/'congrats'/'sorry' стандартный occ.placeholder
 // написан в нейтральной форме "знал(а)"/"заслужил(а)" (в самом конструкторе
-// пол получателя не известен заранее). Здесь получатель у всех карточек —
-// конкретное имя "Насти" (женское), поэтому нейтральную форму меняем на
-// прямую женскую — иначе скобки откровенно читаются как незаполненный шаблон.
+// пол получателя не известен заранее). Здесь получатель у каждой из этих
+// карточек — конкретное имя, поэтому нейтральную форму меняем на прямую (и
+// у 'justbecause' совпадающую по роду с ЕЁ конкретным именем отправителя,
+// см. "подумал" ниже) — иначе скобки откровенно читаются как незаполненный
+// шаблон. Меняя to/from у thanks/congrats/sorry/justbecause — проверьте,
+// что род нового имени всё ещё совпадает с родом глагола в русском
+// textOverride (у английского такой проблемы нет — "you" рода не имеет).
+// ru/en у to/from — НЕ транслитерации друг друга, а два независимых набора
+// имён: сайт рассчитан прежде всего на зарубежную аудиторию, и для en-версии
+// нужны имена, которые для неё звучат нейтрально-своими, а не как русские
+// имена в английской транскрипции (Kirill/Nikolai читались бы иностранцу
+// заметно "русскими", а не нейтральным "кто угодно").
 const EXAMPLES = [
   // occasion остаётся 'love' — от него берутся цвет ленты/иконка/узор на
   // самой карточке, менять внешний вид не просили. applyOccasion — то, что
@@ -1524,19 +1535,19 @@ const EXAMPLES = [
   // текст стоит на карточке), а не "Любовь".
   { id:'love', occasion:'love', applyOccasion:'foryou', vase:'D', ribbon:'#4B2E3D', envelope:'gold', background:'blush', charm:true,
     flowers:{ rose:{color:'#B23A4E', count:5}, peony:{color:'#D98CAE', count:3} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'},
+    to:{ru:'Марии',en:'Emma'}, from:{ru:'Артёма',en:'James'},
     labelOverride:{ru:'Для тебя',en:'For you'}, stampOverride:{ru:'Для тебя',en:'For you'},
     featured:true, tilt:-1, lift:0 },
   { id:'birthday', occasion:'birthday', vase:'B', ribbon:'#C97B86', envelope:'seal', background:'blush', charm:true,
     flowers:{ tulip:{color:'#D65B4A', count:4}, rose:{color:'#E3B7BE', count:3} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:3, lift:-8 },
+    to:{ru:'Софьи',en:'Sophie'}, from:{ru:'Ивана',en:'Daniel'}, tilt:3, lift:-8 },
   { id:'thanks', occasion:'thanks', vase:'C', ribbon:'#B98A4A', envelope:'kraft', background:'cream', charm:false,
     flowers:{ sunflower:{color:'#F2C94C', count:4}, daisy:{color:'#E6C88A', count:3} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:-3.5, lift:6,
+    to:{ru:'Алины',en:'Grace'}, from:{ru:'Максима',en:'Michael'}, tilt:-3.5, lift:6,
     textOverride:{ru:'Хочу, чтобы ты знала, как я ценю тебя',en:'I want you to know how much I appreciate you'} },
   { id:'congrats', occasion:'congrats', vase:'E', ribbon:'#B98A4A', envelope:'pattern', background:'sage', charm:true,
     flowers:{ rose:{color:'#E6C88A', count:3}, daisy:{color:'#E3B7BE', count:4} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:2.5, lift:-10,
+    to:{ru:'Виктории',en:'Olivia'}, from:{ru:'Романа',en:'Ryan'}, tilt:2.5, lift:-10,
     textOverride:{ru:'Ты это заслужила. Горжусь тобой!',en:'You earned this. So proud of you!'} },
   // occ.color у 'justbecause' буквально совпадает с 'birthday' (#C97B86 —
   // общий цвет в самих OCCASIONS, тут не трогаем) — лента фиолетовая и фон
@@ -1545,11 +1556,13 @@ const EXAMPLES = [
   // заголовок.
   { id:'justbecause', occasion:'justbecause', vase:'A', ribbon:'#7e4ab9', envelope:'classic', background:'cream', charm:true,
     flowers:{ peony:{color:'#F0C9D6', count:4}, tulip:{color:'#E8A03A', count:3} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:-2, lift:8,
+    // от "подумал" (муж.) в textOverride ниже — отправитель здесь мужского
+    // рода, имя получателя может быть любым.
+    to:{ru:'Полины',en:'Chloe'}, from:{ru:'Кирилла',en:'Lucas'}, tilt:-2, lift:8,
     textOverride:{ru:'Без повода. Просто подумал о тебе сегодня.',en:'No reason. Just thought of you today.'} },
   { id:'sorry', occasion:'sorry', vase:'B', ribbon:'#8CA087', envelope:'classic', background:'blush', charm:false,
     flowers:{ orchid:{color:'#E8D5F0', count:4}, daisy:{color:'#E3B7BE', count:3} },
-    to:{ru:'Насти',en:'Nastya'}, from:{ru:'Дениса',en:'Denis'}, tilt:4, lift:-6,
+    to:{ru:'Дарьи',en:'Hannah'}, from:{ru:'Николая',en:'Ethan'}, tilt:4, lift:-6,
     textOverride:{ru:'Просто хочу, чтобы ты знала — я рядом, что бы ни случилось.',en:"Just want you to know — I'm here, no matter what."} }
 ];
 

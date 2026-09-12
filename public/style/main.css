@@ -378,6 +378,19 @@ a{color:var(--accent);}
     radial-gradient(ellipse 460px 340px at 12% 15%, color-mix(in srgb, var(--builder-accent, var(--rose)) 20%, transparent), transparent 70%),
     radial-gradient(ellipse 420px 320px at 88% 55%, color-mix(in srgb, var(--sage) 16%, transparent), transparent 70%);
 }
+/* На тёмном фоне 20%/16%-я подмешка тех же цветов читается не мягким пятном,
+   а заметной цветной дымкой (та же история, что уже разбирали у
+   .home-hero--showcase::before — см. комментарий там) — на конструкторе
+   и его SEO-лендингах (/birthday-card и т.п.) эту тёмную версию тогда не
+   поправили. Проценты — как у уже проверенного тёмного варианта хиро на
+   главной, а не просто вдвое меньше: там 20%→оставили бы вдвое больше, чем
+   у главной, и пятно всё равно бросалось бы в глаза сильнее, чем везде
+   остальном на сайте. */
+:root[data-theme="dark"] .builder::before{
+  background:
+    radial-gradient(ellipse 460px 340px at 12% 15%, color-mix(in srgb, var(--builder-accent, var(--rose)) 6%, transparent), transparent 70%),
+    radial-gradient(ellipse 420px 320px at 88% 55%, color-mix(in srgb, var(--sage) 5%, transparent), transparent 70%);
+}
 @media (max-width:880px){
   .builder{grid-template-columns:1fr;}
   /* Живой предпросмотр — самая мотивирующая часть (видно, как букет
