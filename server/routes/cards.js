@@ -3,6 +3,8 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { requireAuth } = require('../auth');
 const { tServer } = require('../i18n');
+const { decodeCardDataServer } = require('../cardMeta');
+const { scanCard } = require('../moderation');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -37,7 +39,12 @@ router.post('/', createLimiter, (req, res) => {
   if(db.listCardsByUser(req.user.id).length >= MAX_CARDS_PER_USER){
     return res.status(403).json({ error: tServer(req, 'cardLimitReached') });
   }
-  const card = db.createCard({ userId: req.user.id, encodedData, occasion, to, from });
+  // Первый, самый дешёвый уровень модерации — см. комментарий у того же
+  // вызова в routes/guestCards.js.
+  let message = '';
+  try{ message = decodeCardDataServer(encodedData).message || ''; }catch(e){ /* битые данные — не наша забота здесь */ }
+  const { flagged, flagReasons } = scanCard({ to, from, message });
+  const card = db.createCard({ userId: req.user.id, encodedData, occasion, to, from, flagged, flagReasons });
   res.status(201).json({ card });
 });
 

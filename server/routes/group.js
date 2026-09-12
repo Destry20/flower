@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { requireAuth } = require('../auth');
 const { tServer } = require('../i18n');
+const { scanCard } = require('../moderation');
 
 const router = express.Router();
 
@@ -33,9 +34,15 @@ const AUTO_CLOSE_MS = 30 * 24 * 60 * 60 * 1000; // 30 дней
 // Наружу группу отдаём только через это — userId никогда не должен уходить
 // клиенту напрямую (незачем светить внутренний id организатора перед кем
 // попало по ссылке); вместо него — вычисленный isOwner для текущего req.user.
+// flagged/flagReasons (см. server/moderation.js) — по той же логике: это
+// служебная метка для админки, а не то, что должен видеть организатор или
+// кто угодно по ссылке-приглашению (иначе автор подозрительной подписи по
+// собственному отклику в интерфейсе понял бы, что его засекли, и просто
+// подправил формулировку). Чистим и на самой группе, и в каждой подписи.
 function publicGroup(group, req){
-  const { userId, ...rest } = group;
-  return { ...rest, closed: db.isGroupCardClosed(group), isOwner: !!(req.user && req.user.id === userId) };
+  const { userId, flagged, flagReasons, ...rest } = group;
+  const contributions = (rest.contributions || []).map(({ flagged: _cf, flagReasons: _cfr, ...c }) => c);
+  return { ...rest, contributions, closed: db.isGroupCardClosed(group), isOwner: !!(req.user && req.user.id === userId) };
 }
 
 const createLimiter = rateLimit({
@@ -69,10 +76,12 @@ router.post('/', requireAuth, createLimiter, (req, res) => {
   if(!OCCASION_IDS.includes(occasion) || !VASE_IDS.includes(vase)){
     return res.status(400).json({ error: tServer(req, 'groupInvalid') });
   }
+  const { flagged, flagReasons } = scanCard({ to });
   const group = db.createGroupCard({
     to, occasion, vase,
     closesAt: Date.now() + AUTO_CLOSE_MS,
-    userId: req.user.id
+    userId: req.user.id,
+    flagged, flagReasons
   });
   res.status(201).json({ group: publicGroup(group, req) });
 });
@@ -95,7 +104,8 @@ router.post('/:shortId/join', joinLimiter, (req, res) => {
   if(!allowedColors || !allowedColors.includes(flowerColor)){
     return res.status(400).json({ error: tServer(req, 'groupInvalid') });
   }
-  const result = db.addGroupContribution(req.params.shortId, { name, message, flowerType, flowerColor });
+  const { flagged, flagReasons } = scanCard({ from: name, message });
+  const result = db.addGroupContribution(req.params.shortId, { name, message, flowerType, flowerColor, flagged, flagReasons });
   if(!result.ok){
     if(result.reason === 'not_found') return res.status(404).json({ error: tServer(req, 'groupNotFound') });
     if(result.reason === 'closed') return res.status(409).json({ error: tServer(req, 'groupClosed') });

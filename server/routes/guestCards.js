@@ -2,6 +2,8 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { tServer } = require('../i18n');
+const { decodeCardDataServer } = require('../cardMeta');
+const { scanCard } = require('../moderation');
 
 const router = express.Router();
 
@@ -29,7 +31,15 @@ router.post('/', createLimiter, (req, res) => {
   if(typeof encodedData !== 'string' || !encodedData || encodedData.length > MAX_ENCODED_LEN){
     return res.status(400).json({ error: tServer(req, 'cardInvalid') });
   }
-  const card = db.createCard({ userId: null, encodedData, occasion, to, from });
+  // Первый, самый дешёвый уровень модерации (см. server/moderation.js) —
+  // сообщение сервер обычно не видит (оно живёт только внутри encodedData,
+  // читает его лишь получатель в браузере), для флага декодируем сами; сбой
+  // декодирования тут не страшнее, чем при сборке og:title — просто ничего
+  // не флагуем и не роняем создание открытки.
+  let message = '';
+  try{ message = decodeCardDataServer(encodedData).message || ''; }catch(e){ /* битые данные — не наша забота здесь */ }
+  const { flagged, flagReasons } = scanCard({ to, from, message });
+  const card = db.createCard({ userId: null, encodedData, occasion, to, from, flagged, flagReasons });
   res.status(201).json({ card: { shortId: card.shortId, expiresAt: card.expiresAt } });
 });
 

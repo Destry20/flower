@@ -252,6 +252,30 @@ test('listRecentGroupCards exposes a signature count, never the contributions th
   assert.equal('contributions' in row, false, 'contribution text must not leak into the admin listing');
 });
 
+test('createCard stores flagged/flagReasons and listRecentCards surfaces them', () => {
+  const clean = db.createCard({ userId: 'flag-test-user', encodedData: 'x', to: 'Ann' });
+  assert.equal(clean.flagged, false);
+  assert.deepEqual(clean.flagReasons, []);
+
+  const flagged = db.createCard({ userId: 'flag-test-user', encodedData: 'y', to: 'Bo', flagged: true, flagReasons: ['link', 'phone'] });
+  const row = db.listRecentCards(50, flagged.shortId).find(x => x.id === flagged.id);
+  assert.equal(row.flagged, true);
+  assert.deepEqual(row.flagReasons, ['link', 'phone']);
+
+  const cleanRow = db.listRecentCards(50, clean.shortId).find(x => x.id === clean.id);
+  assert.equal(cleanRow.flagged, false);
+});
+
+test('listRecentGroupCards bubbles up a flag from a single contribution, without exposing which one via the listing', () => {
+  const g = db.createGroupCard({ to: 'Office', userId: 'group-flag-user' });
+  db.addGroupContribution(g.shortId, { name: 'Kate', message: 'happy birthday!', flowerType: 'rose', flowerColor: '#f00' });
+  db.addGroupContribution(g.shortId, { name: 'Max', message: 'call me at +1 415 555 0187', flowerType: 'rose', flowerColor: '#f00', flagged: true, flagReasons: ['phone'] });
+  const row = db.listRecentGroupCards(50, g.shortId).find(x => x.id === g.id);
+  assert.equal(row.flagged, true);
+  assert.deepEqual(row.flagReasons, ['phone']);
+  assert.equal('contributions' in row, false);
+});
+
 test('admin TOTP: pending -> confirmed -> disabled state machine', () => {
   assert.deepEqual(db.getAdminTotp(), { secret: null, pending: false, enabled: false });
 

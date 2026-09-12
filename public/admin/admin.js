@@ -128,18 +128,29 @@ function renderUsers(users){
   bindDeleteButtons(el, '/users/', 'Delete this account? This also removes any cards saved under it. This cannot be undone.');
 }
 
+// Бейдж для карточек/подписей, помеченных server/moderation.js при создании
+// (ссылка/телефон/крипто-адрес/явная угроза — см. комментарий там же).
+// Ничего не блокирует, только привлекает взгляд в длинном списке — причины
+// смотрим в title и полным текстом через "Preview".
+function flagBadge(item){
+  if(!item.flagged) return '';
+  const reasons = (item.flagReasons || []).join(', ') || 'flagged';
+  return `<span class="tag tag-flagged" title="${escapeHtml(reasons)}">🚩 ${escapeHtml(reasons)}</span>`;
+}
+
 function renderCards(cards){
   const el = $('cardsList');
   if(!cards.length){
     el.innerHTML = '<div class="empty">No cards found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>Link</th><th></th><th></th></tr></thead><tbody>${
-    cards.map(c => `<tr>
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th></th><th>Link</th><th></th><th></th></tr></thead><tbody>${
+    cards.map(c => `<tr${c.flagged ? ' class="row-flagged"' : ''}>
       <td>${fmtTime(c.createdAt)}</td>
       <td class="msg">${escapeHtml(c.ownerEmail || 'guest')}</td>
       <td class="msg">${escapeHtml(c.occasion || '—')}</td>
       <td class="msg">${escapeHtml(c.to || '—')}</td>
+      <td>${flagBadge(c)}</td>
       <td><a href="/c/${encodeURIComponent(c.shortId)}" target="_blank" rel="noopener">/c/${escapeHtml(c.shortId)}</a></td>
       <td class="del"><button class="secondary preview-btn" data-shortid="${escapeHtml(c.shortId)}">Preview</button></td>
       <td class="del"><button data-id="${c.id}">Delete</button></td>
@@ -193,14 +204,15 @@ function renderGroups(groups){
     el.innerHTML = '<div class="empty">No group cards found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Created</th><th>Organizer</th><th>Occasion</th><th>To</th><th>Signed</th><th>Status</th><th>Link</th><th></th></tr></thead><tbody>${
-    groups.map(g => `<tr>
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>Organizer</th><th>Occasion</th><th>To</th><th>Signed</th><th>Status</th><th></th><th>Link</th><th></th></tr></thead><tbody>${
+    groups.map(g => `<tr${g.flagged ? ' class="row-flagged"' : ''}>
       <td>${fmtTime(g.createdAt)}</td>
       <td class="msg">${escapeHtml(g.ownerEmail || '—')}</td>
       <td class="msg">${escapeHtml(g.occasion || '—')}</td>
       <td class="msg">${escapeHtml(g.to || '—')}</td>
       <td>${g.contributionsCount}</td>
       <td>${g.closed ? '<span class="tag tag-bot">closed</span>' : '<span class="tag tag-visitor">open</span>'}</td>
+      <td>${flagBadge(g)}</td>
       <td><a href="/group/${encodeURIComponent(g.shortId)}" target="_blank" rel="noopener">/group/${escapeHtml(g.shortId)}</a></td>
       <td class="del"><button data-id="${g.shortId}">Delete</button></td>
     </tr>`).join('')

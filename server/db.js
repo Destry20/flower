@@ -185,7 +185,12 @@ function findCardByShortId(shortId){
   if(card && card.expiresAt && card.expiresAt <= Date.now()) return null;
   return card;
 }
-function createCard({ userId, encodedData, occasion, to, from }){
+// flagged/flagReasons — результат server/moderation.js, посчитанный роутом ДО
+// вызова createCard (сам db.js ничего не декодирует и не разбирает текст —
+// остаётся тем же generic-хранилищем). Дефолты на случай прямого вызова без
+// них (тесты и т.п.) — false/[], а не undefined, чтобы listRecentCards могла
+// на них полагаться без доп. проверок.
+function createCard({ userId, encodedData, occasion, to, from, flagged, flagReasons }){
   pruneExpiredCards();
   const card = {
     id: uid(),
@@ -197,7 +202,9 @@ function createCard({ userId, encodedData, occasion, to, from }){
     from: (from || '').slice(0, 30),
     createdAt: Date.now(),
     expiresAt: userId ? null : Date.now() + GUEST_CARD_TTL_MS,
-    openedAt: null
+    openedAt: null,
+    flagged: !!flagged,
+    flagReasons: Array.isArray(flagReasons) ? flagReasons : []
   };
   data.cards.unshift(card);
   persist();
@@ -257,7 +264,7 @@ function genGroupShortId(len = 7){
 // единственная защита от накрутки одной ссылки.
 const MAX_CONTRIBUTIONS = 30;
 
-function createGroupCard({ to, occasion, vase, closesAt, userId }){
+function createGroupCard({ to, occasion, vase, closesAt, userId, flagged, flagReasons }){
   const group = {
     id: uid(),
     shortId: genGroupShortId(),
@@ -267,7 +274,9 @@ function createGroupCard({ to, occasion, vase, closesAt, userId }){
     closesAt,
     userId,
     contributions: [],
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    flagged: !!flagged,
+    flagReasons: Array.isArray(flagReasons) ? flagReasons : []
   };
   data.groupCards.unshift(group);
   persist();
@@ -298,7 +307,7 @@ function closeGroupCard(shortId, userId){
 }
 // Возвращает {ok:true, group} или {ok:false, reason:'closed'|'full'} — роут
 // сам решает, каким статусом/текстом это обернуть для клиента.
-function addGroupContribution(shortId, { name, message, flowerType, flowerColor }){
+function addGroupContribution(shortId, { name, message, flowerType, flowerColor, flagged, flagReasons }){
   const group = findGroupCardByShortId(shortId);
   if(!group) return { ok:false, reason:'not_found' };
   if(isGroupCardClosed(group)) return { ok:false, reason:'closed' };
@@ -309,7 +318,9 @@ function addGroupContribution(shortId, { name, message, flowerType, flowerColor 
     message: (message || '').slice(0, 300),
     flowerType,
     flowerColor,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    flagged: !!flagged,
+    flagReasons: Array.isArray(flagReasons) ? flagReasons : []
   };
   group.contributions.push(entry);
   persist();
@@ -632,7 +643,9 @@ function listRecentCards(limit = 15, query = ''){
       from: c.from,
       createdAt: c.createdAt,
       expiresAt: c.expiresAt || null,
-      ownerEmail: owner ? owner.email : null
+      ownerEmail: owner ? owner.email : null,
+      flagged: !!c.flagged,
+      flagReasons: c.flagReasons || []
     };
   });
   const q = String(query || '').trim().toLowerCase();
@@ -650,6 +663,13 @@ function listRecentGroupCards(limit = 15, query = ''){
   let list = [...data.groupCards].sort((a,b) => b.createdAt - a.createdAt);
   const mapped = list.map(g => {
     const owner = findUserById(g.userId);
+    // Флаг агрегируем: подозрительным может оказаться как сам "to" при
+    // создании открытки, так и любая отдельная подпись — organizer видит
+    // (и вешает бейдж в админке) на уровне всей открытки, а не по одной
+    // подписи за раз; какие именно подписи флагнуты, видно уже на самой
+    // странице /group/:shortId.
+    const flaggedContributions = g.contributions.filter(c => c.flagged);
+    const flagReasons = new Set([...(g.flagReasons || []), ...flaggedContributions.flatMap(c => c.flagReasons || [])]);
     return {
       id: g.id,
       shortId: g.shortId,
@@ -658,7 +678,9 @@ function listRecentGroupCards(limit = 15, query = ''){
       createdAt: g.createdAt,
       closed: isGroupCardClosed(g),
       contributionsCount: g.contributions.length,
-      ownerEmail: owner ? owner.email : null
+      ownerEmail: owner ? owner.email : null,
+      flagged: !!g.flagged || flaggedContributions.length > 0,
+      flagReasons: Array.from(flagReasons)
     };
   });
   const q = String(query || '').trim().toLowerCase();
