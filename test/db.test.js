@@ -233,3 +233,34 @@ test('listRecentUsers supports a case-insensitive email/name query', () => {
   assert.ok(db.listRecentUsers(15, 'searchme').some(u => u.email === 'searchme@example.com'));
   assert.equal(db.listRecentUsers(15, 'no-such-person').length, 0);
 });
+
+test('listRecentCards never leaks encodedData (admin sees metadata only)', () => {
+  const c = db.createCard({ userId: 'admin-view-user', encodedData: 'SECRET-WISH-TEXT', occasion: 'love', to: 'Ann', from: 'Bo' });
+  const row = db.listRecentCards(50, c.shortId).find(x => x.id === c.id);
+  assert.ok(row, 'card shows up in the admin list');
+  assert.equal('encodedData' in row, false, 'raw card content must not be exposed to admin listings');
+  assert.equal(row.to, 'Ann');
+  assert.equal(row.from, 'Bo');
+});
+
+test('listRecentGroupCards exposes a signature count, never the contributions themselves', () => {
+  const g = db.createGroupCard({ to: 'Office', userId: 'group-admin-view' });
+  db.addGroupContribution(g.shortId, { name: 'Kate', message: 'private congratulation text', flowerType: 'rose', flowerColor: '#f00' });
+  const row = db.listRecentGroupCards(50, g.shortId).find(x => x.id === g.id);
+  assert.ok(row);
+  assert.equal(row.contributionsCount, 1);
+  assert.equal('contributions' in row, false, 'contribution text must not leak into the admin listing');
+});
+
+test('admin TOTP: pending -> confirmed -> disabled state machine', () => {
+  assert.deepEqual(db.getAdminTotp(), { secret: null, pending: false, enabled: false });
+
+  db.setAdminTotpPending('SECRETBASE32');
+  assert.deepEqual(db.getAdminTotp(), { secret: 'SECRETBASE32', pending: true, enabled: false });
+
+  assert.equal(db.confirmAdminTotp(), true);
+  assert.deepEqual(db.getAdminTotp(), { secret: 'SECRETBASE32', pending: false, enabled: true });
+
+  db.disableAdminTotp();
+  assert.deepEqual(db.getAdminTotp(), { secret: null, pending: false, enabled: false });
+});
