@@ -65,6 +65,12 @@
   .totp-secret{ font-family:monospace; font-size:13px; background:var(--bg); padding:6px 10px; border-radius:6px; display:inline-block; margin:8px 0; word-break:break-all; }
   .field-row{ display:flex; gap:8px; align-items:center; margin-top:10px; }
   .field-row input[type=text]{ font:inherit; padding:8px 12px; border:1px solid var(--border); border-radius:6px; width:120px; }
+  .modal-overlay{ position:fixed; inset:0; background:rgba(30,20,15,.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:100; }
+  .modal-box{ background:var(--card); border-radius:10px; padding:20px 22px; max-width:440px; width:100%; max-height:80vh; overflow:auto; }
+  .preview-field{ margin-bottom:12px; }
+  .preview-field:last-child{ margin-bottom:0; }
+  .preview-field .l{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#8a7b6a; margin-bottom:2px; }
+  .preview-field .v{ font-size:14px; white-space:pre-wrap; word-break:break-word; }
 </style>
 </head>
 <body>
@@ -148,6 +154,16 @@
     <div class="card">
       <h2>Recent cards</h2>
       <div id="cardsList"></div>
+    </div>
+
+    <div id="previewModal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <div class="row-between">
+          <h2 style="margin:0;">Card preview</h2>
+          <button id="previewCloseBtn" class="secondary">Close</button>
+        </div>
+        <div id="previewBody" style="margin-top:14px;"></div>
+      </div>
     </div>
 
     <div class="card">

@@ -32,4 +32,8 @@ function buildShareMeta(encodedData, lang){
   }
 }
 
-module.exports = { buildShareMeta, escapeHtml };
+// decodeCardDataServer экспортируется и для админки (routes/admin.js,
+// GET /cards/:shortId/preview) — просмотр текста открытки для модерации, не
+// затрагивая db.markCardOpened (в отличие от открытия самой ссылки /c/:id,
+// которое помечает открытку как "открыта получателем" — см. routes/share.js).
+module.exports = { buildShareMeta, escapeHtml, decodeCardDataServer };

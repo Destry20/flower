@@ -95,9 +95,12 @@ function renderRecent(recent){
 // Кнопка удаления — общий паттерн для users/cards/groups ниже: подтверждение,
 // DELETE-запрос по указанному пути, перезагрузка всего дашборда после успеха
 // (проще, чем точечно убирать одну строку из трёх разных списков — счётчики
-// вверху тоже должны обновиться).
+// вверху тоже должны обновиться). Селектор нарочно смотрит на [data-id], а не
+// просто на "td.del button" — у карточек в той же ".del"-колонке теперь есть
+// ещё и кнопка "Preview" (data-shortid, без data-id), и без уточнения она бы
+// тоже поймала обработчик удаления.
 function bindDeleteButtons(container, pathPrefix, confirmMsg){
-  container.querySelectorAll('td.del button').forEach(btn => {
+  container.querySelectorAll('td.del button[data-id]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if(!confirm(confirmMsg)) return;
       btn.disabled = true;
@@ -131,18 +134,54 @@ function renderCards(cards){
     el.innerHTML = '<div class="empty">No cards found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>Link</th><th></th></tr></thead><tbody>${
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>Link</th><th></th><th></th></tr></thead><tbody>${
     cards.map(c => `<tr>
       <td>${fmtTime(c.createdAt)}</td>
       <td class="msg">${escapeHtml(c.ownerEmail || 'guest')}</td>
       <td class="msg">${escapeHtml(c.occasion || '—')}</td>
       <td class="msg">${escapeHtml(c.to || '—')}</td>
       <td><a href="/c/${encodeURIComponent(c.shortId)}" target="_blank" rel="noopener">/c/${escapeHtml(c.shortId)}</a></td>
+      <td class="del"><button class="secondary preview-btn" data-shortid="${escapeHtml(c.shortId)}">Preview</button></td>
       <td class="del"><button data-id="${c.id}">Delete</button></td>
     </tr>`).join('')
   }</tbody></table>`;
   bindDeleteButtons(el, '/cards/', 'Delete this card? This cannot be undone.');
+  bindPreviewButtons(el);
 }
+
+// "Preview" читает текст открытки через отдельный эндпоинт (GET .../preview),
+// который не трогает db.markCardOpened — обычный переход по ссылке /c/:id
+// (например, из колонки "Link" выше) пометил бы открытку как открытую
+// получателем, и если она сохранена за аккаунтом, отправитель увидел бы в
+// "Мои открытки", что её якобы уже открыли, хотя это был просто админ-осмотр.
+function bindPreviewButtons(container){
+  container.querySelectorAll('button.preview-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try{
+        const data = await api('/cards/' + encodeURIComponent(btn.dataset.shortid) + '/preview');
+        showCardPreview(data);
+      }catch(e){
+        alert(e.message);
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+function showCardPreview(data){
+  const fields = [['Occasion', data.occasion], ['To', data.to], ['From', data.from], ['Message', data.message]];
+  $('previewBody').innerHTML = fields.map(([label, value]) => `
+    <div class="preview-field">
+      <div class="l">${label}</div>
+      <div class="v">${value ? escapeHtml(value) : '—'}</div>
+    </div>
+  `).join('');
+  $('previewModal').style.display = 'flex';
+}
+$('previewCloseBtn').addEventListener('click', () => { $('previewModal').style.display = 'none'; });
+$('previewModal').addEventListener('click', (e) => { if(e.target.id === 'previewModal') $('previewModal').style.display = 'none'; });
 
 // Открытки "всей компанией" — раньше нигде не были видны в панели (см.
 // listRecentGroupCards в db.js). closed берём уже посчитанным с сервера

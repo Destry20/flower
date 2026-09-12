@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const totpLib = require('../totp');
 const db = require('../db');
+const { decodeCardDataServer } = require('../cardMeta');
 
 const router = express.Router();
 
@@ -164,6 +165,30 @@ router.delete('/cards/:id', requireAdmin, (req, res) => {
   const removed = db.adminDeleteCard(req.params.id);
   if(!removed) return res.status(404).json({ error: 'Not found' });
   res.json({ ok: true });
+});
+
+// Читает текст открытки для модерации ("нет ли там чего плохого"), НЕ вызывая
+// db.markCardOpened — открыв саму ссылку /c/:shortId вместо этого, админ бы
+// пометил открытку как "открыта получателем" (см. routes/share.js), что для
+// открыток, сохранённых за аккаунтом, показалось бы отправителю в "Мои
+// открытки" как настоящий просмотр адресатом. Отдаём только текстовые поля,
+// сам букет (цветы/ваза/лента) для модерации не нужен — риск не во внешнем
+// виде, а в том, что вписано в message/to/from.
+router.get('/cards/:shortId/preview', requireAdmin, (req, res) => {
+  const card = db.findCardByShortId(req.params.shortId);
+  if(!card) return res.status(404).json({ error: 'Not found' });
+  let data;
+  try{
+    data = decodeCardDataServer(card.encodedData);
+  }catch(e){
+    return res.status(422).json({ error: 'Could not decode this card' });
+  }
+  res.json({
+    occasion: typeof data.occasion === 'string' ? data.occasion.slice(0, 30) : '',
+    to: typeof data.to === 'string' ? data.to.slice(0, 30) : '',
+    from: typeof data.from === 'string' ? data.from.slice(0, 30) : '',
+    message: typeof data.message === 'string' ? data.message.slice(0, 400) : ''
+  });
 });
 
 router.get('/groups', requireAdmin, (req, res) => {
