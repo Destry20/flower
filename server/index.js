@@ -99,7 +99,12 @@ app.use(helmet({
       // гостевых открытках/регистрации/подписи под общей открыткой, см.
       // server/turnstile.js) — рисуется не всегда (см. appConfig.turnstileSiteKey
       // в main.js), но домен в CSP нужен заранее, а не только когда включат.
-      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://challenges.cloudflare.com'],
+      // googleads.g.doubleclick.net — GA4-свойство (G-1HTLVYWDJF) в самой
+      // Google Analytics привязано к аккаунту Google Ads (тег AW-18385746090,
+      // конверсии/ремаркетинг для реальных кампаний VivoRose) — в коде это
+      // нигде не вызывается явно, gtag.js подтягивает эту привязку сам и
+      // шлёт на этот домен доп. скрипт.
+      scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com', 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://challenges.cloudflare.com', 'https://googleads.g.doubleclick.net'],
       // Вся вёрстка строится через onclick="..." в шаблонах (унаследовано от
       // исходного сайта) — без unsafe-inline здесь браузер молча блокирует
       // каждый клик. scriptSrc при этом остаётся строгим: внешний <script>
@@ -115,11 +120,16 @@ app.use(helmet({
       // уходит обычной картинкой-пикселем, без img-src такие просто молча
       // блокировались (в консоли — "violates img-src 'self' data:"), сама
       // аналитика при этом не ломалась, но часть событий терялась.
-      imgSrc: ["'self'", 'data:', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
-      // challenges.cloudflare.com в connectSrc/frameSrc — виджет Turnstile
-      // делает свои XHR и рисует сам челлендж во вложенном iframe, как и
-      // Google-кнопка выше.
-      connectSrc: ["'self'", 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://challenges.cloudflare.com'],
+      // googleads.g.doubleclick.net/www.google.com/ad.doubleclick.net — та же
+      // Google Ads-привязка (AW-18385746090, см. scriptSrc выше): конверсии
+      // и ремаркетинг тоже иногда уходят пикселем, а не через connect-src.
+      imgSrc: ["'self'", 'data:', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://ad.doubleclick.net'],
+      // challenges.cloudflare.com — виджет Turnstile делает свои XHR и
+      // рисует сам челлендж во вложенном iframe, как и Google-кнопка выше.
+      // www.google.com/ad.doubleclick.net/googleads.g.doubleclick.net — сами
+      // сетевые запросы конверсий/ремаркетинга Google Ads (rmkt/collect,
+      // ccm/collect, ccm/s/collect) для привязанного тега AW-18385746090.
+      connectSrc: ["'self'", 'https://accounts.google.com', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://challenges.cloudflare.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://ad.doubleclick.net'],
       frameSrc: ["'self'", 'https://accounts.google.com', 'https://challenges.cloudflare.com'],
       objectSrc: ["'none'"],
       baseUri: ["'self'"]
