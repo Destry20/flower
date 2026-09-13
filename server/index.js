@@ -334,14 +334,6 @@ app.get(Object.keys(SEO_PAGES), (req, res, next) => {
   });
 });
 
-// Ezoic сам поддерживает актуальный список разрешённых продавцов рекламы —
-// редиректим /ads.txt на их управляемый файл вместо статического файла в
-// public/, который бы пришлось обновлять вручную (см. их доки: "Server
-// redirects" для сайтов без доступа к плагину WordPress).
-app.get('/ads.txt', (req, res) => {
-  res.redirect(301, 'https://srv.adstxtmanager.com/19390/vivorose.com');
-});
-
 app.use(express.static(PUBLIC_DIR, {
   index: 'index.html',
   extensions: ['html'],
