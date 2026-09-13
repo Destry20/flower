@@ -60,6 +60,17 @@ function withMainJs(html){
     : html.replace('src="/script/main.js"', `src="${MAIN_JS_SRC}"`);
 }
 
+// Google Ads помечал главную и три посадочные страницы (те, куда ведёт
+// реклама) как "взломанный сайт" — из-за стороннего скрипта Adsterra
+// (highrevenueformat.com) в рекламном блоке конструктора, даже при чистом
+// Search Console. Убираем блок #adPool целиком из HTML именно этих страниц
+// на сервере (а не просто прячем в main.js), чтобы iframe с этим скриптом
+// вообще не запрашивался — на остальных лендингах реклама остаётся.
+const NO_AD_PATHS = new Set(['/', '/index.html', '/birthday-card', '/thank-you-card', '/support-card']);
+function stripAdPool(html){
+  return html.replace(/<!-- Оба рекламных блока Adsterra[\s\S]*?(?=<div class="toast")/, '');
+}
+
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
@@ -237,6 +248,7 @@ app.get(['/', '/index.html'], (req, res, next) => {
         .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
         .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
     }
+    out = stripAdPool(out);
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(withMainJs(out));
   });
@@ -344,7 +356,7 @@ app.get(Object.keys(SEO_PAGES), (req, res, next) => {
     const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.path);
     const title = escapeHtml(meta.title);
     const description = escapeHtml(meta.description);
-    const out = html
+    let out = html
       .replace(/<html lang="[^"]*"/, `<html lang="${lang}"`)
       .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
       .replace(/(<meta name="description" content=")[^"]*(")/, `$1${description}$2`)
@@ -354,6 +366,7 @@ app.get(Object.keys(SEO_PAGES), (req, res, next) => {
       .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${description}$2`)
       .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`)
       .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${fullUrl}$2`);
+    if(NO_AD_PATHS.has(req.path)) out = stripAdPool(out);
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(withMainJs(out));
   });
