@@ -3369,7 +3369,12 @@ function renderViewer(encodedData){
 }
 
 // рельефный "зубчатый" край печати — гладкий круг читался бы как наклейка,
-// а такой контур — как настоящий оттиск воска
+// а такой контур — как настоящий оттиск воска. Заливка — радиальный градиент
+// (светлее у "источника света" сверху-слева, темнее к краю) + блик поверх:
+// плоский однотонный кружок на глаз читался как кнопка, а не как воск.
+// id генерируется каждый вызов — на одной странице печать иногда рисуется
+// сразу несколько раз (пикер конвертов: стиль "С печатью" и "Золотой" рядом),
+// и с одним общим id второй вызов переопределил бы градиент первого.
 function waxSealShape(cx, cy, r, fill, dark){
   const teeth = 14;
   let d = '';
@@ -3380,11 +3385,38 @@ function waxSealShape(cx, cy, r, fill, dark){
     const x3=cx+Math.cos(a3)*r, y3=cy+Math.sin(a3)*r;
     d += `${i===0?'M':'L'}${x1.toFixed(1)},${y1.toFixed(1)} Q${x2.toFixed(1)},${y2.toFixed(1)} ${x3.toFixed(1)},${y3.toFixed(1)} `;
   }
-  return `<path d="${d}Z" fill="${fill}" stroke="${dark}" stroke-width=".8"/>`;
+  const gid = 'seal'+Math.random().toString(36).slice(2,8);
+  return `<defs>
+    <radialGradient id="${gid}" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="${lighten(fill,25)}"/>
+      <stop offset="55%" stop-color="${fill}"/>
+      <stop offset="100%" stop-color="${dark}"/>
+    </radialGradient>
+  </defs>
+  <path d="${d}Z" fill="url(#${gid})" stroke="${dark}" stroke-width=".8"/>
+  <ellipse cx="${(cx-r*0.32).toFixed(1)}" cy="${(cy-r*0.38).toFixed(1)}" rx="${(r*0.34).toFixed(1)}" ry="${(r*0.22).toFixed(1)}" fill="#ffffff" opacity=".35"/>`;
 }
 // мягкая тень под конвертом — приподнимает его над сценой вместо плоской наклейки
 function envelopeShadow(){
   return `<ellipse cx="90" cy="127" rx="76" ry="4.5" fill="#000000" opacity=".1"/>`;
+}
+// тонкое бумажное зерно (SVG-шум) + мягкий блик сверху-слева — общие для
+// всех стилей конверта, добавляют объём без новых картинок. На маленьких
+// превью (44×32 в пикере конвертов) не подключаем — шум там не виден, а
+// фильтр всё равно стоит времени на рендер.
+function envelopeTexture(uid){
+  return `<defs>
+    <filter id="grain${uid}" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0"/>
+    </filter>
+    <linearGradient id="sheen${uid}" x1="0%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".32"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="14" width="172" height="112" rx="6" fill="url(#sheen${uid})"/>
+  <rect x="4" y="14" width="172" height="112" rx="6" fill="#000000" filter="url(#grain${uid})"/>`;
 }
 
 function envelopeSvg(color, style, w, h){
@@ -3392,6 +3424,12 @@ function envelopeSvg(color, style, w, h){
   w = w || 180; h = h || 130;
   const light = lighten(color, 60);
   const dark = darken(color, 15);
+  // клапан (шов + тень сгиба, у seal/gold ещё и печать) вынесен в свою
+  // <g class="env-flap"> во всех стилях — по этому классу CSS в момент
+  // открытия (.view-envelope.opening, см. main.css) сворачивает и прячет
+  // именно клапан отдельно от остального конверта, см. openCard() ниже.
+  const uid = Math.random().toString(36).slice(2,8);
+  const texture = w >= 100 ? envelopeTexture(uid) : '';
 
   if(style==='kraft'){
     // тёплая крафтовая бумага — цвет письма не зависит от повода, только тонкая деталь-марка в цвете повода
@@ -3399,8 +3437,11 @@ function envelopeSvg(color, style, w, h){
     return `<svg width="${w}" height="${h}" viewBox="0 0 180 130" style="margin:0 auto;display:block;" aria-hidden="true">
       ${envelopeShadow()}
       <rect x="4" y="14" width="172" height="112" rx="6" fill="${kraft}" stroke="${kraftDark}" stroke-width="1.5"/>
-      <path d="M4 16 L90 82 L176 16" fill="none" stroke="${kraftDark}" stroke-width="1.5"/>
-      <path d="M4 14 L90 68 L176 14" fill="${kraftDark}" opacity=".22"/>
+      ${texture}
+      <g class="env-flap">
+        <path d="M4 16 L90 82 L176 16" fill="none" stroke="${kraftDark}" stroke-width="1.5"/>
+        <path d="M4 14 L90 68 L176 14" fill="${kraftDark}" opacity=".22"/>
+      </g>
       <rect x="66" y="70" width="46" height="15" rx="2" fill="${light}" stroke="${color}" stroke-width="1"/>
       <path d="M70 77.5 L108 77.5" stroke="${color}" stroke-width="1" opacity=".5"/>
     </svg>`;
@@ -3410,10 +3451,13 @@ function envelopeSvg(color, style, w, h){
     return `<svg width="${w}" height="${h}" viewBox="0 0 180 130" style="margin:0 auto;display:block;" aria-hidden="true">
       ${envelopeShadow()}
       <rect x="4" y="14" width="172" height="112" rx="6" fill="${light}" stroke="${color}" stroke-width="1.5"/>
-      <path d="M4 16 L90 82 L176 16" fill="none" stroke="${color}" stroke-width="1.5"/>
-      <path d="M4 14 L90 68 L176 14" fill="${color}" opacity=".12"/>
-      ${waxSealShape(90, 78, 13, color, dark)}
-      <path d="M83 78 Q90 69 97 78 Q90 87 83 78Z" fill="${light}" opacity=".75"/>
+      ${texture}
+      <g class="env-flap">
+        <path d="M4 16 L90 82 L176 16" fill="none" stroke="${color}" stroke-width="1.5"/>
+        <path d="M4 14 L90 68 L176 14" fill="${color}" opacity=".12"/>
+        ${waxSealShape(90, 78, 15, color, dark)}
+        <path d="M83 78 Q90 69 97 78 Q90 87 83 78Z" fill="${light}" opacity=".75"/>
+      </g>
     </svg>`;
   }
   if(style==='pattern'){
@@ -3427,9 +3471,12 @@ function envelopeSvg(color, style, w, h){
     return `<svg width="${w}" height="${h}" viewBox="0 0 180 130" style="margin:0 auto;display:block;" aria-hidden="true">
       ${envelopeShadow()}
       <rect x="4" y="14" width="172" height="112" rx="6" fill="${light}" stroke="${color}" stroke-width="1.5"/>
+      ${texture}
       ${dots}
-      <path d="M4 16 L90 82 L176 16" fill="none" stroke="${color}" stroke-width="1.5"/>
-      <path d="M4 14 L90 68 L176 14" fill="${color}" opacity=".15"/>
+      <g class="env-flap">
+        <path d="M4 16 L90 82 L176 16" fill="none" stroke="${color}" stroke-width="1.5"/>
+        <path d="M4 14 L90 68 L176 14" fill="${color}" opacity=".15"/>
+      </g>
     </svg>`;
   }
   if(style==='gold'){
@@ -3438,45 +3485,86 @@ function envelopeSvg(color, style, w, h){
     return `<svg width="${w}" height="${h}" viewBox="0 0 180 130" style="margin:0 auto;display:block;" aria-hidden="true">
       ${envelopeShadow()}
       <rect x="4" y="14" width="172" height="112" rx="6" fill="${goldFill}" stroke="${goldDark}" stroke-width="1.5"/>
-      <path d="M4 16 L90 82 L176 16" fill="none" stroke="${goldDark}" stroke-width="1.5"/>
-      <path d="M4 14 L90 68 L176 14" fill="${goldDeep}" opacity=".18"/>
-      ${waxSealShape(90, 60, 12, goldDark, goldDeep)}
-      <path d="M90 52 L92.5 58 L98.5 58 L93.5 61.5 L95.5 67.5 L90 64 L84.5 67.5 L86.5 61.5 L81.5 58 L87.5 58 Z" fill="${goldFill}" stroke="${goldDeep}" stroke-width=".5"/>
+      ${texture}
+      <g class="env-flap">
+        <path d="M4 16 L90 82 L176 16" fill="none" stroke="${goldDark}" stroke-width="1.5"/>
+        <path d="M4 14 L90 68 L176 14" fill="${goldDeep}" opacity=".18"/>
+        ${waxSealShape(90, 60, 14, goldDark, goldDeep)}
+        <path d="M90 52 L92.5 58 L98.5 58 L93.5 61.5 L95.5 67.5 L90 64 L84.5 67.5 L86.5 61.5 L81.5 58 L87.5 58 Z" fill="${goldFill}" stroke="${goldDeep}" stroke-width=".5"/>
+      </g>
     </svg>`;
   }
   // classic
   return `<svg width="${w}" height="${h}" viewBox="0 0 180 130" style="margin:0 auto;display:block;" aria-hidden="true">
     ${envelopeShadow()}
     <rect x="4" y="14" width="172" height="112" rx="6" fill="${light}" stroke="${color}" stroke-width="1.5"/>
-    <path d="M4 16 L90 82 L176 16" fill="none" stroke="${color}" stroke-width="1.5"/>
-    <path d="M4 14 L90 68 L176 14" fill="${color}" opacity=".15"/>
+    ${texture}
+    <g class="env-flap">
+      <path d="M4 16 L90 82 L176 16" fill="none" stroke="${color}" stroke-width="1.5"/>
+      <path d="M4 14 L90 68 L176 14" fill="${color}" opacity=".15"/>
+    </g>
   </svg>`;
 }
 
 function openCard(withMusic, occasionId, melodyId){
-  document.getElementById('envelope').style.display='none';
-  document.getElementById('viewContent').classList.add('show');
-  setTimeout(()=>document.getElementById('viewBouquet').classList.add('bloom'), 60);
-  setTimeout(()=>document.getElementById('viewMsg').classList.add('show'), 500);
-  setTimeout(()=>document.getElementById('viewFrom').classList.add('show'), 700);
-  // Когда сообщение и подпись проявились — мягко подводим их в кадр: на
-  // невысоком экране открытая открытка (букет + текст + подпись) не помещается
-  // целиком, получатель остаётся на букете, а само пожелание уходит под сгиб.
-  // Скроллим только если подпись (последняя строка) реально не видна и
-  // прокрутка вообще нужна. Под reduced-motion общий CSS делает
-  // scroll-behavior:auto — переход становится мгновенным, это ок.
-  setTimeout(()=>{
-    const msg = document.getElementById('viewMsg');
-    const from = document.getElementById('viewFrom');
-    const lastLine = (from && from.textContent.trim()) ? from : msg;
-    if(msg && lastLine && window.scrollY < 4 &&
-       document.documentElement.scrollHeight > window.innerHeight + 8 &&
-       lastLine.getBoundingClientRect().bottom > window.innerHeight - 16){
-      msg.scrollIntoView({ behavior:'smooth', block:'center' });
-    }
-  }, 1800);
-  if(withMusic) playChime(melodyId);
-  dropParticles(occasionById(occasionId).anim);
+  const envelopeEl = document.getElementById('envelope');
+  const reveal = () => {
+    envelopeEl.style.display='none';
+    document.getElementById('viewContent').classList.add('show');
+    setTimeout(()=>document.getElementById('viewBouquet').classList.add('bloom'), 60);
+    setTimeout(()=>document.getElementById('viewMsg').classList.add('show'), 500);
+    setTimeout(()=>document.getElementById('viewFrom').classList.add('show'), 700);
+    // Когда сообщение и подпись проявились — мягко подводим их в кадр: на
+    // невысоком экране открытая открытка (букет + текст + подпись) не помещается
+    // целиком, получатель остаётся на букете, а само пожелание уходит под сгиб.
+    // Скроллим только если подпись (последняя строка) реально не видна и
+    // прокрутка вообще нужна. Под reduced-motion общий CSS делает
+    // scroll-behavior:auto — переход становится мгновенным, это ок.
+    setTimeout(()=>{
+      const msg = document.getElementById('viewMsg');
+      const from = document.getElementById('viewFrom');
+      const lastLine = (from && from.textContent.trim()) ? from : msg;
+      if(msg && lastLine && window.scrollY < 4 &&
+         document.documentElement.scrollHeight > window.innerHeight + 8 &&
+         lastLine.getBoundingClientRect().bottom > window.innerHeight - 16){
+        msg.scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+    }, 1800);
+    if(withMusic) playChime(melodyId);
+    dropParticles(occasionById(occasionId).anim);
+  };
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const flap = envelopeEl.querySelector('.env-flap');
+  const svg = envelopeEl.querySelector('svg');
+  if(reduceMotion || !flap || !svg || !flap.animate){
+    reveal();
+    return;
+  }
+  // Сперва даём клапану приоткрыться и только потом убираем конверт —
+  // иначе "разворот", который обещан в тексте на сайте, ничем не отличался
+  // бы от простого исчезновения картинки. Играем через Element.animate()
+  // (Web Animations API), а не CSS-класс: .env-flap лежит внутри той же
+  // svg, что уже бесконечно "дышит" через CSS-анимацию (envelope-idle) —
+  // CSS transition на transform при остановке конкурирующей CSS-анимации
+  // применяется скачком, а не интерполируется, WAAPI от этого не зависит.
+  const flapAnim = flap.animate(
+    [{ transform:'translateY(0) scaleY(1)', opacity:1 },
+     { transform:'translateY(-10px) scaleY(.18)', opacity:0 }],
+    { duration:420, easing:'cubic-bezier(.5,0,.25,1)', fill:'forwards' }
+  );
+  const svgAnim = svg.animate(
+    [{ opacity:1, offset:0 }, { opacity:1, offset:.35 }, { opacity:0, offset:1 }],
+    { duration:450, easing:'ease', fill:'forwards' }
+  );
+  // reveal должен случиться ровно один раз — .finished штатно резолвится
+  // по завершении анимации, а таймер ниже подстраховывает на случай, если
+  // вкладку увели в фон прямо во время открытия (браузеры тормозят WAAPI
+  // у невидимых вкладок, и .finished может задержаться дольше самой
+  // анимации — получатель не должен застрять на середине разворота).
+  let revealed = false;
+  const revealOnce = () => { if(revealed) return; revealed = true; reveal(); };
+  Promise.all([flapAnim.finished, svgAnim.finished]).then(revealOnce, revealOnce);
+  setTimeout(revealOnce, 900);
 }
 
 // Единая "падающая" анимация с тремя стилями частиц под настроение повода:

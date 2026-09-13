@@ -1329,10 +1329,39 @@ input[type=date], input[type=time]{
 }
 .view-envelope{
   cursor:pointer; text-align:center; padding:60px 20px;
-  border:none; background:none; width:100%;
+  border:none; width:100%;
+  /* Мягкая виньетка вокруг конверта — на пустой одноцветной сцене
+     маленький конверт иначе теряется. Это фон самой кнопки, а не
+     ::before/::after — так он гарантированно рисуется под svg и
+     подсказкой ниже, без игр с z-index. */
+  background:radial-gradient(circle at 50% 42%, rgba(0,0,0,.07), transparent 62%);
 }
 .view-envelope .flap{
   width:180px;height:130px;margin:0 auto 22px; position:relative;
+}
+/* Конверт занимает фиксированные 180×130px независимо от экрана — на
+   широком десктопе тонет в пустой сцене. clamp() держит его заметным на
+   телефоне и не даёт разрастись на весь монитор. Лёгкое "дыхание" в покое
+   приглашает нажать; под prefers-reduced-motion гасится общим правилом
+   в начале файла (animation-duration:0.001ms !important). */
+@keyframes envelope-idle{
+  0%, 100%{ transform:scale(1) rotate(0deg); }
+  50%{ transform:scale(1.025) rotate(-0.6deg); }
+}
+.view-envelope svg{
+  width:clamp(150px, 34vw, 220px); height:auto;
+  animation:envelope-idle 4.2s ease-in-out infinite;
+}
+/* Разворот при открытии — openCard() в main.js проигрывает сам переход
+   через Element.animate() (Web Animations API), а не через CSS-класс:
+   .env-flap лежит внутри svg, у которой уже крутится бесконечная
+   envelope-idle (см. выше), и CSS-transition на том же свойстве (transform)
+   при остановке конкурирующей CSS-анимации не интерполируется, а
+   применяется скачком — WAAPI от каскада не зависит и играет
+   надёжно. transform-box/-origin ниже — то, откуда WAAPI берёт точку
+   поворота (верхний край конверта, где реальный сгиб клапана). */
+.view-envelope .env-flap{
+  transform-box:fill-box; transform-origin:50% 0%;
 }
 .view-open-hint{
   margin-top:18px; font-size:13px; color:var(--ink-soft); font-family:'Fraunces',serif; font-style:italic;
