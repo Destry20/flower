@@ -925,23 +925,6 @@ a{color:var(--accent);}
   width:100%; margin-top:22px; padding-top:18px; border-top:1px solid var(--line);
 }
 
-/* Раньше слот сидел внутри .col-preview (одной из двух колонок .builder,
-   ~400-536px в зависимости от ширины окна) — этой ширины никогда не
-   хватало на оба рекламных блока (320+300+отступ ⩾ 620px), поэтому
-   .promo-row переносил второй блок на новую строку, и они всегда стояли
-   друг под другом. grid-column:1/-1 растягивает слот на всю ширину сетки
-   .builder (обе колонки + зазор между ними, до ~1108px) — там места
-   достаточно, и тот же flex-wrap в .promo-row уже сам ставит блоки в ряд,
-   когда они помещаются, вместо того чтобы городить отдельную раскладку.
-   Из-за grid-column этот div должен быть прямым потомком .builder (не
-   вложен в .col-preview) — см. разметку в main.js. */
-.promo-inline-slot{
-  grid-column: 1 / -1;
-  width:100%;
-  display:flex; justify-content:center; min-height:1px;
-}
-.promo-inline-slot .promo-row{ margin-top:0; padding:0; }
-
 .bg-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
 .bg-chip{
   width:34px; height:34px; border-radius:50%; cursor:pointer;
@@ -1502,33 +1485,6 @@ footer.site-footer a:hover{color:var(--accent);}
   font-size:12.5px; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.04em;
 }
 .auth-divider::before, .auth-divider::after{content:''; flex:1; height:1px; background:var(--line);}
-
-/* ---------- рекламные блоки (Adsterra) ----------
-   Классы намеренно без слова "ad": generic-фильтры блокировщиков рекламы
-   скрывают/режут по подстроке "ad-"/"ads" в классах и путях. */
-.promo-row{
-  max-width:760px; margin:28px auto 0; padding:0 20px 10px;
-  display:flex; flex-wrap:wrap; justify-content:center; align-items:flex-start; gap:20px;
-}
-.promo-box{
-  border:1px solid var(--line); border-radius:14px;
-  padding:14px 16px; text-align:center; background:rgba(47,59,42,0.02);
-}
-.promo-box iframe{ max-width:100%; }
-.promo-tag{
-  font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-mute); margin-bottom:8px;
-}
-/* Отдельный блок под блог (blog.js вставляет до двух штук за страницу — после
-   вступления и в конце статьи, см. комментарий там же) — 728x90, а не 300x250,
-   как у .promo-box: тот квадратный формат в узкой текстовой колонке статьи
-   смотрелся бы непропорционально высоким. iframe растянут на 100% ширины
-   колонки, а высоту держит через aspect-ratio — сама реклама внутри (см.
-   public/x/n3.html) масштабируется под эту ширину уже своим скриптом. */
-.promo-wide{ max-width:680px; margin:28px auto; text-align:center; }
-.promo-wide iframe{
-  display:block; width:100%; max-width:728px; margin:0 auto;
-  aspect-ratio:728/90; border:0;
-}
 
 /* ---------- legal pages ---------- */
 .legal-wrap{max-width:680px; margin:0 auto; padding:40px 36px 90px; line-height:1.7;}

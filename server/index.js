@@ -60,36 +60,12 @@ function withMainJs(html){
     : html.replace('src="/script/main.js"', `src="${MAIN_JS_SRC}"`);
 }
 
-// Google Ads помечал главную и три посадочные страницы (те, куда ведёт
-// реклама) как "взломанный сайт" — из-за стороннего скрипта Adsterra
-// (highrevenueformat.com) в рекламном блоке конструктора, даже при чистом
-// Search Console. Убираем блок #adPool целиком из HTML именно этих страниц
-// на сервере (а не просто прячем в main.js), чтобы iframe с этим скриптом
-// вообще не запрашивался — на остальных лендингах реклама остаётся.
-const NO_AD_PATHS = new Set(['/', '/index.html', '/birthday-card', '/thank-you-card', '/support-card']);
-function stripAdPool(html){
-  return html.replace(/<!-- Оба рекламных блока Adsterra[\s\S]*?(?=<div class="toast")/, '');
-}
-
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
 // CSP разрешает ровно то, что реально грузит страница: свой JS/CSS, шрифты
 // Google Fonts, CDN qrcode.js для QR-кода и инлайн-стили (сайт строит вёрстку
 // через innerHTML со style="..." — это осознанный компромисс, а не дыра).
-// Рекламные теги Adsterra сюда НЕ добавляем: такие "CPM"-сети дёргают ещё и
-// произвольные (в т.ч. явно рандомно сгенерированные — вида
-// kettledroopingcontinuation.com) домены для трекинга и подгрузки самого
-// объявления, вписать их все в allowlist нельзя. Ослаблять же connect-src/
-// scriptSrc всего сайта до https: ради рекламы — то же самое, что дать
-// любому XSS право слать данные куда угодно, а на сайте JWT-кука и данные
-// аккаунтов. Поэтому реклама изолирована в отдельных iframe-страницах
-// (public/x/*.html — путь специально без слова "ads": иначе блокировщики
-// режут такие URL по общему правилу, ещё до всякого CSP) со своей,
-// отдельной и более мягкой политикой — см. AD_CSP ниже. Изоляция от
-// остального сайта — это sandbox на самих <iframe> в index.html, а не эта
-// политика; подробности (включая то, почему там всё же есть allow-same-origin
-// и что это значит) — в комментарии прямо над этими <iframe> в index.html.
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -156,18 +132,6 @@ app.use(helmet({
   // (в том числе Google-попап).
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
-
-// Отдельная, куда более мягкая CSP только для рекламных iframe-страниц —
-// см. комментарий выше. Сами объявления мы не пишем и не контролируем,
-// поэтому запрещать им конкретные домены бессмысленно; изоляция от
-// остального сайта обеспечивается не этой политикой, а sandbox-атрибутом
-// на <iframe> в index.html.
-const AD_PAGE_PATHS = new Set(['/x/n1.html', '/x/n2.html', '/x/n3.html']);
-const AD_CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https:; connect-src https:; img-src https: data:; style-src 'unsafe-inline'; frame-src https:";
-app.use((req, res, next) => {
-  if(AD_PAGE_PATHS.has(req.path)) res.setHeader('Content-Security-Policy', AD_CSP);
-  next();
-});
 
 app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
@@ -248,7 +212,6 @@ app.get(['/', '/index.html'], (req, res, next) => {
         .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${meta.description}$2`)
         .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`);
     }
-    out = stripAdPool(out);
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(withMainJs(out));
   });
@@ -356,7 +319,7 @@ app.get(Object.keys(SEO_PAGES), (req, res, next) => {
     const fullUrl = escapeHtml(req.protocol + '://' + req.get('host') + req.path);
     const title = escapeHtml(meta.title);
     const description = escapeHtml(meta.description);
-    let out = html
+    const out = html
       .replace(/<html lang="[^"]*"/, `<html lang="${lang}"`)
       .replace(/<title>.*?<\/title>/, `<title>${title}</title>`)
       .replace(/(<meta name="description" content=")[^"]*(")/, `$1${description}$2`)
@@ -366,10 +329,17 @@ app.get(Object.keys(SEO_PAGES), (req, res, next) => {
       .replace(/(<meta name="twitter:description" content=")[^"]*(")/, `$1${description}$2`)
       .replace(/(<meta property="og:url" content=")[^"]*(")/, `$1${fullUrl}$2`)
       .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${fullUrl}$2`);
-    if(NO_AD_PATHS.has(req.path)) out = stripAdPool(out);
     res.set('Cache-Control', 'no-cache');
     res.type('html').send(withMainJs(out));
   });
+});
+
+// Ezoic сам поддерживает актуальный список разрешённых продавцов рекламы —
+// редиректим /ads.txt на их управляемый файл вместо статического файла в
+// public/, который бы пришлось обновлять вручную (см. их доки: "Server
+// redirects" для сайтов без доступа к плагину WordPress).
+app.get('/ads.txt', (req, res) => {
+  res.redirect(301, 'https://srv.adstxtmanager.com/19390/vivorose.com');
 });
 
 app.use(express.static(PUBLIC_DIR, {

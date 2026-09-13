@@ -72,34 +72,4 @@
       }
     });
   });
-
-  // Рекламные блоки (Adsterra, своя зона под блог — не n1/n2 из конструктора,
-  // см. public/x/n3.html). Через JS в общем blog.js, а не руками в каждый из
-  // 16 файлов (7 тем × 2 языка + 2 каталога), чтобы поменять/убрать блок
-  // можно было в одном месте.
-  function insertPromo(parent, beforeNode){
-    var adLabel = isEn ? 'Advertisement' : 'Реклама';
-    var wrap = document.createElement('div');
-    wrap.className = 'promo-wide';
-    wrap.innerHTML = '<div class="promo-tag">' + adLabel + '</div>' +
-      '<iframe src="/x/n3.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="' + adLabel + '"></iframe>';
-    parent.insertBefore(wrap, beforeNode); // beforeNode == null -> в конец parent
-  }
-
-  // Первый блок — после вступительного абзаца, перед первым <h2> статьи.
-  var firstHeading = document.querySelector('.legal-wrap h2');
-  if(firstHeading){
-    insertPromo(firstHeading.parentNode, firstHeading);
-  }else{
-    // Страницы-каталоги (/blog/, /blog/en/) — там нет <h2>, зато сразу за
-    // вступлением идёт список статей (.blog-list). Тот же блок, перед списком.
-    var firstList = document.querySelector('.legal-wrap .blog-list');
-    if(firstList) insertPromo(firstList.parentNode, firstList);
-  }
-
-  // Второй блок — в конце статьи, ПОСЛЕ кнопки "Собрать открытку" (.article-cta),
-  // не до неё: иначе реклама перехватывала бы клик у собственной конверсии сайта.
-  // На каталогах .article-cta нет — там второй блок не нужен, и так не появится.
-  var cta = document.querySelector('.article-cta');
-  if(cta) insertPromo(cta.parentNode, cta.nextSibling);
 })();

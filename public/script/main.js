@@ -288,9 +288,6 @@ const EN_STRINGS = {
   'Живой предпросмотр открытки. Получатель увидит анимацию раскрытия.': 'Live preview of the card. The recipient will see the opening animation.',
   '↻ Показать анимацию открытия': '↻ Replay opening animation',
   'Текст пожелания появится здесь…': 'Your message will appear here…',
-  'РЕКЛАМА': 'ADVERTISEMENT',
-  'Реклама': 'Advertisement',
-  'Место для рекламного баннера': 'Ad banner placeholder',
 
   // occasion labels/stamps/placeholders — см. tr() в самих объектах OCCASIONS
 
@@ -1988,7 +1985,6 @@ function renderCreator(){
   const previewPatternColor = previewBg.dark ? '#F3EEE3' : occ.color;
   const previewPatternOpacity = previewBg.dark ? 0.28 : 0.2;
   const previewBandStyle = occasionBadgeStyle(occ.color);
-  parkInlineAd();
   document.getElementById('app').innerHTML = `
   ${topbarHtml()}
   <div class="wrap">
@@ -2127,15 +2123,12 @@ function renderCreator(){
           </div>
         </div>
       </div>
-
-      <div class="promo-inline-slot" id="colPreviewAdSlot"></div>
     </div>
 
     ${aboutSectionHtml()}
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
   `;
-  mountInlineAd('colPreviewAdSlot');
 
   document.getElementById('occasionChips').innerHTML = OCCASIONS.map(o =>
     `<div class="chip ${state.occasion===o.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.occasion===o.id}" onclick="setOccasion('${o.id}')" onkeydown="activateOnKey(event)">
@@ -2263,35 +2256,6 @@ function footerHtml(){
   // поэтому обычная ссылка, а не хэш-роут.
   const blogHref = uiLang === 'ru' ? '/blog/' : '/blog/en/';
   return `${BRAND} — ${t('соберите открытку за пару минут и отправьте ссылкой')} · <a href="${blogHref}">${t('Блог')}</a> · <a href="#privacy">${t('Конфиденциальность')}</a> · <a href="#terms">${t('Условия использования')}</a> · <a href="mailto:vivorosesupport@gmail.com">${t('Написать нам')}</a> · <a href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">☕ ${t('Поддержать проект')}</a>`;
-}
-
-// Оба рекламных iframe (#inlineAdRow, см. index.html — нативный + баннер
-// 300x250 одной строкой) — живые узлы, которые переставляются между
-// скрытым #adPool и плейсхолдером внутри #app по мере рендеров, а не
-// пересоздаются: пересоздание перезагружало бы рекламу на каждый клик по
-// поводу/вазе/конверту/фону. parkInlineAd() зовём ПЕРЕД любым
-// app.innerHTML=... (иначе innerHTML уничтожит узлы вместе с остальным
-// поддеревом), mountInlineAd() — ПОСЛЕ, когда в новой разметке уже есть
-// куда их вставить.
-function parkInlineAd(){
-  const pool = document.getElementById('adPool');
-  const row = document.getElementById('inlineAdRow');
-  if(pool && row) pool.appendChild(row);
-}
-function mountInlineAd(slotId){
-  const slot = document.getElementById(slotId);
-  const row = document.getElementById('inlineAdRow');
-  if(slot && row){
-    slot.appendChild(row);
-    // "Реклама" в index.html — статичная разметка вне #app, поэтому обычный
-    // рендер через t() её не подхватывает и она всегда оставалась русской
-    // даже при выбранном английском интерфейсе. Подставляем перевод здесь —
-    // mountInlineAd и так вызывается заново на каждый renderCreator(),
-    // включая смену языка (setLang → renderRoute), так что не расходится.
-    row.querySelectorAll('.promo-tag').forEach(el => { el.textContent = t('РЕКЛАМА'); });
-    row.querySelectorAll('[aria-label="Реклама"]').forEach(el => { el.setAttribute('aria-label', t('РЕКЛАМА')); });
-    row.querySelectorAll('iframe[title="Реклама"]').forEach(el => { el.setAttribute('title', t('РЕКЛАМА')); });
-  }
 }
 
 const OCCASION_ICON = {birthday:'cake',foryou:'you', love:'heart', thanks:'gift', congrats:'star', sorry:'feather', justbecause:'sprout', sympathy:'leaf'};
@@ -4466,11 +4430,6 @@ function renderTerms(){
 /* ====================== ROUTER ====================== */
 
 function renderRoute(){
-  // Если рекламный узел сейчас вставлен в конструктор, а мы уходим на другой
-  // экран (логин, аккаунт и т.п.) — тамошний app.innerHTML=... не знает про
-  // #inlineAdBox и просто уничтожил бы его вместе с остальным. Паркуем
-  // заранее, renderCreator() сам поставит его на место при возврате.
-  parkInlineAd();
   // Хэш-маршруты — это внутренняя навигация по SPA, они всегда в приоритете.
   // ?data= (ссылка на открытку) смотрим только когда хэша нет — иначе клик по
   // "Мои открытки"/"Войти" на странице открытой открытки не сработал бы: сам
