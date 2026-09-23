@@ -14,6 +14,27 @@
         "value": "fraunces",
         "createdAt": "2026-09-15T15:29:09.430Z",
         "reason": "user confirmed: Inter/Fraunces are the site's deliberate brand typography, not left over from generation"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .3, 1.2)",
+        "createdAt": "2026-09-15T15:35:21.399Z",
+        "reason": "evidence: flower-picker modal pop-in (main.css L886), deliberate playful overshoot, part of the site's bouquet/'bloom' motion language per adjacent comments"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, .9, .25, 1.2)",
+        "createdAt": "2026-09-15T15:35:21.642Z",
+        "reason": "evidence: card/bouquet 'bloom' reveal animations (main.css L1280, L1396, class literally named .bloom), overshoot intentionally mimics a flower unfurling, not generic UI bounce"
+      },
+      {
+        "rule": "layout-transition",
+        "value": "*",
+        "files": [
+          "public/style/main.css"
+        ],
+        "createdAt": "2026-09-15T15:35:26.599Z",
+        "reason": "evidence: main.css L760-767 comment documents the grid-template-rows:0fr->1fr alternative was tried and broke (stuck at padding), explicit pixel-height transition kept deliberately as the reliable fallback for the accordion panel"
       }
     ]
   }
