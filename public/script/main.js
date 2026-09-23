@@ -260,6 +260,7 @@ const EN_STRINGS = {
   'Цветы': 'Flowers',
   'отметьте нужные, выберите цвет и количество': 'pick the ones you want, choose color and count',
   'Лента': 'Ribbon',
+  'Свой цвет ленты': 'Custom ribbon color',
   'Послание': 'Message',
   'кому и что хотите сказать': 'who it\'s for and what you want to say',
   'Имя получателя': 'Recipient\'s name',
@@ -520,7 +521,12 @@ const FLOWER_TYPES = [
   {id:'daisy', label:{ru:'Ромашка',en:'Daisy'}, colors:['#FFFFFF','#E6C88A','#E3B7BE']},
   {id:'carnation', label:{ru:'Гвоздика',en:'Carnation'}, colors:['#C97B86','#D65B4A','#F0C9D6','#FFFFFF']},
   {id:'orchid', label:{ru:'Орхидея',en:'Orchid'}, colors:['#B27BC9','#E8D5F0','#7A4B96']},
-  {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']}
+  {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']},
+  {id:'lily', label:{ru:'Лилия',en:'Lily'}, colors:['#FFFFFF','#F2C94C','#E3B7BE','#D65B4A']},
+  {id:'hydrangea', label:{ru:'Гортензия',en:'Hydrangea'}, colors:['#B27BC9','#8FC4D2','#F0C9D6','#FFFFFF']},
+  {id:'lavender', label:{ru:'Лаванда',en:'Lavender'}, colors:['#8C7BC9','#B7A6E3','#7A5A9E']},
+  {id:'iris', label:{ru:'Ирис',en:'Iris'}, colors:['#5A4B96','#3A5A9E','#7A4B96']},
+  {id:'mum', label:{ru:'Хризантема',en:'Chrysanthemum'}, colors:['#F2C94C','#F0C9D6','#FFFFFF','#D65B4A']}
 ];
 
 // Предел количества цветков одного типа (раньше было 8) — большие количества
@@ -533,7 +539,10 @@ const VASES = [
   {id:'B', label:{ru:'Стеклянная',en:'Glass'}},
   {id:'C', label:{ru:'Крафтовая',en:'Kraft-wrapped'}},
   {id:'D', label:{ru:'Мраморная',en:'Marble'}},
-  {id:'E', label:{ru:'Плетёная корзина',en:'Wicker basket'}}
+  {id:'E', label:{ru:'Плетёная корзина',en:'Wicker basket'}},
+  {id:'F', label:{ru:'Банка',en:'Mason jar'}},
+  {id:'G', label:{ru:'Подарочная коробка',en:'Gift box'}},
+  {id:'H', label:{ru:'Жестяное ведёрко',en:'Tin pail'}}
 ];
 
 const RIBBONS = ['#B98A4A','#C97B86','#4B2E3D','#8CA087','#F2E1C8','#7e4ab9'];
@@ -554,7 +563,10 @@ const BACKGROUNDS = [
   {id:'cream', label:{ru:'Кремовый',en:'Cream'}, css:'linear-gradient(180deg,#F0E4CE,#FAF3E7)'},
   {id:'blush', label:{ru:'Румяна',en:'Blush'}, css:'linear-gradient(180deg,#F6DDE2,#FBEFE9)'},
   {id:'sage', label:{ru:'Шалфей',en:'Sage'}, css:'linear-gradient(180deg,#DCE6D6,#F2F5EE)'},
-  {id:'night', label:{ru:'Ночь',en:'Night'}, css:'linear-gradient(180deg,#1B2038,#3A3159)', dark:true}
+  {id:'night', label:{ru:'Ночь',en:'Night'}, css:'linear-gradient(180deg,#1B2038,#3A3159)', dark:true},
+  {id:'snow', label:{ru:'Зима',en:'Snow'}, css:'linear-gradient(180deg,#E4EDF2,#F7FAFB)'},
+  {id:'sakura', label:{ru:'Сакура',en:'Sakura'}, css:'linear-gradient(180deg,#F3DCEB,#FCF2F8)'},
+  {id:'sunset', label:{ru:'Закат',en:'Sunset'}, css:'linear-gradient(180deg,#EDA47A,#F8D9B4)'}
 ];
 
 // Ссылка, где всё "зашито" через base64, растёт с длиной сообщения и количеством
@@ -1039,6 +1051,91 @@ function flowerHead(type, cx, cy, color, rot, scale){
       const aa = i*GOLDEN;
       g += `<circle cx="${Math.cos(aa)*rr}" cy="${Math.sin(aa)*rr}" r=".55" fill="#4B2E3D" opacity=".45"/>`;
     }
+  } else if(type==='lily'){
+    // 6 широких острых лепестков в форме звезды (не плотная розетка, как у
+    // розы/пиона) + тонкие изогнутые тычинки с продолговатым пыльником —
+    // именно тычинки на виду и делают силуэт узнаваемо лилией, а не просто
+    // крупным цветком с большими лепестками.
+    const count = 6;
+    for(let i=0;i<count;i++){
+      const a = (i/count)*360;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(11,6)}" fill="${i%2?pg.url:light}" stroke="${dark}" stroke-width=".5" transform="translate(0,-3)"/></g>`;
+    }
+    // Пыльник — фиксированный тёпло-коричневый тон вне зависимости от цвета
+    // лепестков, тот же приём, что и у жёлтой серединки пиона/ромашки: у
+    // настоящей лилии пыльца именно такого тона почти всегда.
+    for(let i=0;i<6;i++){
+      const a = (i/6)*360 + 30, rad = a*Math.PI/180;
+      const x2 = Math.sin(rad)*5.5, y2 = -Math.cos(rad)*5.5 - 1;
+      g += `<path d="M0,-0.5 L${x2},${y2}" stroke="${dark}" stroke-width=".45" opacity=".7"/><ellipse cx="${x2}" cy="${y2}" rx="1" ry="1.6" fill="#8A5E22" transform="rotate(${a} ${x2} ${y2})"/>`;
+    }
+    g += `<circle cx="0" cy="0" r="1.3" fill="${dark}"/>`;
+    g += glint(-2, -7, -18, lighten(color,45));
+  } else if(type==='hydrangea'){
+    // Не один цветок, а плотный шар из мелких 4-лепестковых соцветий —
+    // единственный тип в наборе, устроенный так на самом деле (не
+    // художественное упрощение). Раскладываем ~7 мини-цветков золотым углом
+    // внутри общего радиуса головки, каждый — просто 4 лепестка-капли вокруг
+    // своей точки, без общего центра на весь цветок.
+    // Больше соцветий, каждое чуть крупнее и плотнее посажено (первая
+    // проба на 7 мелких давала слишком дырявый, "колючий" силуэт вместо
+    // плотного шара — у настоящей гортензии соцветия перекрывают друг
+    // друга почти без просветов между ними).
+    const florets = 11, GOLD = 137.508*Math.PI/180;
+    for(let i=0;i<florets;i++){
+      const rr = Math.sqrt((i+0.3)/florets)*6.4;
+      const aa = i*GOLD;
+      const fx = Math.cos(aa)*rr, fy = Math.sin(aa)*rr*0.92;
+      const fc = i%3===0 ? light : pg.url;
+      [0,90,180,270].forEach(rot=>{
+        g += `<g transform="translate(${fx} ${fy}) rotate(${rot})"><path d="${petalPath(3.1,3)}" fill="${fc}" stroke="${dark}" stroke-width=".3" transform="translate(0,-1.5)"/></g>`;
+      });
+      g += `<circle cx="${fx}" cy="${fy}" r=".55" fill="${darken(color,25)}" opacity=".6"/>`;
+    }
+  } else if(type==='lavender'){
+    // Единственный "не радиальный" силуэт в наборе — колос из мелких
+    // бутонов, сужающийся к острию, а не кольцо лепестков вокруг центра.
+    // Рисуется вдоль вертикальной оси самого цветка (локальный -y — "вверх"
+    // до общего rot букета), а не вокруг точки — иначе это была бы просто
+    // ещё одна круглая головка другого цвета.
+    const rows = 9;
+    for(let i=0;i<rows;i++){
+      const yy = -2 - i*1.9;
+      const w = 2.6 * (1 - i/rows*0.65);
+      const budColor = i%2 ? pg.url : light;
+      g += `<ellipse cx="${-w*0.55}" cy="${yy}" rx="${w*0.42}" ry="1.3" fill="${budColor}" stroke="${dark}" stroke-width=".3" transform="rotate(-18 ${-w*0.55} ${yy})"/>`;
+      g += `<ellipse cx="${w*0.55}" cy="${yy}" rx="${w*0.42}" ry="1.3" fill="${budColor}" stroke="${dark}" stroke-width=".3" transform="rotate(18 ${w*0.55} ${yy})"/>`;
+    }
+    g += `<path d="M0,2 L0,${-2-rows*1.9+2}" stroke="#6E8B5E" stroke-width="1" opacity=".55"/>`;
+  } else if(type==='iris'){
+    // 3 узких приподнятых лепестка ("стандарты") + 3 более широких и
+    // длинных через один ("фолсы") — разница между двумя ярусами и даёт
+    // узнаваемый силуэт ириса на плоской иконке, где буквальная 3D-обвислость
+    // недостижима (тот же принцип, что различает внешний/внутренний ярус у
+    // розы — размером и оттенком, не позой).
+    for(let i=0;i<3;i++){
+      const a = i*120;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(7,3.6)}" fill="${light}" stroke="${dark}" stroke-width=".4" transform="translate(0,-2.5)"/></g>`;
+    }
+    for(let i=0;i<3;i++){
+      const a = i*120 + 60;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(8.5,6.5)}" fill="${pg.url}" stroke="${dark}" stroke-width=".5" transform="translate(0,-3.8)"/></g>`;
+    }
+    g += `<path d="M-1.6,-1 L0,-4.5 L1.6,-1 Z" fill="#F2C94C" opacity=".85"/>`;
+    g += `<circle cx="0" cy="0" r="1.3" fill="${dark}"/>`;
+  } else if(type==='mum'){
+    // Хризантема-помпон: 3 яруса очень узких плотных лепестков без видимой
+    // серединки — то, что отличает её и от ромашки (широкие редкие лепестки
+    // + открытый центр), и от гвоздики (рюшевая бахрома, а не гладкий
+    // узкий лепесток).
+    [[10,9.2,2.6,0],[7.6,7.5,2.1,14],[5.2,6,1.6,7]].forEach(([n,len,w,off],layer)=>{
+      for(let i=0;i<n;i++){
+        const a = (i/n)*360 + off;
+        const fc = layer===0 ? (i%2?pg.url:light) : pg.url;
+        g += `<g transform="rotate(${a})"><path d="${petalPath(len,w)}" fill="${fc}" stroke="${dark}" stroke-width=".3" transform="translate(0,${-1-layer*0.6})"/></g>`;
+      }
+    });
+    g += `<circle cx="0" cy="0" r="1.1" fill="${dark}" opacity=".6"/>`;
   }
   // translate → rotate → scale, в этом порядке: сначала ставим цветок на место стебля,
   // затем крутим и масштабируем строго вокруг этой самой точки — без сюрпризов рендера.
@@ -1126,6 +1223,43 @@ function vaseSvg(type, cx, topY){
       ${weave}
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="${basketLight}" stroke="${basketDark}" stroke-width="1.5"/>
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="none" stroke="${basketDeep}" stroke-width=".8" opacity=".5"/>`;
+  }
+  if(type==='F'){
+    // Банка — в отличие от вазы B (сужающийся "бочонок"), у банки прямые
+    // параллельные стенки и заметный рант крышки у горлышка — именно это
+    // отличает mason jar от вазы, а не просто более бледный синий тон.
+    const jar = '#DCEAEE', jarDark = '#6E98A2';
+    return `<path d="M ${cx-30} ${topY+4} L ${cx-30} ${topY+86} L ${cx+30} ${topY+86} L ${cx+30} ${topY+4} Z" fill="${jar}" opacity=".55" stroke="${jarDark}" stroke-width="1.3"/>
+      <path d="M ${cx-30} ${topY+58} L ${cx-30} ${topY+86} L ${cx+30} ${topY+86} L ${cx+30} ${topY+58} Z" fill="#8FC4D2" opacity=".4"/>
+      <path d="M ${cx-20} ${topY+12} L ${cx-20} ${topY+78}" stroke="#FFFFFF" stroke-width="4" opacity=".55" stroke-linecap="round"/>
+      <rect x="${cx-32}" y="${topY-8}" width="64" height="12" rx="2" fill="${lighten(jar,20)}" stroke="${jarDark}" stroke-width="1.2"/>
+      <rect x="${cx-32}" y="${topY-3}" width="64" height="4" fill="${jarDark}" opacity=".25"/>
+      <ellipse cx="${cx}" cy="${topY+4}" rx="30" ry="6" fill="${lighten(jar,12)}" opacity=".85" stroke="${jarDark}" stroke-width="1.2"/>`;
+  }
+  if(type==='G'){
+    // Подарочная коробка вместо вазы — плоская крышка с "окном" сверху (в
+    // него уходят стебли) и лентой крест-накрест на лицевой стороне; сама
+    // коробка — прямоугольный короб, а не сужающийся к горлышку сосуд, как
+    // у всех остальных ваз.
+    const box = '#E7DCC8', boxDark = '#B9A87E', ribbon = '#C97B86', ribbonDark = '#9B4E5C';
+    return `<rect x="${cx-40}" y="${topY+2}" width="80" height="60" rx="4" fill="${box}" stroke="${boxDark}" stroke-width="1.2"/>
+      <rect x="${cx-42}" y="${topY-6}" width="84" height="12" rx="3" fill="${lighten(box,10)}" stroke="${boxDark}" stroke-width="1.2"/>
+      <rect x="${cx-6}" y="${topY+2}" width="12" height="60" fill="${ribbon}" opacity=".9"/>
+      <rect x="${cx-40}" y="${topY+26}" width="80" height="12" fill="${ribbon}" opacity=".9"/>
+      <path d="M ${cx-13} ${topY-2} C ${cx-24} ${topY-14} ${cx-4} ${topY-14} ${cx} ${topY-4} C ${cx+4} ${topY-14} ${cx+24} ${topY-14} ${cx+13} ${topY-2} Z" fill="${ribbon}" stroke="${ribbonDark}" stroke-width="1"/>`;
+  }
+  if(type==='H'){
+    // Оцинкованное ведёрко — та же трапеция, что у глиняной вазы A, но
+    // холодный металлический тон, горизонтальные рёбра (гофра) вместо
+    // глиняного блика, и дугой ручка сверху — деталь, которой ни у одной
+    // другой вазы нет.
+    const tin = '#B9C0C4', tinDark = '#7C8489', tinLight = '#DCE2E4';
+    return `<path d="M ${cx-34} ${topY+2} L ${cx-27} ${topY+82} L ${cx+27} ${topY+82} L ${cx+34} ${topY+2} Z" fill="${tin}" stroke="${tinDark}" stroke-width="1.2"/>
+      <path d="M ${cx-31} ${topY+22} L ${cx+31} ${topY+22}" stroke="${tinDark}" stroke-width="1" opacity=".4"/>
+      <path d="M ${cx-29.5} ${topY+42} L ${cx+29.5} ${topY+42}" stroke="${tinDark}" stroke-width="1" opacity=".4"/>
+      <path d="M ${cx-28} ${topY+62} L ${cx+28} ${topY+62}" stroke="${tinDark}" stroke-width="1" opacity=".4"/>
+      <path d="M ${cx-20} ${topY+8} C ${cx-16} ${topY-14} ${cx+16} ${topY-14} ${cx+20} ${topY+8}" fill="none" stroke="${tinDark}" stroke-width="2.2" stroke-linecap="round"/>
+      <ellipse cx="${cx}" cy="${topY+2}" rx="34" ry="7" fill="${tinLight}" stroke="${tinDark}" stroke-width="1.2"/>`;
   }
   // крафтовая — складки бумаги и верхняя светлая полоса вместо ровного прямоугольника
   return `<rect x="${cx-38}" y="${topY-4}" width="76" height="88" rx="6" fill="${c.fill}" stroke="${c.dark}" stroke-width="1"/>
@@ -1533,7 +1667,7 @@ const EXAMPLES = [
   // текст стоит на карточке), а не "Любовь".
   { id:'love', occasion:'love', applyOccasion:'foryou', vase:'D', ribbon:'#4B2E3D', envelope:'gold', background:'blush', charm:true,
     flowers:{ rose:{color:'#B23A4E', count:5}, peony:{color:'#D98CAE', count:3} },
-    to:{ru:'Марии',en:'Emma'}, from:{ru:'Артёма',en:'James'},
+    to:{ru:'Насти',en:'Emma'}, from:{ru:'Дениса',en:'James'},
     labelOverride:{ru:'Для тебя',en:'For you'}, stampOverride:{ru:'Для тебя',en:'For you'},
     featured:true, tilt:-1, lift:0 },
   { id:'birthday', occasion:'birthday', vase:'B', ribbon:'#C97B86', envelope:'seal', background:'blush', charm:true,
@@ -2144,9 +2278,18 @@ function renderCreator(){
 
   document.getElementById('flowerRows').innerHTML = flowerRowsHtml();
 
+  // Последний "своп" — не фиксированный цвет, а native <input type=color>:
+  // лента может быть в тон повода/наряда получателя, а не только одним из
+  // 6 заранее выбранных оттенков. Сама метка-кружок красится либо в уже
+  // выбранный кастомный цвет (если он активен), либо в радужный градиент —
+  // подсказка "тут можно выбрать свой", а не просто ещё один непонятный
+  // серый кружок среди цветных.
+  const isCustomRibbon = !RIBBONS.includes(state.ribbon);
   document.getElementById('ribbonSwatches').innerHTML = RIBBONS.map((c,i)=>
     `<div class="swatch ${state.ribbon===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${t('Лента').toLowerCase()} №${i+1}" aria-pressed="${state.ribbon===c}" onclick="setRibbon('${c}')" onkeydown="activateOnKey(event)"></div>`
-  ).join('');
+  ).join('') + `<label class="swatch swatch-custom ${isCustomRibbon?'sel':''}" style="${isCustomRibbon?`background:${state.ribbon};`:''}" title="${t('Свой цвет ленты')}">
+      <input type="color" value="${isCustomRibbon?state.ribbon:'#C97B86'}" oninput="setRibbon(this.value)" aria-label="${t('Свой цвет ленты')}">
+    </label>`;
 
   document.getElementById('bgChips').innerHTML = BACKGROUNDS.map(b=>
     `<div class="bg-chip ${state.background===b.id?'active':''}" style="background:${b.css}" tabindex="0" role="button" aria-label="${t('Фон сцены')}: ${tr(b.label)}" aria-pressed="${state.background===b.id}" onclick="setBackground('${b.id}')" onkeydown="activateOnKey(event)"></div>`
@@ -2422,6 +2565,9 @@ function vaseThumbSvg(type){
   if(type==='B') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M11 4C8 12 8 26 10 32L24 32C26 26 26 12 23 4Z" fill="#DCEAEE" opacity=".68" stroke="#6E98A2" stroke-width="1.2"/><path d="M10.5 22C10 26 10.5 30 11.5 32L22.5 32C23.5 30 24 26 23.5 22Z" fill="#8FC4D2" opacity=".4"/><path d="M13 8C11.5 14 11.5 22 12.5 29" stroke="#FFFFFF" stroke-width="1.6" opacity=".65" stroke-linecap="round" fill="none"/><ellipse cx="17" cy="4" rx="6.5" ry="1.7" fill="#EFF7F8" stroke="#6E98A2" stroke-width="1"/></svg>`;
   if(type==='D') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M9 8L7 28L27 28L25 8Z" fill="#EDEBE4" stroke="#8C8578" stroke-width="1.2"/><rect x="10" y="28" width="14" height="4" rx="1" fill="#DED9CB" stroke="#8C8578" stroke-width="1"/><path d="M11 13Q17 20 20 26" stroke="#9C9284" stroke-width="1.2" fill="none" opacity=".8"/><path d="M22 12Q17 20 14 27" stroke="#B8B0A0" stroke-width="1" fill="none" opacity=".55"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#F5F3ED" stroke="#8C8578" stroke-width="1.1"/></svg>`;
   if(type==='E') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#C99A5B" stroke="#7A5A2E" stroke-width="1.2"/><path d="M13 9L11.6 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M21 9L22.4 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M8 15Q17 18 26 15" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><path d="M7.3 22.5Q17 25.5 26.7 22.5" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#DDB876" stroke="#7A5A2E" stroke-width="1.2"/></svg>`;
+  if(type==='F') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M9 10L9 32L25 32L25 10Z" fill="#DCEAEE" opacity=".6" stroke="#6E98A2" stroke-width="1.1"/><path d="M9 24L9 32L25 32L25 24Z" fill="#8FC4D2" opacity=".4"/><rect x="7" y="4" width="20" height="6" rx="1.5" fill="#EFF7F8" stroke="#6E98A2" stroke-width="1"/><ellipse cx="17" cy="10" rx="8" ry="1.8" fill="#EFF7F8" opacity=".8" stroke="#6E98A2" stroke-width="1"/></svg>`;
+  if(type==='G') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="12" width="22" height="20" rx="2" fill="#E7DCC8" stroke="#B9A87E" stroke-width="1"/><rect x="5" y="7" width="24" height="6" rx="1.5" fill="#F0E8D8" stroke="#B9A87E" stroke-width="1"/><rect x="15" y="12" width="4" height="20" fill="#C97B86" opacity=".9"/><rect x="6" y="20" width="22" height="4" fill="#C97B86" opacity=".9"/></svg>`;
+  if(type==='H') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 9L10 30L24 30L26 9Z" fill="#B9C0C4" stroke="#7C8489" stroke-width="1"/><path d="M10 15L24 15" stroke="#7C8489" stroke-width=".8" opacity=".4"/><path d="M10 21L24 21" stroke="#7C8489" stroke-width=".8" opacity=".4"/><path d="M12 3Q17 -2 22 3" fill="none" stroke="#7C8489" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="17" cy="9" rx="9" ry="1.8" fill="#DCE2E4" stroke="#7C8489" stroke-width="1"/></svg>`;
   return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="9" width="22" height="23" rx="3" fill="#DCC9A3" stroke="#B39B6D" stroke-width="1"/><rect x="5" y="4" width="24" height="7" rx="2" fill="#EAD9B0" stroke="#B39B6D" stroke-width="1"/></svg>`;
 }
 
@@ -2453,7 +2599,18 @@ function setVase(id){
 function setRibbon(c){
   state.ribbon=c; renderPreviewBouquet();
   document.querySelectorAll('#ribbonSwatches .swatch').forEach(s=>{s.classList.remove('sel'); s.setAttribute('aria-pressed','false');});
-  event.currentTarget.classList.add('sel'); event.currentTarget.setAttribute('aria-pressed','true');
+  // Фиксированные свопы кликают сами по себе (currentTarget === .swatch),
+  // а кастомный цвет — через вложенный <input type=color>, у него
+  // currentTarget — сам инпут, поэтому берём ближайший .swatch (это его
+  // <label>-обёртку) и вдобавок сразу красим саму метку в выбранный цвет —
+  // без этого кружок-подсказка продолжал бы показывать радужный градиент
+  // вместо реально выбранного оттенка до следующей полной перерисовки.
+  const target = event.currentTarget;
+  const swatchEl = target.classList.contains('swatch') ? target : target.closest('.swatch');
+  if(swatchEl){
+    swatchEl.classList.add('sel'); swatchEl.setAttribute('aria-pressed','true');
+    if(swatchEl.classList.contains('swatch-custom')) swatchEl.style.background = c;
+  }
 }
 function setBackground(id){
   state.background = id;
@@ -2883,10 +3040,21 @@ function shareChannelsHtml(url){
   const wa = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
   const tg = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text);
   const vk = 'https://vk.com/share.php?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(text);
+  // Pinterest — единственная из этих сетей, у которой "поделиться" это в
+  // первую очередь картинка, а не текст со ссылкой: как раз формат самой
+  // открытки (нарисованный букет), поэтому канал добавлен отдельно, не
+  // просто "ещё одна кнопка". media обязателен для их pin/create/button —
+  // персональной картинки именно ЭТОГО букета сайт пока не рендерит в PNG
+  // (это отдельная задача на сервер), поэтому временно берём общий
+  // og-image сайта; можно будет заменить на персональный рендер конкретной
+  // открытки, когда появится такой эндпоинт.
+  const pinMedia = location.origin + '/og-image.jpg';
+  const pin = 'https://www.pinterest.com/pin/create/button/?url=' + encodeURIComponent(url) + '&media=' + encodeURIComponent(pinMedia) + '&description=' + encodeURIComponent(text);
   return `<div class="share-channels">
     <a class="share-channel-btn wa" href="${wa}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
     <a class="share-channel-btn tg" href="${tg}" target="_blank" rel="noopener noreferrer">Telegram</a>
     <a class="share-channel-btn vk" href="${vk}" target="_blank" rel="noopener noreferrer">${uiLang==='ru'?'ВКонтакте':'VK'}</a>
+    <a class="share-channel-btn pin" href="${pin}" target="_blank" rel="noopener noreferrer">Pinterest</a>
   </div>`;
 }
 function openView(url){
