@@ -86,7 +86,8 @@
    выбранной на сайте. */
 :root[data-theme="dark"] .preview-stage,
 :root[data-theme="dark"] .view-stage,
-:root[data-theme="dark"] .home-card-stage{
+:root[data-theme="dark"] .home-card-stage,
+:root[data-theme="dark"] .hero-showcase-stage{
   --paper:#FAF3E7;
   --paper-deep:#F0E4CE;
   --ink:#2F3B2A;
