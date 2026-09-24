@@ -1817,7 +1817,7 @@ function homeExampleCardHtml(ex, i){
   return `<div class="home-card ${ex.featured?'featured':''}" style="--tilt:${ex.tilt}deg; --lift:${ex.lift}px; z-index:${i+1};" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${labelText}" onclick="applyExample('${ex.id}')" onkeydown="activateOnKey(event)">
     <div class="home-card-stage" style="background:${bg.css}">
       ${bgSceneSvg(bg.id)}
-      ${bg.id==='cream' ? stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity) : ''}
+      ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity)}
       <div class="home-card-inner">
         <div class="home-card-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${stampText}</div>
         <div class="home-card-bouquet">${buildBouquetSVG(ex, size)}</div>
@@ -1850,7 +1850,7 @@ function heroShowcaseCardHtml(){
   return `<div class="hero-showcase" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${tr(ex.labelOverride)}" onclick="applyExample('love')" onkeydown="activateOnKey(event)">
       <div class="hero-showcase-stage" style="background:${bg.css}">
         ${bgSceneSvg(bg.id)}
-        ${bg.id==='cream' ? stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22) : ''}
+        ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22)}
         <div class="hero-showcase-inner">
           <div class="hero-showcase-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${tr(ex.stampOverride)}</div>
           <div class="hero-showcase-bouquet">${buildBouquetSVG(ex, 300)}</div>
