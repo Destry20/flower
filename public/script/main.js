@@ -409,8 +409,8 @@ const EN_STRINGS = {
   'Условия использования': 'Terms of use',
   'Политика конфиденциальности': 'Privacy Policy',
   'Какие данные мы собираем': 'What data we collect',
-  'Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.':
-    'Email and (optionally) name when you register an account. Passwords are stored hashed, never in plain text. The contents of the cards you build (text, flower choices, etc.) — only if you\'re logged in, so your "My cards" list survives across devices.',
+  'Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. IP-адрес — при регистрации и при создании открытки (в том числе гостевой, без аккаунта), для защиты от злоупотреблений: спама, флуда и дублирующихся фейковых аккаунтов. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.':
+    'Email and (optionally) name when you register an account. Passwords are stored hashed, never in plain text. Your IP address when you register or create a card (including a guest card, without an account), to help prevent abuse: spam, flooding, and duplicate fake accounts. The contents of the cards you build (text, flower choices, etc.) — only if you\'re logged in, so your "My cards" list survives across devices.',
   'Как используются данные': 'How the data is used',
   'Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.':
     'To log you in and show your cards. We don\'t sell or share your email with third parties except where required by law.',
@@ -4742,7 +4742,7 @@ function renderPrivacy(){
       <div class="eyebrow">${t('документ')}</div>
       <h1 style="font-size:28px;margin-top:8px;">${t('Политика конфиденциальности')}</h1>
       <h2>${t('Какие данные мы собираем')}</h2>
-      <p>${t('Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.')}</p>
+      <p>${t('Email и (опционально) имя — при регистрации аккаунта. Пароль хранится не в открытом виде, а в виде хеша. IP-адрес — при регистрации и при создании открытки (в том числе гостевой, без аккаунта), для защиты от злоупотреблений: спама, флуда и дублирующихся фейковых аккаунтов. Содержимое собранных вами открыток (текст, выбор цветов и т.д.) — если вы вошли в аккаунт, чтобы список «Мои открытки» не терялся между устройствами.')}</p>
 
       <h2>${t('Как используются данные')}</h2>
       <p>${t('Для входа в аккаунт и отображения ваших открыток. Мы не продаём и не передаём email третьим лицам, кроме случаев, предусмотренных законом.')}</p>

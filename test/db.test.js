@@ -243,6 +243,25 @@ test('listRecentCards never leaks encodedData (admin sees metadata only)', () =>
   assert.equal(row.from, 'Bo');
 });
 
+test('createUser/createCard store ip, and listRecentUsers/listRecentCards surface it and can search by it', () => {
+  const u = db.createUser({ email: 'ip-user@example.com', passwordHash: 'h', ip: '203.0.113.7' });
+  assert.equal(u.ip, '203.0.113.7');
+  const userRow = db.listRecentUsers(50, 'ip-user@example.com').find(x => x.id === u.id);
+  assert.equal(userRow.ip, '203.0.113.7');
+  assert.ok(db.listRecentUsers(50, '203.0.113.7').some(x => x.id === u.id), 'searchable by ip');
+
+  const c = db.createCard({ userId: null, encodedData: 'x', to: 'Ann', ip: '198.51.100.9' });
+  assert.equal(c.ip, '198.51.100.9');
+  const cardRow = db.listRecentCards(50, c.shortId).find(x => x.id === c.id);
+  assert.equal(cardRow.ip, '198.51.100.9');
+  assert.ok(db.listRecentCards(50, '198.51.100.9').some(x => x.id === c.id), 'searchable by ip');
+
+  // Ни один вызывающий код (auth.js/cards.js/guestCards.js) сегодня не
+  // передаёт ip всегда — не должно падать, если его нет.
+  const noIp = db.createUser({ email: 'no-ip@example.com', passwordHash: 'h' });
+  assert.equal(noIp.ip, null);
+});
+
 test('listRecentGroupCards exposes a signature count, never the contributions themselves', () => {
   const g = db.createGroupCard({ to: 'Office', userId: 'group-admin-view' });
   db.addGroupContribution(g.shortId, { name: 'Kate', message: 'private congratulation text', flowerType: 'rose', flowerColor: '#f00' });

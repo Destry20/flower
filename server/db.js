@@ -97,7 +97,7 @@ function findUserById(id){
 // (Google-аккаунт всё равно получает обычный passwordHash — случайный,
 // недогадываемый, просто чтобы поле не оставалось пустым для остального
 // кода) — только для будущей отладки/админки, откуда пришёл пользователь.
-function createUser({ email, passwordHash, name, provider }){
+function createUser({ email, passwordHash, name, provider, ip }){
   const user = {
     id: uid(),
     email: String(email).trim().toLowerCase(),
@@ -105,6 +105,11 @@ function createUser({ email, passwordHash, name, provider }){
     name: (name || '').slice(0, 60),
     provider: provider === 'google' ? 'google' : 'password',
     createdAt: Date.now(),
+    // IP регистрации — только для админки (спот-проверка одного IP,
+    // штампующего пачку тестовых/спам-аккаунтов, тот же мотив, что и у
+    // flagged/flagReasons в createCard ниже). См. renderPrivacy() в
+    // public/script/main.js — этот сбор явно описан в политике.
+    ip: ip || null,
     resetTokenHash: null,
     resetTokenExpiresAt: null
   };
@@ -190,7 +195,7 @@ function findCardByShortId(shortId){
 // остаётся тем же generic-хранилищем). Дефолты на случай прямого вызова без
 // них (тесты и т.п.) — false/[], а не undefined, чтобы listRecentCards могла
 // на них полагаться без доп. проверок.
-function createCard({ userId, encodedData, occasion, to, from, flagged, flagReasons }){
+function createCard({ userId, encodedData, occasion, to, from, flagged, flagReasons, ip }){
   pruneExpiredCards();
   const card = {
     id: uid(),
@@ -204,7 +209,10 @@ function createCard({ userId, encodedData, occasion, to, from, flagged, flagReas
     expiresAt: userId ? null : Date.now() + GUEST_CARD_TTL_MS,
     openedAt: null,
     flagged: !!flagged,
-    flagReasons: Array.isArray(flagReasons) ? flagReasons : []
+    flagReasons: Array.isArray(flagReasons) ? flagReasons : [],
+    // Как и ip у createUser выше — только для админки, чтобы связать
+    // несколько подозрительных/флагнутых открыток с одним источником.
+    ip: ip || null
   };
   data.cards.unshift(card);
   persist();
@@ -621,9 +629,9 @@ function listRecentUsers(limit = 15, query = ''){
   let list = [...data.users].sort((a,b) => b.createdAt - a.createdAt);
   const q = String(query || '').trim().toLowerCase();
   if(q){
-    list = list.filter(u => u.email.toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q));
+    list = list.filter(u => u.email.toLowerCase().includes(q) || (u.name || '').toLowerCase().includes(q) || (u.ip || '').includes(q));
   }
-  return list.slice(0, limit).map(u => ({ id: u.id, email: u.email, name: u.name, provider: u.provider || 'password', createdAt: u.createdAt }));
+  return list.slice(0, limit).map(u => ({ id: u.id, email: u.email, name: u.name, provider: u.provider || 'password', createdAt: u.createdAt, ip: u.ip || null }));
 }
 // Для панели администратора — раньше счётчик "cards created" был, а самого
 // списка открыток не было нигде, поэтому не было способа увидеть, что и когда
@@ -645,12 +653,13 @@ function listRecentCards(limit = 15, query = ''){
       expiresAt: c.expiresAt || null,
       ownerEmail: owner ? owner.email : null,
       flagged: !!c.flagged,
-      flagReasons: c.flagReasons || []
+      flagReasons: c.flagReasons || [],
+      ip: c.ip || null
     };
   });
   const q = String(query || '').trim().toLowerCase();
   const filtered = q
-    ? mapped.filter(c => [c.to, c.from, c.occasion, c.shortId, c.ownerEmail].some(v => v && v.toLowerCase().includes(q)))
+    ? mapped.filter(c => [c.to, c.from, c.occasion, c.shortId, c.ownerEmail, c.ip].some(v => v && v.toLowerCase().includes(q)))
     : mapped;
   return filtered.slice(0, limit);
 }
