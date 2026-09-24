@@ -48,7 +48,7 @@ router.post('/', createLimiter, async (req, res) => {
   let message = '';
   try{ message = decodeCardDataServer(encodedData).message || ''; }catch(e){ /* битые данные — не наша забота здесь */ }
   const { flagged, flagReasons } = scanCard({ to, from, message });
-  const card = db.createCard({ userId: null, encodedData, occasion, to, from, flagged, flagReasons });
+  const card = db.createCard({ userId: null, encodedData, occasion, to, from, flagged, flagReasons, ip: req.ip });
   res.status(201).json({ card: { shortId: card.shortId, expiresAt: card.expiresAt } });
 });
 

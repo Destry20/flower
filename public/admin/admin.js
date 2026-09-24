@@ -116,11 +116,12 @@ function renderUsers(users){
     el.innerHTML = '<div class="empty">No accounts found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Signed up</th><th>Email</th><th>Name</th><th></th><th></th></tr></thead><tbody>${
+  el.innerHTML = `<table><thead><tr><th>Signed up</th><th>Email</th><th>Name</th><th>IP</th><th></th><th></th></tr></thead><tbody>${
     users.map(u => `<tr>
       <td>${fmtTime(u.createdAt)}</td>
       <td class="msg">${escapeHtml(u.email)}</td>
       <td class="msg">${escapeHtml(u.name || '—')}</td>
+      <td class="msg">${escapeHtml(u.ip || '—')}</td>
       <td>${u.provider === 'google' ? '<span class="tag tag-google">Google</span>' : ''}</td>
       <td class="del"><button data-id="${u.id}">Delete</button></td>
     </tr>`).join('')
@@ -144,12 +145,13 @@ function renderCards(cards){
     el.innerHTML = '<div class="empty">No cards found.</div>';
     return;
   }
-  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th></th><th>Link</th><th></th><th></th></tr></thead><tbody>${
+  el.innerHTML = `<table><thead><tr><th>Created</th><th>By</th><th>Occasion</th><th>To</th><th>IP</th><th></th><th>Link</th><th></th><th></th></tr></thead><tbody>${
     cards.map(c => `<tr${c.flagged ? ' class="row-flagged"' : ''}>
       <td>${fmtTime(c.createdAt)}</td>
       <td class="msg">${escapeHtml(c.ownerEmail || 'guest')}</td>
       <td class="msg">${escapeHtml(c.occasion || '—')}</td>
       <td class="msg">${escapeHtml(c.to || '—')}</td>
+      <td class="msg">${escapeHtml(c.ip || '—')}</td>
       <td>${flagBadge(c)}</td>
       <td><a href="/c/${encodeURIComponent(c.shortId)}" target="_blank" rel="noopener">/c/${escapeHtml(c.shortId)}</a></td>
       <td class="del"><button class="secondary preview-btn" data-shortid="${escapeHtml(c.shortId)}">Preview</button></td>

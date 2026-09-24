@@ -58,7 +58,7 @@ router.post('/register', async (req, res) => {
   if(!(await verifyTurnstile(turnstileToken, req.ip))){
     return res.status(400).json({ error: tServer(req, 'captchaFailed') });
   }
-  const user = db.createUser({ email, passwordHash: auth.hashPassword(password), name });
+  const user = db.createUser({ email, passwordHash: auth.hashPassword(password), name, ip: req.ip });
   const token = auth.signToken(user);
   auth.setAuthCookie(res, token);
   res.status(201).json({ user: auth.publicUser(user) });
@@ -107,7 +107,8 @@ router.post('/google', async (req, res) => {
       email: payload.email,
       passwordHash: auth.hashPassword(crypto.randomBytes(24).toString('hex')),
       name: payload.name || '',
-      provider: 'google'
+      provider: 'google',
+      ip: req.ip
     });
   }
   const token = auth.signToken(user);
