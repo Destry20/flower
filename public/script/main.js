@@ -260,6 +260,7 @@ const EN_STRINGS = {
   'Цветы': 'Flowers',
   'отметьте нужные, выберите цвет и количество': 'pick the ones you want, choose color and count',
   'Лента': 'Ribbon',
+  'Свой цвет ленты': 'Custom ribbon color',
   'Послание': 'Message',
   'кому и что хотите сказать': 'who it\'s for and what you want to say',
   'Имя получателя': 'Recipient\'s name',
@@ -520,7 +521,12 @@ const FLOWER_TYPES = [
   {id:'daisy', label:{ru:'Ромашка',en:'Daisy'}, colors:['#FFFFFF','#E6C88A','#E3B7BE']},
   {id:'carnation', label:{ru:'Гвоздика',en:'Carnation'}, colors:['#C97B86','#D65B4A','#F0C9D6','#FFFFFF']},
   {id:'orchid', label:{ru:'Орхидея',en:'Orchid'}, colors:['#B27BC9','#E8D5F0','#7A4B96']},
-  {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']}
+  {id:'sunflower', label:{ru:'Подсолнух',en:'Sunflower'}, colors:['#F2C94C','#E8A03A']},
+  {id:'lily', label:{ru:'Лилия',en:'Lily'}, colors:['#FFFFFF','#F2C94C','#E3B7BE','#D65B4A']},
+  {id:'hydrangea', label:{ru:'Гортензия',en:'Hydrangea'}, colors:['#B27BC9','#8FC4D2','#F0C9D6','#FFFFFF']},
+  {id:'lavender', label:{ru:'Лаванда',en:'Lavender'}, colors:['#8C7BC9','#B7A6E3','#7A5A9E']},
+  {id:'iris', label:{ru:'Ирис',en:'Iris'}, colors:['#5A4B96','#3A5A9E','#7A4B96']},
+  {id:'mum', label:{ru:'Хризантема',en:'Chrysanthemum'}, colors:['#F2C94C','#F0C9D6','#FFFFFF','#D65B4A']}
 ];
 
 // Предел количества цветков одного типа (раньше было 8) — большие количества
@@ -533,7 +539,10 @@ const VASES = [
   {id:'B', label:{ru:'Стеклянная',en:'Glass'}},
   {id:'C', label:{ru:'Крафтовая',en:'Kraft-wrapped'}},
   {id:'D', label:{ru:'Мраморная',en:'Marble'}},
-  {id:'E', label:{ru:'Плетёная корзина',en:'Wicker basket'}}
+  {id:'E', label:{ru:'Плетёная корзина',en:'Wicker basket'}},
+  {id:'F', label:{ru:'Банка',en:'Mason jar'}},
+  {id:'G', label:{ru:'Подарочная коробка',en:'Gift box'}},
+  {id:'H', label:{ru:'Жестяное ведёрко',en:'Tin pail'}}
 ];
 
 const RIBBONS = ['#B98A4A','#C97B86','#4B2E3D','#8CA087','#F2E1C8','#7e4ab9'];
@@ -554,7 +563,10 @@ const BACKGROUNDS = [
   {id:'cream', label:{ru:'Кремовый',en:'Cream'}, css:'linear-gradient(180deg,#F0E4CE,#FAF3E7)'},
   {id:'blush', label:{ru:'Румяна',en:'Blush'}, css:'linear-gradient(180deg,#F6DDE2,#FBEFE9)'},
   {id:'sage', label:{ru:'Шалфей',en:'Sage'}, css:'linear-gradient(180deg,#DCE6D6,#F2F5EE)'},
-  {id:'night', label:{ru:'Ночь',en:'Night'}, css:'linear-gradient(180deg,#1B2038,#3A3159)', dark:true}
+  {id:'night', label:{ru:'Ночь',en:'Night'}, css:'linear-gradient(180deg,#1B2038,#3A3159)', dark:true},
+  {id:'snow', label:{ru:'Зима',en:'Snow'}, css:'linear-gradient(180deg,#E4EDF2,#F7FAFB)'},
+  {id:'sakura', label:{ru:'Сакура',en:'Sakura'}, css:'linear-gradient(180deg,#F3DCEB,#FCF2F8)'},
+  {id:'sunset', label:{ru:'Закат',en:'Sunset'}, css:'linear-gradient(180deg,#EDA47A,#F8D9B4)'}
 ];
 
 // Ссылка, где всё "зашито" через base64, растёт с длиной сообщения и количеством
@@ -1039,6 +1051,91 @@ function flowerHead(type, cx, cy, color, rot, scale){
       const aa = i*GOLDEN;
       g += `<circle cx="${Math.cos(aa)*rr}" cy="${Math.sin(aa)*rr}" r=".55" fill="#4B2E3D" opacity=".45"/>`;
     }
+  } else if(type==='lily'){
+    // 6 широких острых лепестков в форме звезды (не плотная розетка, как у
+    // розы/пиона) + тонкие изогнутые тычинки с продолговатым пыльником —
+    // именно тычинки на виду и делают силуэт узнаваемо лилией, а не просто
+    // крупным цветком с большими лепестками.
+    const count = 6;
+    for(let i=0;i<count;i++){
+      const a = (i/count)*360;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(11,6)}" fill="${i%2?pg.url:light}" stroke="${dark}" stroke-width=".5" transform="translate(0,-3)"/></g>`;
+    }
+    // Пыльник — фиксированный тёпло-коричневый тон вне зависимости от цвета
+    // лепестков, тот же приём, что и у жёлтой серединки пиона/ромашки: у
+    // настоящей лилии пыльца именно такого тона почти всегда.
+    for(let i=0;i<6;i++){
+      const a = (i/6)*360 + 30, rad = a*Math.PI/180;
+      const x2 = Math.sin(rad)*5.5, y2 = -Math.cos(rad)*5.5 - 1;
+      g += `<path d="M0,-0.5 L${x2},${y2}" stroke="${dark}" stroke-width=".45" opacity=".7"/><ellipse cx="${x2}" cy="${y2}" rx="1" ry="1.6" fill="#8A5E22" transform="rotate(${a} ${x2} ${y2})"/>`;
+    }
+    g += `<circle cx="0" cy="0" r="1.3" fill="${dark}"/>`;
+    g += glint(-2, -7, -18, lighten(color,45));
+  } else if(type==='hydrangea'){
+    // Не один цветок, а плотный шар из мелких 4-лепестковых соцветий —
+    // единственный тип в наборе, устроенный так на самом деле (не
+    // художественное упрощение). Раскладываем ~7 мини-цветков золотым углом
+    // внутри общего радиуса головки, каждый — просто 4 лепестка-капли вокруг
+    // своей точки, без общего центра на весь цветок.
+    // Больше соцветий, каждое чуть крупнее и плотнее посажено (первая
+    // проба на 7 мелких давала слишком дырявый, "колючий" силуэт вместо
+    // плотного шара — у настоящей гортензии соцветия перекрывают друг
+    // друга почти без просветов между ними).
+    const florets = 11, GOLD = 137.508*Math.PI/180;
+    for(let i=0;i<florets;i++){
+      const rr = Math.sqrt((i+0.3)/florets)*6.4;
+      const aa = i*GOLD;
+      const fx = Math.cos(aa)*rr, fy = Math.sin(aa)*rr*0.92;
+      const fc = i%3===0 ? light : pg.url;
+      [0,90,180,270].forEach(rot=>{
+        g += `<g transform="translate(${fx} ${fy}) rotate(${rot})"><path d="${petalPath(3.1,3)}" fill="${fc}" stroke="${dark}" stroke-width=".3" transform="translate(0,-1.5)"/></g>`;
+      });
+      g += `<circle cx="${fx}" cy="${fy}" r=".55" fill="${darken(color,25)}" opacity=".6"/>`;
+    }
+  } else if(type==='lavender'){
+    // Единственный "не радиальный" силуэт в наборе — колос из мелких
+    // бутонов, сужающийся к острию, а не кольцо лепестков вокруг центра.
+    // Рисуется вдоль вертикальной оси самого цветка (локальный -y — "вверх"
+    // до общего rot букета), а не вокруг точки — иначе это была бы просто
+    // ещё одна круглая головка другого цвета.
+    const rows = 9;
+    for(let i=0;i<rows;i++){
+      const yy = -2 - i*1.9;
+      const w = 2.6 * (1 - i/rows*0.65);
+      const budColor = i%2 ? pg.url : light;
+      g += `<ellipse cx="${-w*0.55}" cy="${yy}" rx="${w*0.42}" ry="1.3" fill="${budColor}" stroke="${dark}" stroke-width=".3" transform="rotate(-18 ${-w*0.55} ${yy})"/>`;
+      g += `<ellipse cx="${w*0.55}" cy="${yy}" rx="${w*0.42}" ry="1.3" fill="${budColor}" stroke="${dark}" stroke-width=".3" transform="rotate(18 ${w*0.55} ${yy})"/>`;
+    }
+    g += `<path d="M0,2 L0,${-2-rows*1.9+2}" stroke="#6E8B5E" stroke-width="1" opacity=".55"/>`;
+  } else if(type==='iris'){
+    // 3 узких приподнятых лепестка ("стандарты") + 3 более широких и
+    // длинных через один ("фолсы") — разница между двумя ярусами и даёт
+    // узнаваемый силуэт ириса на плоской иконке, где буквальная 3D-обвислость
+    // недостижима (тот же принцип, что различает внешний/внутренний ярус у
+    // розы — размером и оттенком, не позой).
+    for(let i=0;i<3;i++){
+      const a = i*120;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(7,3.6)}" fill="${light}" stroke="${dark}" stroke-width=".4" transform="translate(0,-2.5)"/></g>`;
+    }
+    for(let i=0;i<3;i++){
+      const a = i*120 + 60;
+      g += `<g transform="rotate(${a})"><path d="${petalPath(8.5,6.5)}" fill="${pg.url}" stroke="${dark}" stroke-width=".5" transform="translate(0,-3.8)"/></g>`;
+    }
+    g += `<path d="M-1.6,-1 L0,-4.5 L1.6,-1 Z" fill="#F2C94C" opacity=".85"/>`;
+    g += `<circle cx="0" cy="0" r="1.3" fill="${dark}"/>`;
+  } else if(type==='mum'){
+    // Хризантема-помпон: 3 яруса очень узких плотных лепестков без видимой
+    // серединки — то, что отличает её и от ромашки (широкие редкие лепестки
+    // + открытый центр), и от гвоздики (рюшевая бахрома, а не гладкий
+    // узкий лепесток).
+    [[10,9.2,2.6,0],[7.6,7.5,2.1,14],[5.2,6,1.6,7]].forEach(([n,len,w,off],layer)=>{
+      for(let i=0;i<n;i++){
+        const a = (i/n)*360 + off;
+        const fc = layer===0 ? (i%2?pg.url:light) : pg.url;
+        g += `<g transform="rotate(${a})"><path d="${petalPath(len,w)}" fill="${fc}" stroke="${dark}" stroke-width=".3" transform="translate(0,${-1-layer*0.6})"/></g>`;
+      }
+    });
+    g += `<circle cx="0" cy="0" r="1.1" fill="${dark}" opacity=".6"/>`;
   }
   // translate → rotate → scale, в этом порядке: сначала ставим цветок на место стебля,
   // затем крутим и масштабируем строго вокруг этой самой точки — без сюрпризов рендера.
@@ -1126,6 +1223,47 @@ function vaseSvg(type, cx, topY){
       ${weave}
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="${basketLight}" stroke="${basketDark}" stroke-width="1.5"/>
       <ellipse cx="${cx}" cy="${topY}" rx="42" ry="9" fill="none" stroke="${basketDeep}" stroke-width=".8" opacity=".5"/>`;
+  }
+  if(type==='F'){
+    // Банка — в отличие от вазы B (сужающийся "бочонок"), у банки прямые
+    // параллельные стенки и заметный рант крышки у горлышка — именно это
+    // отличает mason jar от вазы, а не просто более бледный синий тон.
+    const jar = '#DCEAEE', jarDark = '#6E98A2';
+    return `<path d="M ${cx-30} ${topY+4} L ${cx-30} ${topY+86} L ${cx+30} ${topY+86} L ${cx+30} ${topY+4} Z" fill="${jar}" opacity=".55" stroke="${jarDark}" stroke-width="1.3"/>
+      <path d="M ${cx-30} ${topY+58} L ${cx-30} ${topY+86} L ${cx+30} ${topY+86} L ${cx+30} ${topY+58} Z" fill="#8FC4D2" opacity=".4"/>
+      <path d="M ${cx-20} ${topY+12} L ${cx-20} ${topY+78}" stroke="#FFFFFF" stroke-width="4" opacity=".55" stroke-linecap="round"/>
+      <rect x="${cx-32}" y="${topY-8}" width="64" height="12" rx="2" fill="${lighten(jar,20)}" stroke="${jarDark}" stroke-width="1.2"/>
+      <rect x="${cx-32}" y="${topY-3}" width="64" height="4" fill="${jarDark}" opacity=".25"/>
+      <ellipse cx="${cx}" cy="${topY+4}" rx="30" ry="6" fill="${lighten(jar,12)}" opacity=".85" stroke="${jarDark}" stroke-width="1.2"/>`;
+  }
+  if(type==='G'){
+    // Открытая коробка-упаковка (первая версия — запечатанный подарок с
+    // плоской крышкой и бантом СВЕРХУ — не объясняла, откуда растут стебли:
+    // они как будто протыкали крышку насквозь). Теперь как у всех остальных
+    // ваз — настоящее "горлышко"-рант ровно на topY, куда физически входят
+    // стебли (тот же приём, что у вазы B/банки F); лента с бантом обвивает
+    // корпус НИЖЕ ранта, а не поверх него, поэтому больше не спорит взглядом
+    // с местом, откуда растут цветы.
+    const box = '#E7DCC8', boxDark = '#B9A87E', ribbon = '#C97B86', ribbonDark = '#9B4E5C';
+    return `<rect x="${cx-40}" y="${topY+4}" width="80" height="58" rx="4" fill="${box}" stroke="${boxDark}" stroke-width="1.2"/>
+      <rect x="${cx-6}" y="${topY+4}" width="12" height="58" fill="${ribbon}" opacity=".9"/>
+      <rect x="${cx-40}" y="${topY+28}" width="80" height="12" fill="${ribbon}" opacity=".9"/>
+      <path d="M ${cx-11} ${topY+9} C ${cx-20} ${topY-1} ${cx-2} ${topY-1} ${cx} ${topY+7} C ${cx+2} ${topY-1} ${cx+20} ${topY-1} ${cx+11} ${topY+9} Z" fill="${ribbon}" stroke="${ribbonDark}" stroke-width="1"/>
+      <ellipse cx="${cx}" cy="${topY}" rx="40" ry="8" fill="${lighten(box,10)}" stroke="${boxDark}" stroke-width="1.3"/>
+      <ellipse cx="${cx}" cy="${topY}" rx="30" ry="5" fill="${lighten(box,24)}" opacity=".75"/>`;
+  }
+  if(type==='H'){
+    // Оцинкованное ведёрко — та же трапеция, что у глиняной вазы A, но
+    // холодный металлический тон, горизонтальные рёбра (гофра) вместо
+    // глиняного блика, и дугой ручка сверху — деталь, которой ни у одной
+    // другой вазы нет.
+    const tin = '#B9C0C4', tinDark = '#7C8489', tinLight = '#DCE2E4';
+    return `<path d="M ${cx-34} ${topY+2} L ${cx-27} ${topY+82} L ${cx+27} ${topY+82} L ${cx+34} ${topY+2} Z" fill="${tin}" stroke="${tinDark}" stroke-width="1.2"/>
+      <path d="M ${cx-31} ${topY+22} L ${cx+31} ${topY+22}" stroke="${tinDark}" stroke-width="1" opacity=".4"/>
+      <path d="M ${cx-29.5} ${topY+42} L ${cx+29.5} ${topY+42}" stroke="${tinDark}" stroke-width="1" opacity=".4"/>
+      <path d="M ${cx-28} ${topY+62} L ${cx+28} ${topY+62}" stroke="${tinDark}" stroke-width="1" opacity=".4"/>
+      <path d="M ${cx-20} ${topY+8} C ${cx-16} ${topY-14} ${cx+16} ${topY-14} ${cx+20} ${topY+8}" fill="none" stroke="${tinDark}" stroke-width="2.2" stroke-linecap="round"/>
+      <ellipse cx="${cx}" cy="${topY+2}" rx="34" ry="7" fill="${tinLight}" stroke="${tinDark}" stroke-width="1.2"/>`;
   }
   // крафтовая — складки бумаги и верхняя светлая полоса вместо ровного прямоугольника
   return `<rect x="${cx-38}" y="${topY-4}" width="76" height="88" rx="6" fill="${c.fill}" stroke="${c.dark}" stroke-width="1"/>
@@ -1533,7 +1671,7 @@ const EXAMPLES = [
   // текст стоит на карточке), а не "Любовь".
   { id:'love', occasion:'love', applyOccasion:'foryou', vase:'D', ribbon:'#4B2E3D', envelope:'gold', background:'blush', charm:true,
     flowers:{ rose:{color:'#B23A4E', count:5}, peony:{color:'#D98CAE', count:3} },
-    to:{ru:'Марии',en:'Emma'}, from:{ru:'Артёма',en:'James'},
+    to:{ru:'Насти',en:'Emma'}, from:{ru:'Дениса',en:'James'},
     labelOverride:{ru:'Для тебя',en:'For you'}, stampOverride:{ru:'Для тебя',en:'For you'},
     featured:true, tilt:-1, lift:0 },
   { id:'birthday', occasion:'birthday', vase:'B', ribbon:'#C97B86', envelope:'seal', background:'blush', charm:true,
@@ -1678,7 +1816,8 @@ function homeExampleCardHtml(ex, i){
   const bandStyle = occasionBadgeStyle(occ.color);
   return `<div class="home-card ${ex.featured?'featured':''}" style="--tilt:${ex.tilt}deg; --lift:${ex.lift}px; z-index:${i+1};" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${labelText}" onclick="applyExample('${ex.id}')" onkeydown="activateOnKey(event)">
     <div class="home-card-stage" style="background:${bg.css}">
-      ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity)}
+      ${bgSceneSvg(bg.id)}
+      ${bg.id==='cream' ? stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity) : ''}
       <div class="home-card-inner">
         <div class="home-card-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${stampText}</div>
         <div class="home-card-bouquet">${buildBouquetSVG(ex, size)}</div>
@@ -1710,7 +1849,8 @@ function heroShowcaseCardHtml(){
   const patternColor = bg.dark ? '#F3EEE3' : occ.color;
   return `<div class="hero-showcase" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${tr(ex.labelOverride)}" onclick="applyExample('love')" onkeydown="activateOnKey(event)">
       <div class="hero-showcase-stage" style="background:${bg.css}">
-        ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22)}
+        ${bgSceneSvg(bg.id)}
+        ${bg.id==='cream' ? stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22) : ''}
         <div class="hero-showcase-inner">
           <div class="hero-showcase-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${tr(ex.stampOverride)}</div>
           <div class="hero-showcase-bouquet">${buildBouquetSVG(ex, 300)}</div>
@@ -2097,13 +2237,14 @@ function renderCreator(){
       <div class="col-preview">
         <div class="preview-stage ${previewBg.dark?'stage-dark':''}" id="previewStage" style="background:${previewBg.css}">
           <div class="preview-hero">
-            ${stagePatternSvg(OCCASION_ICON[occ.id], previewPatternColor, previewPatternOpacity)}
+            ${bgSceneSvg(state.background)}
+            ${previewBg.id==='cream' ? stagePatternSvg(OCCASION_ICON[occ.id], previewPatternColor, previewPatternOpacity) : ''}
             <div class="preview-card">
               <div class="preview-occasion-band" id="pvBand" style="background:${previewBandStyle.bg};color:${previewBandStyle.color}">${tr(occ.stamp)}</div>
               <div class="preview-bouquet-wrap" id="pvBouquetWrap"><div class="preview-bouquet" id="pvBouquet"></div></div>
               <div class="preview-msg">
                 <div class="to" id="pvTo"></div>
-                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span style="color:var(--ink-mute)">${t('Текст пожелания появится здесь…')}</span>`}</div>
+                <div class="text" id="pvText" style="${messageFontStyleAttr(state.messageFont)}">${esc(state.message)||`<span class="ph">${t('Текст пожелания появится здесь…')}</span>`}</div>
                 <div class="from" id="pvFrom"></div>
               </div>
               <div class="preview-envelope-overlay" id="pvEnvelopeOverlay" aria-hidden="true">${envelopeSvg(occ.color, state.envelope, 150, 108)}</div>
@@ -2144,9 +2285,18 @@ function renderCreator(){
 
   document.getElementById('flowerRows').innerHTML = flowerRowsHtml();
 
+  // Последний "своп" — не фиксированный цвет, а native <input type=color>:
+  // лента может быть в тон повода/наряда получателя, а не только одним из
+  // 6 заранее выбранных оттенков. Сама метка-кружок красится либо в уже
+  // выбранный кастомный цвет (если он активен), либо в радужный градиент —
+  // подсказка "тут можно выбрать свой", а не просто ещё один непонятный
+  // серый кружок среди цветных.
+  const isCustomRibbon = !RIBBONS.includes(state.ribbon);
   document.getElementById('ribbonSwatches').innerHTML = RIBBONS.map((c,i)=>
     `<div class="swatch ${state.ribbon===c?'sel':''}" style="background:${c}" tabindex="0" role="button" aria-label="${t('Цвет')} ${t('Лента').toLowerCase()} №${i+1}" aria-pressed="${state.ribbon===c}" onclick="setRibbon('${c}')" onkeydown="activateOnKey(event)"></div>`
-  ).join('');
+  ).join('') + `<label class="swatch swatch-custom ${isCustomRibbon?'sel':''}" style="${isCustomRibbon?`background:${state.ribbon};`:''}" title="${t('Свой цвет ленты')}">
+      <input type="color" value="${isCustomRibbon?state.ribbon:'#C97B86'}" oninput="setRibbon(this.value)" aria-label="${t('Свой цвет ленты')}">
+    </label>`;
 
   document.getElementById('bgChips').innerHTML = BACKGROUNDS.map(b=>
     `<div class="bg-chip ${state.background===b.id?'active':''}" style="background:${b.css}" tabindex="0" role="button" aria-label="${t('Фон сцены')}: ${tr(b.label)}" aria-pressed="${state.background===b.id}" onclick="setBackground('${b.id}')" onkeydown="activateOnKey(event)"></div>`
@@ -2372,6 +2522,161 @@ function stagePatternSvg(iconName, color, opacity){
   ).join('');
   return `<div class="home-card-pattern" aria-hidden="true">${items}</div>`;
 }
+
+// "Настоящее место" за карточкой, привязанное к выбранному ФОНУ (BACKGROUNDS),
+// а не к поводу (тем занимается stagePatternSvg выше, оба слоя сосуществуют
+// на одной сцене) — намёк на подоконник/ночное небо/сад/снег вместо
+// плоской заливки. .bg-scene-dot — свой квадратный SVG на каждый акцент
+// с процентным left/top (тот же приём против перекоса пропорций, что и у
+// PATTERN_SPOTS выше); "полоса" внизу (сугроб/трава/горизонт) — отдельный
+// широкий и низкий SVG на всю ширину сцены, растяжение по X ей не вредит,
+// в отличие от круглых фигур.
+function bgSceneSvg(bgId){
+  // Уникальный id на каждый вызов (та же причина, что у petalGradient в
+  // flowerHead) — сцена одного и того же фона рисуется на странице не один
+  // раз (несколько карточек-примеров с одинаковым background), и общий id
+  // градиента переопределял бы себя между вызовами.
+  const rid = () => 'sc'+Math.random().toString(36).slice(2,9);
+  const strip = (defs, d) => `<svg class="bg-scene-strip" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><defs>${defs}</defs>${d}</svg>`;
+  // Линейный градиент вместо плоской opacity-заливки — низ (ближе к
+  // зрителю) плотнее, верх сходит в прозрачность, как у настоящего сугроба/
+  // травы/дымки у горизонта, а не ровный залитый прямоугольник.
+  const stripFade = (id, color, opBottom) => `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0"/><stop offset="100%" stop-color="${color}" stop-opacity="${opBottom}"/></linearGradient>`;
+  // overflow:visible — без него SVG по умолчанию обрезает содержимое ровно
+  // по границе viewBox; blur-свечение (у луны/солнца/звёзд ниже) физически
+  // красится и ЗА пределами своей фигуры, и без этого атрибута обрезалось
+  // плоским краем viewBox — выглядело как светящийся ПРЯМОУГОЛЬНИК вместо
+  // мягкого ореола (сам blur никуда не делся, просто его срезало по рамке).
+  const dot = (x,y,size,inner) => `<span class="bg-scene-dot" style="left:${x}%; top:${y}%; width:${size}%;"><svg viewBox="0 0 10 10" style="overflow:visible" aria-hidden="true">${inner}</svg></span>`;
+  const star = (c,o,glow) => {
+    const g = glow ? `<circle cx="5" cy="5" r="3" fill="${c}" opacity="${o*.35}" style="filter:blur(1.2px)"/>` : '';
+    return `${g}<path d="M5 0L6.2 3.8L10 5L6.2 6.2L5 10L3.8 6.2L0 5L3.8 3.8Z" fill="${c}" opacity="${o}"/>`;
+  };
+  const flake = (c,o,rot) => `<path d="M5 0V10M0 5H10M1.5 1.5L8.5 8.5M1.5 8.5L8.5 1.5" stroke="${c}" stroke-width="1" stroke-linecap="round" opacity="${o}" transform="rotate(${rot} 5 5)"/><circle cx="5" cy="5" r=".6" fill="${c}" opacity="${o}"/>`;
+  // Тот же трёхстопный градиент, что petalGradient у настоящих цветов —
+  // и не просто "по той же логике", а буквально важная деталь, которую
+  // раньше упустил: там 0%→light, 60%→САМ ЦВЕТ, 100%→dark, то есть на
+  // всей средней части фигуры лежит настоящий, узнаваемый цвет, а блик —
+  // маленькое яркое пятно, а не основа. Двухстопный вариант (0%→light,
+  // 100%→dark) на уже светлых пастельных тонах (розовый сакуры, светлый
+  // акцент) высветлял центр почти до белого — на маленьком размере вся
+  // фигура читалась белёсым пятном/жемчужиной, а не цветным лепестком:
+  // тон был не по краям, а буквально не показан почти нигде.
+  const shaded = (color) => {
+    const id = rid();
+    const light = lighten(color, 16), dark = darken(color, 16);
+    return {
+      defs: `<radialGradient id="${id}" cx="35%" cy="28%" r="80%"><stop offset="0%" stop-color="${light}"/><stop offset="55%" stop-color="${color}"/><stop offset="100%" stop-color="${dark}"/></radialGradient>`,
+      fill: `url(#${id})`
+    };
+  };
+  const petal = (color,o) => {
+    const s = shaded(color);
+    return `<defs>${s.defs}</defs><ellipse cx="5" cy="5" rx="4.4" ry="2.8" fill="${s.fill}" opacity="${o}" transform="rotate(-35 5 5)"/>`;
+  };
+
+  if(bgId==='night'){
+    const moonBody = rid();
+    return `<div class="bg-scene" aria-hidden="true">
+    <svg class="bg-scene-moon" viewBox="0 0 20 20" style="overflow:visible" aria-hidden="true">
+      <defs><radialGradient id="${moonBody}" cx="32%" cy="28%" r="75%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="65%" stop-color="#F3EEE3"/><stop offset="100%" stop-color="#DACFBB"/></radialGradient></defs>
+      <circle cx="10" cy="10" r="9" fill="#F3EEE3" opacity=".28" style="filter:blur(2px)"/>
+      <circle cx="10" cy="10" r="8" fill="url(#${moonBody})"/>
+      <circle cx="13" cy="8" r="8" fill="#232A46"/>
+    </svg>
+    ${dot(12,16,5,star('#F3EEE3','.9',true))}${dot(32,28,3.5,star('#F3EEE3','.5',false))}${dot(62,11,4,star('#F3EEE3','.8',true))}${dot(20,44,3,star('#F3EEE3','.45',false))}${dot(46,36,3.5,star('#F3EEE3','.6',false))}
+  </div>`;
+  }
+  if(bgId==='snow'){
+    const g = rid();
+    return `<div class="bg-scene" aria-hidden="true">
+    ${strip(stripFade(g,'#FFFFFF',.85), `<path d="M0,24 Q75,10 150,22 Q225,32 300,14 L300,30 L0,30 Z" fill="url(#${g})"/>`)}
+    ${dot(14,15,5.5,flake('#FFFFFF','.85',12))}${dot(80,9,4,flake('#FFFFFF','.55',-20))}${dot(46,26,4.5,flake('#FFFFFF','.75',35))}${dot(62,40,3.5,flake('#FFFFFF','.5',-8))}${dot(26,44,4,flake('#FFFFFF','.6',18))}${dot(90,32,3.5,flake('#FFFFFF','.45',-30))}${dot(6,32,3,flake('#FFFFFF','.4',24))}
+  </div>`;
+  }
+  if(bgId==='sakura'){
+    // Закрашенный кружок с градиентом (было раньше) при любом оттенке
+    // читается бусиной/жемчужиной — это форма, а не цвет, дело не в
+    // подборе тона. Настоящий цветок — 5 лепестков-капель вокруг центра
+    // (petalPath, тот же примитив, что рисует розу/ромашку в flowerHead),
+    // с маленькой жёлтой серединкой, как у настоящей сакуры.
+    const blossom = (cx,cy,r,color,o) => {
+      const s = shaded(color);
+      let petals = '';
+      for(let i=0;i<5;i++){
+        petals += `<g transform="rotate(${i*72})"><path d="${petalPath(r, r*0.8)}" fill="${s.fill}" transform="translate(0,${-r*0.1})"/></g>`;
+      }
+      return `<defs>${s.defs}</defs><g transform="translate(${cx} ${cy})" opacity="${o}">${petals}<circle r="${r*0.26}" fill="#F2C94C" opacity=".85"/></g>`;
+    };
+    return `<div class="bg-scene" aria-hidden="true">
+    <svg class="bg-scene-branch" viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M40,0 C32,8 25,12 17,22 M40,0 C33,4 28,5 24,8" stroke="#9B7A8A" stroke-width="1.6" fill="none" opacity=".5"/>
+      ${blossom(37,1,2.6,'#F0C9D6','.95')}${blossom(31,6,2.4,'#F0C9D6','.9')}
+      ${blossom(25,11,2.2,'#F0C9D6','.85')}${blossom(19,17,2,'#F0C9D6','.78')}
+      ${blossom(29,2,1.7,'#F6C7DB','.8')}${blossom(21,9,1.6,'#F6C7DB','.72')}
+    </svg>
+    ${dot(66,40,3.2,petal('#F0C9D6','.6'))}${dot(56,54,2.6,petal('#F0C9D6','.42'))}
+  </div>`;
+  }
+  if(bgId==='sunset'){
+    const sunBody = rid(), g = rid();
+    return `<div class="bg-scene" aria-hidden="true">
+    <svg class="bg-scene-sun" viewBox="0 0 20 20" style="overflow:visible" aria-hidden="true">
+      <defs><radialGradient id="${sunBody}" cx="38%" cy="34%" r="70%"><stop offset="0%" stop-color="#FFF4D9"/><stop offset="60%" stop-color="#F9E2B8"/><stop offset="100%" stop-color="#EDC488"/></radialGradient></defs>
+      <circle cx="10" cy="10" r="9" fill="#F9E2B8" opacity=".32" style="filter:blur(2.2px)"/>
+      <circle cx="10" cy="10" r="8" fill="url(#${sunBody})"/>
+    </svg>
+    ${strip(stripFade(g,'#B9583A',.4), `<path d="M0,20 Q75,10 150,18 Q225,24 300,14 L300,30 L0,30 Z" fill="url(#${g})"/>`)}
+  </div>`;
+  }
+  if(bgId==='sage'){
+    // Настоящий лист — та же "капля с жилкой", что и у зелени букета
+    // (leafSpray, см. выше в файле), а не эллипс: у эллипса с радиальным
+    // бликом нет ни одного признака листа (ни острого кончика, ни жилки),
+    // поэтому он и читался просто шариком/бусиной.
+    const leaf = (x,y,angle,len,color,dark) => {
+      const w = len*0.4;
+      return `<g transform="translate(${x} ${y}) rotate(${angle})"><path d="M0,0 C${-w},${-len*0.3} ${-w*0.9},${-len*0.75} 0,${-len} C${w*0.9},${-len*0.75} ${w},${-len*0.3} 0,0 Z" fill="${color}" opacity=".8"/><path d="M0,-1 L0,${-len+1.3}" stroke="${dark}" stroke-width=".35" opacity=".5"/></g>`;
+    };
+    // Раньше угол каждого листа был подобран на глаз, без расчёта — листья
+    // торчали вдоль самого стебля, а не в стороны от него, плюс вторая
+    // веточка у основания сливалась с ними в одно пятно. Теперь честная
+    // геометрия: один прямой стебель (40,2)→(12,24), у него понятное
+    // направление, и лист сидит СТРОГО перпендикулярно этому направлению
+    // (±90°, с небольшим наклоном вперёд — так растут настоящие листья, не
+    // точно поперёк), чередуясь через один на разные стороны стебля — а
+    // не пучком на одной.
+    const base = '#8CA087', accent = '#A3B79A', dark = darken('#8CA087', 22), g = rid();
+    return `<div class="bg-scene" aria-hidden="true">
+    <svg class="bg-scene-branch-left" viewBox="0 0 40 40" aria-hidden="true">
+      <path d="M40,2 L12,24" stroke="#5C7457" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+      ${leaf(35,6,155,6.2,base,dark)}${leaf(28,11,308,6.8,base,dark)}${leaf(21.5,16.5,150,6,accent,dark)}${leaf(15.4,21.4,312,5,accent,dark)}
+    </svg>
+    ${strip(stripFade(g,'#5C7457',.42), `<path d="M0,22 Q75,12 150,20 Q225,28 300,14 L300,30 L0,30 Z" fill="url(#${g})"/>`)}
+  </div>`;
+  }
+  if(bgId==='blush'){
+    const front = rid(), back = rid();
+    return `<div class="bg-scene" aria-hidden="true">
+    <svg class="bg-scene-clouds" viewBox="0 0 100 60" aria-hidden="true">
+      <defs>
+        <radialGradient id="${front}" cx="38%" cy="32%" r="75%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#F6DCE6"/></radialGradient>
+        <radialGradient id="${back}" cx="38%" cy="32%" r="75%"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#F0C9D6"/></radialGradient>
+      </defs>
+      <g fill="url(#${back})" opacity=".4"><ellipse cx="76" cy="14" rx="13" ry="7"/><ellipse cx="86" cy="11" rx="9" ry="6"/><ellipse cx="66" cy="17" rx="8" ry="6"/></g>
+      <g fill="url(#${front})" opacity=".65"><ellipse cx="20" cy="30" rx="16" ry="9"/><ellipse cx="32" cy="26" rx="11" ry="8"/><ellipse cx="10" cy="34" rx="10" ry="7"/></g>
+    </svg>
+    <svg class="bg-scene-strip" viewBox="0 0 300 30" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="20" x2="300" y2="20" stroke="#9B4E5C" stroke-width="1.4" opacity=".32"/></svg>
+  </div>`;
+  }
+  // cream — честно нейтральный дефолт, без декора. Раньше тут был мягкий
+  // кружок-свечение в том же углу, что и луна/солнце — на глаз он читался
+  // как "тот же самый кружок, просто светлее", а не как отдельная деталь,
+  // только путал (тот же вопрос был и про солнце на "Закате" — см. правку
+  // позиции .bg-scene-sun выше). Лучше честная пустота, чем decoративный
+  // элемент, который никто не может отличить от других.
+  return '';
+}
 // crossedOut=false — глаз (пароль сейчас скрыт, клик покажет), true — глаз
 // с чертой (пароль сейчас показан, клик снова скроет). См. passwordFieldHtml.
 function eyeIconSvg(crossedOut){
@@ -2422,6 +2727,9 @@ function vaseThumbSvg(type){
   if(type==='B') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M11 4C8 12 8 26 10 32L24 32C26 26 26 12 23 4Z" fill="#DCEAEE" opacity=".68" stroke="#6E98A2" stroke-width="1.2"/><path d="M10.5 22C10 26 10.5 30 11.5 32L22.5 32C23.5 30 24 26 23.5 22Z" fill="#8FC4D2" opacity=".4"/><path d="M13 8C11.5 14 11.5 22 12.5 29" stroke="#FFFFFF" stroke-width="1.6" opacity=".65" stroke-linecap="round" fill="none"/><ellipse cx="17" cy="4" rx="6.5" ry="1.7" fill="#EFF7F8" stroke="#6E98A2" stroke-width="1"/></svg>`;
   if(type==='D') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M9 8L7 28L27 28L25 8Z" fill="#EDEBE4" stroke="#8C8578" stroke-width="1.2"/><rect x="10" y="28" width="14" height="4" rx="1" fill="#DED9CB" stroke="#8C8578" stroke-width="1"/><path d="M11 13Q17 20 20 26" stroke="#9C9284" stroke-width="1.2" fill="none" opacity=".8"/><path d="M22 12Q17 20 14 27" stroke="#B8B0A0" stroke-width="1" fill="none" opacity=".55"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#F5F3ED" stroke="#8C8578" stroke-width="1.1"/></svg>`;
   if(type==='E') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 8L6 32L28 32L26 8Z" fill="#C99A5B" stroke="#7A5A2E" stroke-width="1.2"/><path d="M13 9L11.6 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M21 9L22.4 31" stroke="#7A5A2E" stroke-width="1" opacity=".3"/><path d="M8 15Q17 18 26 15" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><path d="M7.3 22.5Q17 25.5 26.7 22.5" stroke="#5E441F" stroke-width="1.6" opacity=".5" fill="none"/><ellipse cx="17" cy="8" rx="9" ry="1.8" fill="#DDB876" stroke="#7A5A2E" stroke-width="1.2"/></svg>`;
+  if(type==='F') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M9 10L9 32L25 32L25 10Z" fill="#DCEAEE" opacity=".6" stroke="#6E98A2" stroke-width="1.1"/><path d="M9 24L9 32L25 32L25 24Z" fill="#8FC4D2" opacity=".4"/><rect x="7" y="4" width="20" height="6" rx="1.5" fill="#EFF7F8" stroke="#6E98A2" stroke-width="1"/><ellipse cx="17" cy="10" rx="8" ry="1.8" fill="#EFF7F8" opacity=".8" stroke="#6E98A2" stroke-width="1"/></svg>`;
+  if(type==='G') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="13" width="22" height="19" rx="2" fill="#E7DCC8" stroke="#B9A87E" stroke-width="1"/><rect x="15" y="13" width="4" height="19" fill="#C97B86" opacity=".9"/><rect x="6" y="21" width="22" height="4" fill="#C97B86" opacity=".9"/><ellipse cx="17" cy="13" rx="11" ry="2.4" fill="#F0E8D8" stroke="#B9A87E" stroke-width="1"/></svg>`;
+  if(type==='H') return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M8 9L10 30L24 30L26 9Z" fill="#B9C0C4" stroke="#7C8489" stroke-width="1"/><path d="M10 15L24 15" stroke="#7C8489" stroke-width=".8" opacity=".4"/><path d="M10 21L24 21" stroke="#7C8489" stroke-width=".8" opacity=".4"/><path d="M12 3Q17 -2 22 3" fill="none" stroke="#7C8489" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="17" cy="9" rx="9" ry="1.8" fill="#DCE2E4" stroke="#7C8489" stroke-width="1"/></svg>`;
   return `<svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><rect x="6" y="9" width="22" height="23" rx="3" fill="#DCC9A3" stroke="#B39B6D" stroke-width="1"/><rect x="5" y="4" width="24" height="7" rx="2" fill="#EAD9B0" stroke="#B39B6D" stroke-width="1"/></svg>`;
 }
 
@@ -2435,7 +2743,7 @@ function renderPreviewBouquet(){
 function updatePreviewText(){
   const occ = occasionById(state.occasion);
   document.getElementById('pvTo').textContent = state.to ? `${t('Для')} ${state.to}` : '';
-  document.getElementById('pvText').innerHTML = esc(state.message) || `<span style="color:var(--ink-mute)">${t('Текст пожелания появится здесь…')}</span>`;
+  document.getElementById('pvText').innerHTML = esc(state.message) || `<span class="ph">${t('Текст пожелания появится здесь…')}</span>`;
   document.getElementById('pvFrom').textContent = state.from ? `— ${state.from}` : '';
   const bandStyle = occasionBadgeStyle(occ.color);
   document.getElementById('pvBand').style.background = bandStyle.bg;
@@ -2453,7 +2761,18 @@ function setVase(id){
 function setRibbon(c){
   state.ribbon=c; renderPreviewBouquet();
   document.querySelectorAll('#ribbonSwatches .swatch').forEach(s=>{s.classList.remove('sel'); s.setAttribute('aria-pressed','false');});
-  event.currentTarget.classList.add('sel'); event.currentTarget.setAttribute('aria-pressed','true');
+  // Фиксированные свопы кликают сами по себе (currentTarget === .swatch),
+  // а кастомный цвет — через вложенный <input type=color>, у него
+  // currentTarget — сам инпут, поэтому берём ближайший .swatch (это его
+  // <label>-обёртку) и вдобавок сразу красим саму метку в выбранный цвет —
+  // без этого кружок-подсказка продолжал бы показывать радужный градиент
+  // вместо реально выбранного оттенка до следующей полной перерисовки.
+  const target = event.currentTarget;
+  const swatchEl = target.classList.contains('swatch') ? target : target.closest('.swatch');
+  if(swatchEl){
+    swatchEl.classList.add('sel'); swatchEl.setAttribute('aria-pressed','true');
+    if(swatchEl.classList.contains('swatch-custom')) swatchEl.style.background = c;
+  }
 }
 function setBackground(id){
   state.background = id;
@@ -2463,6 +2782,28 @@ function setBackground(id){
   stage.classList.toggle('stage-dark', !!bg.dark);
   document.querySelectorAll('#bgChips .bg-chip').forEach(c=>{c.classList.remove('active'); c.setAttribute('aria-pressed','false');});
   event.currentTarget.classList.add('active'); event.currentTarget.setAttribute('aria-pressed','true');
+  // Точечное обновление, как и остальное в этой функции (не renderCreator()
+  // целиком) — но decor-слой сцены (bgSceneSvg) живёт вне этого набора
+  // точечных правок, поэтому раньше при клике по свопу оставался от ПРЕЖНЕГО
+  // фона (а если сцена начиналась с 'cream', для которого bgSceneSvg
+  // возвращает '' — то есть .bg-scene вообще не существовал в разметке —
+  // не появлялся вовсе, при переключении на любой другой фон). Пересоздаём
+  // его так же явно, как стиль и класс stage-dark выше.
+  const oldScene = document.querySelector('#previewStage .bg-scene');
+  const sceneHtml = bgSceneSvg(id);
+  if(oldScene) oldScene.remove();
+  if(sceneHtml) document.querySelector('#previewStage .preview-hero').insertAdjacentHTML('afterbegin', sceneHtml);
+  // Рассыпанный узор иконки повода (stagePatternSvg) теперь живёт только на
+  // кремовом фоне — на остальных у сцены уже есть своя декорация (звёзды,
+  // ветка сакуры и т.д.), и оба узора поверх друг друга читались как каша.
+  // Та же логика, что и в шаблоне renderCreator (previewBg.id==='cream'),
+  // просто применённая точечно при живом переключении свопа.
+  const oldPattern = document.querySelector('#previewStage .home-card-pattern');
+  if(oldPattern) oldPattern.remove();
+  if(id === 'cream'){
+    const occ = occasionById(state.occasion);
+    document.querySelector('#previewStage .preview-hero').insertAdjacentHTML('afterbegin', stagePatternSvg(OCCASION_ICON[occ.id], occ.color, 0.2));
+  }
 }
 function setEnvelope(id){ state.envelope = id; renderCreator(); }
 function openFlowerPicker(){ flowerPickerOpen = true; renderCreator(); }
@@ -2883,10 +3224,21 @@ function shareChannelsHtml(url){
   const wa = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url);
   const tg = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text);
   const vk = 'https://vk.com/share.php?url=' + encodeURIComponent(url) + '&title=' + encodeURIComponent(text);
+  // Pinterest — единственная из этих сетей, у которой "поделиться" это в
+  // первую очередь картинка, а не текст со ссылкой: как раз формат самой
+  // открытки (нарисованный букет), поэтому канал добавлен отдельно, не
+  // просто "ещё одна кнопка". media обязателен для их pin/create/button —
+  // персональной картинки именно ЭТОГО букета сайт пока не рендерит в PNG
+  // (это отдельная задача на сервер), поэтому временно берём общий
+  // og-image сайта; можно будет заменить на персональный рендер конкретной
+  // открытки, когда появится такой эндпоинт.
+  const pinMedia = location.origin + '/og-image.jpg';
+  const pin = 'https://www.pinterest.com/pin/create/button/?url=' + encodeURIComponent(url) + '&media=' + encodeURIComponent(pinMedia) + '&description=' + encodeURIComponent(text);
   return `<div class="share-channels">
     <a class="share-channel-btn wa" href="${wa}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
     <a class="share-channel-btn tg" href="${tg}" target="_blank" rel="noopener noreferrer">Telegram</a>
     <a class="share-channel-btn vk" href="${vk}" target="_blank" rel="noopener noreferrer">${uiLang==='ru'?'ВКонтакте':'VK'}</a>
+    <a class="share-channel-btn pin" href="${pin}" target="_blank" rel="noopener noreferrer">Pinterest</a>
   </div>`;
 }
 function openView(url){
@@ -3323,6 +3675,7 @@ function renderViewer(encodedData){
   const bg = BACKGROUNDS.find(b=>b.id===data.background) || BACKGROUNDS[0];
   document.getElementById('app').innerHTML = `
     <div class="view-stage ${bg.dark?'stage-dark':''}" style="background:${bg.css}">
+      ${bgSceneSvg(bg.id)}
       <div class="view-card">
         <button class="view-envelope" id="envelope" onclick="openCard(${data.music?'true':'false'}, '${data.occasion}', '${data.melody}')" aria-label="${t('Открыть открытку')}">
           ${envelopeSvg(occ.color, data.envelope)}

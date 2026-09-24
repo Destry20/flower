@@ -954,6 +954,14 @@ a{color:var(--accent);}
   box-shadow:inset 0 0 0 1px rgba(47,59,42,0.12);
 }
 .swatch.sel{border-color:var(--ink);}
+/* Своп своего цвета ленты — <label> с тем же кругом, что у фиксированных
+   свопов, но внутри спрятанный (opacity:0) native <input type=color>,
+   растянутый чуть шире самого кружка, чтобь тач-цель не была микроскопической.
+   Радужный conic-gradient — только "заводская" подсказка-иконка "тут можно
+   выбрать свой цвет"; как только цвет выбран, JS (setRibbon) перекрашивает
+   саму метку сплошным выбранным цветом поверх этого градиента. */
+.swatch-custom{position:relative; overflow:hidden; background:conic-gradient(from 0deg,#C97B86,#B98A4A,#8CA087,#4B2E3D,#7e4ab9,#C97B86);}
+.swatch-custom input[type=color]{position:absolute; inset:-4px; width:26px; height:26px; opacity:0; cursor:pointer; border:none; padding:0;}
 .stepper{display:flex; align-items:center; gap:7px; flex:none;}
 .stepper button{
   width:24px;height:24px;border-radius:50%;border:1px solid var(--line);
@@ -1061,6 +1069,7 @@ input[type=date], input[type=time]{
 .share-channel-btn.wa{ background:#3FAE59; }
 .share-channel-btn.tg{ background:#2AABEE; }
 .share-channel-btn.vk{ background:#4C75A3; }
+.share-channel-btn.pin{ background:#E60023; }
 
 /* ---------- my cards ---------- */
 .mine-wrap{max-width:720px; margin:0 auto; padding:40px 36px 80px;}
@@ -1272,14 +1281,24 @@ input[type=date], input[type=time]{
   position:relative; z-index:0; width:100%;
   display:flex; flex-direction:column; align-items:center;
 }
+/* Раньше карточка сама была непрозрачной "бумагой" (--paper фон, рамка,
+   тень) — с появлением декоративных сцен фона (bgSceneSvg) это перекрывало
+   почти всю сцену, оставляя звёзды/ветку видимыми только в узких полях по
+   краям. У .view-card (то, что реально получает адресат после открытия
+   конверта) фона нет вообще — букет и текст лежат прямо на сцене. Убираем
+   его и здесь, чтобы предпросмотр конструктора честно совпадал с тем, что
+   увидит получатель, а не показывал более бедную версию сцены. */
 .preview-card{
-  width:100%; max-width:360px; background:var(--paper);
-  border:1px solid var(--line); border-radius:14px; overflow:hidden;
-  box-shadow:0 18px 40px -24px rgba(47,59,42,0.35);
-  position:relative;
+  width:100%; max-width:360px; text-align:center;
+  position:relative; overflow:hidden;
 }
+/* Раньше полоса на всю ширину карточки (скруглённые углы — за счёт
+   overflow:hidden родителя). Без своего фона у карточки полоса эти углы
+   больше не получает "бесплатно" — делаем её самостоятельной пилюлей,
+   тем же приёмом, что и у .view-occasion-band в итоговой открытке. */
 .preview-occasion-band{
-  padding:10px 18px; font-family:'Fraunces',serif; font-style:italic;
+  display:inline-block; padding:6px 18px; border-radius:999px;
+  font-family:'Fraunces',serif; font-style:italic;
   font-size:13px; text-align:center; color:var(--paper);
 }
 .preview-bouquet{padding:6px 10px 0;}
@@ -1298,6 +1317,7 @@ input[type=date], input[type=time]{
   font-family:'Fraunces',serif; font-size:16px; line-height:1.55; color:var(--ink);
   white-space:pre-wrap; transition:opacity .8s ease;
 }
+.preview-msg .text .ph{color:var(--ink-mute);}
 .preview-msg .from{
   margin-top:12px; font-size:12px; color:var(--ink-soft); transition:opacity .8s ease;
 }
@@ -1326,6 +1346,17 @@ input[type=date], input[type=time]{
 .stage-dark .pv-replay{ color:#F3EEE3; border-color:rgba(243,238,227,0.35); }
 .stage-dark .pv-replay:hover{ border-color:#F3EEE3; background:rgba(243,238,227,0.1); }
 .stage-dark .bg-chip{ box-shadow:inset 0 0 0 1px rgba(243,238,227,0.3); }
+/* Текст, который раньше всегда лежал на непрозрачной --paper карточке
+   (см. комментарий у .preview-card выше) — теперь может оказаться прямо на
+   тёмной сцене. Та же светлая замена (#F3EEE3), что уже применяется к
+   .view-msg/.view-from в итоговой открытке — один и тот же случай, просто
+   версия для конструктора. .ph — плейсхолдер "Текст пожелания появится
+   здесь…", раньше красился инлайн-стилем (color:var(--ink-mute)), вынесен
+   в класс именно затем, чтобы это правило могло его перекрыть. */
+.stage-dark .preview-msg .to,
+.stage-dark .preview-msg .text,
+.stage-dark .preview-msg .text .ph,
+.stage-dark .preview-msg .from{ color:#F3EEE3; }
 
 /* ---------- share screen ---------- */
 .share-wrap{max-width:560px; margin:80px auto; text-align:center;}
@@ -1353,7 +1384,40 @@ input[type=date], input[type=time]{
 .view-stage{
   min-height:100vh; display:flex; align-items:center; justify-content:center;
   padding:40px 20px;
+  /* position:relative + z-index:0 — та же причина, что у .preview-hero/
+     .home-card-stage выше: точка отсчёта для .bg-scene (z-index:-1) ниже,
+     иначе узор нашёл бы предком что-то выше по дереву и не был бы виден. */
+  position:relative; z-index:0;
 }
+/* Декоративная "сцена" фона — намёк на настоящее место (подоконник, ночное
+   небо, сад, снег), которого сам линейный градиент BACKGROUNDS.css не даёт.
+   Тот же приём слоя, что и у .home-card-pattern/stagePatternSvg (узор
+   повода): пигнутый под карточкой z-index:-1, декоративный, кликов не
+   перехватывает. Мелкие акценты (звёзды/снежинки/лепестки) — свои
+   квадратные SVG с процентным left/top через .bg-scene-dot, а не один
+   растянутый на всю сцену viewBox — иначе круглые звёзды/снежинки
+   превращались бы в эллипсы на нетипичных пропорциях сцены (тот же
+   принцип, что уже объяснён у .home-card-pattern-icon). */
+.bg-scene{position:absolute; inset:0; z-index:-1; pointer-events:none; overflow:hidden;}
+.bg-scene-strip{position:absolute; left:0; right:0; bottom:0; width:100%; height:11%;}
+.bg-scene-dot{position:absolute; transform:translate(-50%,-50%); aspect-ratio:1;}
+.bg-scene-dot svg{display:block; width:100%; height:100%;}
+.bg-scene-moon{position:absolute; top:4%; right:6%; width:15%;}
+/* Солнце сидит У ГОРИЗОНТА (низ, по центру), а не в углу неба, где сидит
+   луна — иначе оба читаются как "один и тот же кружок", просто перекрашенный
+   (ровно так это и выглядело до правки: и на "Ночи", и на "Закате" был один
+   кружок в правом верхнем углу). Закатное солнце давно закатывается ЗА
+   горизонт, а не висит в небе, поэтому и место у него другое. */
+.bg-scene-sun{position:absolute; left:50%; bottom:6%; width:24%; transform:translateX(-50%);}
+.bg-scene-branch{position:absolute; top:0; right:0; width:38%;}
+/* Та же ветка, но слева и зеркально (scaleX) — не переписывая координаты
+   вручную. Нужна для того, чтобы у соседних по смыслу фонов (сакура/шалфей
+   — оба "ветка в углу") не повторялся один и тот же угол композиции. */
+.bg-scene-branch-left{position:absolute; top:0; left:0; width:38%; transform:scaleX(-1);}
+/* Облака — единственный акцент, растянутый на всю ширину сцены (не в углу,
+   как луна/ветка): по небу они не сидят в одной точке, а плывут по всей
+   его ширине, поэтому и viewBox не квадратный, а широкий. */
+.bg-scene-clouds{position:absolute; top:4%; left:0; width:100%; height:auto;}
 .view-card{
   width:100%; max-width:460px; text-align:center;
 }
