@@ -86,7 +86,8 @@
    выбранной на сайте. */
 :root[data-theme="dark"] .preview-stage,
 :root[data-theme="dark"] .view-stage,
-:root[data-theme="dark"] .home-card-stage{
+:root[data-theme="dark"] .home-card-stage,
+:root[data-theme="dark"] .hero-showcase-stage{
   --paper:#FAF3E7;
   --paper-deep:#F0E4CE;
   --ink:#2F3B2A;
@@ -576,7 +577,6 @@ a{color:var(--accent);}
   transition:transform .22s ease;
 }
 .home-card:first-child{margin-left:0;}
-.home-card.featured{width:354px;}
 .home-card:hover, .home-card:focus-visible{
   transform:rotate(0deg) translateY(-20px) scale(1.06);
   z-index:50 !important;
@@ -659,7 +659,6 @@ a{color:var(--accent);}
      много ширины и мешает разглядеть каждую карточку по отдельности. */
   .home-examples-row{--lift-scale:0.35; padding:33px 6vw 62px;}
   .home-card{width:228px; margin-left:-42px;}
-  .home-card.featured{width:276px;}
   .home-card-stage{padding:26px 18px 22px;}
   .home-card-cta{opacity:1; transform:none;}
   /* На этой ширине CTA всегда виден (нет hover на тач-экранах), а карточки

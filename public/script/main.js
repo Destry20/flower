@@ -484,7 +484,7 @@ function siteDescription(){ return uiLang === 'ru' ? SITE_DESCRIPTION_RU : SITE_
 const OCCASIONS = [
   {id:'foryou', label:{ru:'Для тебя',en:'For you'}, color:'#5C7457', stamp:{ru:'Для тебя',en:'For you'}, placeholder:{ru:'За то что ты есть!',en:'Just for being you!'}, anim:'petals'},
   {id:'birthday', label:{ru:'День рождения',en:'Birthday'}, color:'#C97B86', stamp:{ru:'С днём рождения',en:'Happy Birthday'}, placeholder:{ru:'Пусть этот год принесёт тебе только самые тёплые дни...',en:'May this year bring you only warm, happy days...'}, anim:'confetti'},
-  {id:'love', label:{ru:'Любовь',en:'Love'}, color:'#4B2E3D', stamp:{ru:'С любовью',en:'With love'}, placeholder:{ru:'Ты — моё самое доброе утро...',en:'You are my favorite good morning...'}, anim:'hearts'},
+  {id:'love', label:{ru:'Любовь',en:'Love'}, color:'#4B2E3D', stamp:{ru:'С любовью',en:'With love'}, placeholder:{ru:'Ты — моё самое доброе утро и причина просыпаться с улыбкой...',en:'You are my favorite good morning...'}, anim:'hearts'},
   {id:'thanks', label:{ru:'Спасибо',en:'Thank you'}, color:'#B98A4A', stamp:{ru:'Спасибо тебе',en:'Thank you'}, placeholder:{ru:'Хочу, чтобы ты знал(а), как я ценю тебя...',en:'I want you to know how much I appreciate you...'}, anim:'petals'},
   {id:'congrats', label:{ru:'Поздравляю',en:'Congrats'}, color:'#5C7457', stamp:{ru:'Поздравляю',en:'Congratulations'}, placeholder:{ru:'Ты это заслужил(а). Горжусь тобой!',en:'You earned this. So proud of you!'}, anim:'confetti'},
   {id:'sorry', label:{ru:'Поддержка',en:'Support'}, color:'#8CA087', stamp:{ru:'Я рядом',en:"I'm here"}, placeholder:{ru:'Просто хочу, чтобы ты знал(а) — я рядом, что бы ни случилось.',en:"Just want you to know — I'm here, no matter what."}, anim:'petals'},
@@ -1800,7 +1800,7 @@ function homeExampleCardHtml(ex, i){
   const occ = occasionById(ex.occasion);
   const bg = BACKGROUNDS.find(b=>b.id===ex.background);
   const line = ex.textOverride ? tr(ex.textOverride) : tr(occ.placeholder).replace(/\.\.\.$/, '');
-  const size = ex.featured ? 366 : 298;
+  const size = 298;
   // labelText/stampText — своя надпись на конкретной карточке (сейчас только
   // у 'love': "Для тебя" вместо стандартного "Любовь"), при этом ex.occasion
   // остаётся настоящим поводом 'love' — именно он уходит в applyExample при
@@ -1817,7 +1817,7 @@ function homeExampleCardHtml(ex, i){
   return `<div class="home-card ${ex.featured?'featured':''}" style="--tilt:${ex.tilt}deg; --lift:${ex.lift}px; z-index:${i+1};" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${labelText}" onclick="applyExample('${ex.id}')" onkeydown="activateOnKey(event)">
     <div class="home-card-stage" style="background:${bg.css}">
       ${bgSceneSvg(bg.id)}
-      ${bg.id==='cream' ? stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity) : ''}
+      ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, patternOpacity)}
       <div class="home-card-inner">
         <div class="home-card-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${stampText}</div>
         <div class="home-card-bouquet">${buildBouquetSVG(ex, size)}</div>
@@ -1850,7 +1850,7 @@ function heroShowcaseCardHtml(){
   return `<div class="hero-showcase" tabindex="0" role="button" aria-label="${t('Собрать такую открытку')}: ${tr(ex.labelOverride)}" onclick="applyExample('love')" onkeydown="activateOnKey(event)">
       <div class="hero-showcase-stage" style="background:${bg.css}">
         ${bgSceneSvg(bg.id)}
-        ${bg.id==='cream' ? stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22) : ''}
+        ${stagePatternSvg(OCCASION_ICON[ex.occasion], patternColor, 0.22)}
         <div class="hero-showcase-inner">
           <div class="hero-showcase-band" style="background:${bandStyle.bg};color:${bandStyle.color}">${tr(ex.stampOverride)}</div>
           <div class="hero-showcase-bouquet">${buildBouquetSVG(ex, 300)}</div>
