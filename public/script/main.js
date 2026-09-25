@@ -1800,7 +1800,7 @@ function homeExampleCardHtml(ex, i){
   const occ = occasionById(ex.occasion);
   const bg = BACKGROUNDS.find(b=>b.id===ex.background);
   const line = ex.textOverride ? tr(ex.textOverride) : tr(occ.placeholder).replace(/\.\.\.$/, '');
-  const size = ex.featured ? 366 : 298;
+  const size = 298;
   // labelText/stampText — своя надпись на конкретной карточке (сейчас только
   // у 'love': "Для тебя" вместо стандартного "Любовь"), при этом ex.occasion
   // остаётся настоящим поводом 'love' — именно он уходит в applyExample при
