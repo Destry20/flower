@@ -240,6 +240,23 @@ a{color:var(--accent);}
 }
 @media (max-width:480px){
   .topbar{padding:16px 18px;}
+  /* "Важные даты" и "Поддержать" остаются на виду (см. комментарий у
+     .topbar-menu-btn выше — их сознательно не прячут в меню), но на узком
+     экране весь ряд из темы/дат/доната/меню/аккаунта не помещается в одну
+     строку и разъезжается на две — таблетки сворачиваются до кружков-иконок
+     (как тема/меню), aria-label на <a> ниже сохраняет доступное имя вместо
+     спрятанного текста. Аккаунт/"Войти" (<button>, не <a>) не трогаем —
+     это единственное место, где видно, в каком вы аккаунте. */
+  .topbar-actions > a.topbar-pill{
+    width:40px; padding:0; justify-content:center; position:relative;
+  }
+  .topbar-pill-label{display:none;}
+  /* Бейдж "новое" — текст схлопывается в точку-индикатор поверх иконки,
+     а не отдельную таблетку рядом с исчезнувшим текстом. */
+  .topbar-actions > a.topbar-pill .topbar-new-badge{
+    position:absolute; top:1px; right:1px;
+    width:9px; height:9px; min-width:0; padding:0; font-size:0; line-height:0;
+  }
 }
 .brand{
   display:flex; align-items:center; gap:10px;

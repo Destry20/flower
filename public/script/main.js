@@ -2362,8 +2362,8 @@ function topbarHtml(){
     <div class="brand" tabindex="0" role="link" onclick="goHome()" onkeydown="activateOnKey(event)" style="cursor:pointer;">${leafIcon()}${BRAND}</div>
     <div class="topbar-actions">
       <button class="theme-toggle" onclick="toggleTheme()" aria-label="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}" title="${uiTheme==='dark'?t('Включить светлую тему'):t('Включить тёмную тему')}">${themeIconSvg(uiTheme)}</button>
-      <a class="topbar-pill" href="#dates">${badgeIconSvg('bell','currentColor',16)}${t('Важные даты')}<span class="topbar-new-badge">${t('новое')}</span></a>
-      <a class="topbar-pill topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer">${badgeIconSvg('coffee','currentColor',16)}${t('Поддержать')}</a>
+      <a class="topbar-pill" href="#dates" aria-label="${t('Важные даты')}">${badgeIconSvg('bell','currentColor',16)}<span class="topbar-pill-label">${t('Важные даты')}</span><span class="topbar-new-badge">${t('новое')}</span></a>
+      <a class="topbar-pill topbar-support-btn" href="https://ko-fi.com/vivorose" target="_blank" rel="noopener noreferrer" aria-label="${t('Поддержать')}">${badgeIconSvg('coffee','currentColor',16)}<span class="topbar-pill-label">${t('Поддержать')}</span></a>
       <div class="topbar-more ${topbarMenuOpen?'open':''}" id="topbarMore">
         <button class="topbar-menu-btn" onclick="toggleTopbarMenu()" aria-expanded="${topbarMenuOpen}" aria-label="${t('Меню')}">${menuIconSvg()}</button>
         <div class="topbar-more-backdrop" onclick="if(event.target===this) closeTopbarMenu()"></div>
