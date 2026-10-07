@@ -4505,17 +4505,54 @@ function loadTurnstileScript(){
 // (блокировщик и т.п.) — форма всё равно должна остаться отправляемой,
 // сервер сам решит, что делать с пустым токеном (см. server/turnstile.js:
 // пропустит, если капча тоже выключена там, иначе отклонит).
+//
+// widgetId по контейнеру и порядковый номер последнего вызова — чтобы не
+// плодить "осиротевшие" виджеты. Экран целиком перерисовывается (innerHTML)
+// на каждый структурный клик конструктора, а то и дважды за один переход
+// (hashchange + явный renderRoute), и контейнер каждый раз заменяется новым
+// узлом. Старый виджет при этом остаётся жить внутри Turnstile: сам повторяет
+// попытки (retry: auto, раз в 8с) уже в никуда и пишет в консоль "Cannot find
+// Widget ... use turnstile.remove()", а лишние запуски проверки ещё и
+// повышают шанс, что одна из них споткнётся об антибот-эвристику Cloudflare.
+const turnstileWidgets = {};   // containerId -> widgetId живого виджета
+const turnstileRenderSeq = {}; // containerId -> номер последнего вызова renderTurnstile
+function removeTurnstileWidget(containerId){
+  const id = turnstileWidgets[containerId];
+  if(id == null) return;
+  delete turnstileWidgets[containerId];
+  try{ if(window.turnstile) window.turnstile.remove(id); }catch(e){ /* уже убран — не страшно */ }
+}
 async function renderTurnstile(containerId){
   if(!appConfig.turnstileSiteKey) return null;
-  const el = document.getElementById(containerId);
-  if(!el) return null;
+  const seq = (turnstileRenderSeq[containerId] || 0) + 1;
+  turnstileRenderSeq[containerId] = seq;
+  removeTurnstileWidget(containerId);
   try{
     await loadTurnstileScript();
-    return window.turnstile.render(el, {
+    // Пока грузился скрипт, экран мог перерисоваться: контейнер заменён новым
+    // узлом, а то и renderTurnstile вызван ещё раз. Рисуем только если мы всё
+    // ещё последний вызов — иначе виджет уйдёт в уже отсоединённый узел.
+    const el = document.getElementById(containerId);
+    if(!el || turnstileRenderSeq[containerId] !== seq) return null;
+    const id = window.turnstile.render(el, {
       sitekey: appConfig.turnstileSiteKey,
       theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
-      language: uiLang
+      language: uiLang,
+      // Без error-callback Cloudflare бросает наружу необработанное
+      // TurnstileError (так оно и попадало в "Ошибки от пользователей" в
+      // админке: "Error: 300010" — это 300xxx, "общий сбой проверки": у
+      // конкретного посетителя расширение/приватный режим/VPN либо браузер,
+      // похожий на автоматизированный; серверной причины нет). Возврат true —
+      // сигнал "обработано, в консоль не пиши". Сама форма остаётся рабочей:
+      // у гостя saveAndShare при отказе проверки тихо откатывается на длинную
+      // самодостаточную ссылку, у регистрации/подписи показывается ошибка
+      // сервера (captchaFailed) с просьбой обновить страницу. Сам виджет
+      // уже показывает посетителю своё сообщение об ошибке и (retry: auto)
+      // пробует снова.
+      'error-callback': () => true
     });
+    turnstileWidgets[containerId] = id;
+    return id;
   }catch(e){ return null; }
 }
 
