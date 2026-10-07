@@ -21,6 +21,7 @@ const { startBackupScheduler } = require('./backup');
 const { startDateReminderScheduler } = require('./dateReminders');
 const { buildShareMeta, escapeHtml } = require('./cardMeta');
 const { tServer, pickLang } = require('./i18n');
+const { GOOGLE_REGIONAL_IMG_SOURCES } = require('./googleDomains');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -110,7 +111,12 @@ app.use(helmet({
       // googleads.g.doubleclick.net/www.google.com/ad.doubleclick.net — та же
       // Google Ads-привязка (AW-18385746090, см. scriptSrc выше): конверсии
       // и ремаркетинг тоже иногда уходят пикселем, а не через connect-src.
-      imgSrc: ["'self'", 'data:', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://ad.doubleclick.net'],
+      // ...GOOGLE_REGIONAL_IMG_SOURCES — пиксель ремаркетинга (/pagead/
+      // 1p-user-list/) уходит не на www.google.com, а на домен страны
+      // посетителя (www.google.kz, www.google.co.uk ...); без них такие
+      // запросы блокировал CSP и посетитель не попадал в аудиторию Google
+      // Ads. Почему перечислены явно, а не "https:" — см. server/googleDomains.js.
+      imgSrc: ["'self'", 'data:', 'https://www.googletagmanager.com', 'https://www.google-analytics.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com', 'https://googleads.g.doubleclick.net', 'https://www.google.com', 'https://ad.doubleclick.net', ...GOOGLE_REGIONAL_IMG_SOURCES],
       // challenges.cloudflare.com — виджет Turnstile делает свои XHR и
       // рисует сам челлендж во вложенном iframe, как и Google-кнопка выше.
       // www.google.com/ad.doubleclick.net/googleads.g.doubleclick.net — сами
