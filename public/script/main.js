@@ -1671,7 +1671,7 @@ const EXAMPLES = [
   // текст стоит на карточке), а не "Любовь".
   { id:'love', occasion:'love', applyOccasion:'foryou', vase:'D', ribbon:'#4B2E3D', envelope:'gold', background:'blush', charm:true,
     flowers:{ rose:{color:'#B23A4E', count:5}, peony:{color:'#D98CAE', count:3} },
-    to:{ru:'Насти',en:'Emma'}, from:{ru:'Дениса',en:'James'},
+    to:{ru:'Ксении',en:'Mia'}, from:{ru:'Андрея',en:'Noah'},
     labelOverride:{ru:'Для тебя',en:'For you'}, stampOverride:{ru:'Для тебя',en:'For you'},
     featured:true, tilt:-1, lift:0 },
   { id:'birthday', occasion:'birthday', vase:'B', ribbon:'#C97B86', envelope:'seal', background:'blush', charm:true,
