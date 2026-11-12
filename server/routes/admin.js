@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const totpLib = require('../totp');
 const db = require('../db');
 const { decodeCardDataServer } = require('../cardMeta');
+const { isNoiseClientError } = require('../clientErrorNoise');
 
 const router = express.Router();
 
@@ -224,6 +225,12 @@ router.post('/report-error', reportLimiter, (req, res) => {
   const { message, stack, url, userAgent } = req.body || {};
   if(typeof message !== 'string' || !message){
     return res.status(400).json({ error: 'Invalid report' });
+  }
+  // Ошибки чужих скриптов ("Script error.", встроенный браузер Meta,
+  // расширения) в журнал не пишем — подробности в server/clientErrorNoise.js.
+  // Отвечаем 202, а не ошибкой: клиенту всё равно, он fire-and-forget.
+  if(isNoiseClientError({ message, stack, url })){
+    return res.status(202).json({ ok: true, ignored: true });
   }
   db.recordClientError({ message, stack, url, userAgent });
   res.status(201).json({ ok: true });
