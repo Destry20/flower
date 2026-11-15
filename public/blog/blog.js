@@ -88,14 +88,24 @@
   }
 
   // Первый блок — после вступительного абзаца, перед первым <h2> статьи.
-  var firstHeading = document.querySelector('.legal-wrap h2');
+  var headings = document.querySelectorAll('.legal-wrap h2');
+  var firstHeading = headings[0];
   if(firstHeading){
     insertPromo(firstHeading.parentNode, firstHeading);
+    // Блок в середине статьи — перед <h2> посередине (между подборками фраз),
+    // чтобы не лепить рекламу подряд у начала и у конца длинного списка.
+    // querySelectorAll отдаёт статичный список, вставка выше его не сдвигает.
+    var mid = Math.floor(headings.length / 2);
+    if(headings.length >= 3 && mid >= 1) insertPromo(headings[mid].parentNode, headings[mid]);
   }else{
     // Страницы-каталоги (/blog/, /blog/en/) — там нет <h2>, зато сразу за
-    // вступлением идёт список статей (.blog-list). Тот же блок, перед списком.
+    // вступлением идёт список статей (.blog-list). Тот же блок, перед списком,
+    // и ещё один — сразу после списка.
     var firstList = document.querySelector('.legal-wrap .blog-list');
-    if(firstList) insertPromo(firstList.parentNode, firstList);
+    if(firstList){
+      insertPromo(firstList.parentNode, firstList);
+      insertPromo(firstList.parentNode, firstList.nextSibling);
+    }
   }
 
   // Второй блок — в конце статьи, ПОСЛЕ кнопки "Собрать открытку" (.article-cta),
