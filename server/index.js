@@ -139,6 +139,21 @@ app.use(helmet({
   crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' }
 }));
 
+// Рекламная сеть (Adsterra) тянет скрипты и трекинг с произвольных, меняющихся
+// доменов (за время работы уже сменились highrevenueformat.com -> bauval.org),
+// вписать их в allowlist основной CSP нельзя — а ослаблять её для всего сайта
+// ради рекламы, где JWT-кука и данные аккаунтов, нельзя тем более. Поэтому
+// реклама живёт в одной отдельной iframe-странице (/x/n3.html — путь без
+// слова "ads", иначе блокировщики режут URL ещё до CSP) со своей мягкой
+// политикой, а на самих страницах блога (frame-src 'self') ничего не меняется.
+// Реклама стоит только в блоге, не на главной и не на лендингах Google Ads.
+const AD_PAGE_PATHS = new Set(['/x/n3.html']);
+const AD_CSP = "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' https:; connect-src https:; img-src https: data:; style-src 'unsafe-inline'; frame-src https:";
+app.use((req, res, next) => {
+  if(AD_PAGE_PATHS.has(req.path)) res.setHeader('Content-Security-Policy', AD_CSP);
+  next();
+});
+
 app.use(express.json({ limit: '256kb' }));
 app.use(cookieParser());
 app.use(attachUser);

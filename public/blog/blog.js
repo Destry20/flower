@@ -72,4 +72,35 @@
       }
     });
   });
+
+  // Рекламные блоки (Adsterra, 728x90, только блог — на главной и лендингах
+  // Google Ads рекламы нет намеренно: именно скрипты рекламной сети раньше
+  // стали причиной отклонения объявлений как "взломанный сайт"). Через JS в
+  // общем blog.js, а не руками в каждый файл статьи, чтобы убрать/поменять
+  // блок можно было в одном месте — достаточно удалить этот блок кода.
+  function insertPromo(parent, beforeNode){
+    var adLabel = isEn ? 'Advertisement' : 'Реклама';
+    var wrap = document.createElement('div');
+    wrap.className = 'promo-wide';
+    wrap.innerHTML = '<div class="promo-tag">' + adLabel + '</div>' +
+      '<iframe src="/x/n3.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="' + adLabel + '"></iframe>';
+    parent.insertBefore(wrap, beforeNode); // beforeNode == null -> в конец parent
+  }
+
+  // Первый блок — после вступительного абзаца, перед первым <h2> статьи.
+  var firstHeading = document.querySelector('.legal-wrap h2');
+  if(firstHeading){
+    insertPromo(firstHeading.parentNode, firstHeading);
+  }else{
+    // Страницы-каталоги (/blog/, /blog/en/) — там нет <h2>, зато сразу за
+    // вступлением идёт список статей (.blog-list). Тот же блок, перед списком.
+    var firstList = document.querySelector('.legal-wrap .blog-list');
+    if(firstList) insertPromo(firstList.parentNode, firstList);
+  }
+
+  // Второй блок — в конце статьи, ПОСЛЕ кнопки "Собрать открытку" (.article-cta),
+  // не до неё: иначе реклама перехватывала бы клик у собственной конверсии сайта.
+  // На каталогах .article-cta нет — там второй блок не нужен, и так не появится.
+  var cta = document.querySelector('.article-cta');
+  if(cta) insertPromo(cta.parentNode, cta.nextSibling);
 })();
