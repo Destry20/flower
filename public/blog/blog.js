@@ -78,12 +78,22 @@
   // стали причиной отклонения объявлений как "взломанный сайт"). Через JS в
   // общем blog.js, а не руками в каждый файл статьи, чтобы убрать/поменять
   // блок можно было в одном месте — достаточно удалить этот блок кода.
+  // Раскладка (по центру колонки статьи) задана прямо здесь, а не в main.css:
+  // blog.js и main.css кэшируются независимо (до 4 часов), и при старом кэше
+  // стилей рамка рекламы вылезала нестилизованной и слева. iframe растянут на
+  // 100% ширины колонки (до 728px), высоту держит aspect-ratio — сама реклама
+  // внутри (/x/n3.html) масштабируется под эту ширину своим скриптом.
   function insertPromo(parent, beforeNode){
-    var adLabel = isEn ? 'Advertisement' : 'Реклама';
     var wrap = document.createElement('div');
-    wrap.className = 'promo-wide';
-    wrap.innerHTML = '<div class="promo-tag">' + adLabel + '</div>' +
-      '<iframe src="/x/n3.html" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" loading="lazy" scrolling="no" title="' + adLabel + '"></iframe>';
+    wrap.style.cssText = 'max-width:680px;margin:28px auto;text-align:center;';
+    var frame = document.createElement('iframe');
+    frame.src = '/x/n3.html';
+    frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+    frame.setAttribute('loading', 'lazy');
+    frame.setAttribute('scrolling', 'no');
+    frame.title = isEn ? 'Advertisement' : 'Реклама'; // только для скринридеров, на экране подписи нет
+    frame.style.cssText = 'display:block;width:100%;max-width:728px;margin:0 auto;aspect-ratio:728/90;border:0;';
+    wrap.appendChild(frame);
     parent.insertBefore(wrap, beforeNode); // beforeNode == null -> в конец parent
   }
 
