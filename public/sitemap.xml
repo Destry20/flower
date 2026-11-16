@@ -6,7 +6,8 @@
      server/index.js) под конкретные поисковые запросы, а не только под
      название бренда. lastmod проставлен вручную датой последнего реального
      изменения контента страницы — обновляйте при следующей правке текста. -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://vivorose.com/</loc>
     <lastmod>2026-09-05</lastmod>
@@ -81,109 +82,127 @@
   </url>
   <url>
     <loc>https://vivorose.com/blog/birthday-wishes</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/birthday-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/love-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/love-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/thank-you-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/thank-you-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/congrats-wishes</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/congrats-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/support-words</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/support-words.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/just-because-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/just-because-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/sympathy-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/sympathy-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/birthday-wishes</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/birthday-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/love-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/love-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/thank-you-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/thank-you-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/congrats-wishes</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/congrats-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/support-words</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/support-words.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/just-because-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/just-because-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/sympathy-messages</loc>
-    <lastmod>2026-09-05</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/sympathy-messages.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/anniversary-wishes</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/anniversary-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/anniversary-wishes</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/anniversary-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/get-well-wishes</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/get-well-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://vivorose.com/blog/en/get-well-wishes</loc>
-    <lastmod>2026-09-12</lastmod>
+    <lastmod>2026-11-16</lastmod>
+    <image:image><image:loc>https://vivorose.com/blog/img/en/get-well-wishes.jpg</image:loc></image:image>
     <changefreq>yearly</changefreq>
     <priority>0.6</priority>
   </url>

@@ -1711,6 +1711,12 @@ footer.site-footer a:hover{color:var(--accent);}
 /* Тот же случай, что у .article-cta .btn ниже: .legal-wrap a красит ссылки в
    --accent, а он в светлой теме равен фону самой кнопки — подпись пропадает. */
 .blog-cta .btn{display:inline-block; flex:none; text-decoration:none; color:var(--pale);}
+/* Иллюстрация статьи (картинка 1200x630 с букетом, она же og:image) и подпись-
+   ссылка под ней, ведущая в конструктор. Отступы figure и размеры img
+   продублированы инлайном в самих статьях — на случай старого кэша стилей. */
+.blog-figure figcaption{margin-top:8px; font-size:13px; text-align:center;}
+.blog-figure figcaption a{color:var(--accent); font-weight:600; text-decoration:none;}
+.blog-figure figcaption a:hover{text-decoration:underline;}
 .article-cta{
   margin:40px 0 10px; padding:26px; text-align:center; border-radius:16px;
   background:var(--paper-deep); border:1px solid var(--line);
