@@ -648,14 +648,15 @@ async function loadMe(){
 // turnstileSiteKey. Оба null, пока владелец сайта не задал соответствующую
 // переменную в .env — тогда renderGoogleButton()/renderTurnstile() ниже
 // просто ничего не рисуют, вместо нерабочей кнопки/виджета.
-const appConfig = { googleClientId: null, turnstileSiteKey: null };
+const appConfig = { googleClientId: null, turnstileSiteKey: null, siteAds: false };
 async function loadConfig(){
   try{
     const res = await fetch('/api/config');
     const json = await res.json();
     appConfig.googleClientId = json.googleClientId || null;
     appConfig.turnstileSiteKey = json.turnstileSiteKey || null;
-  }catch(e){ appConfig.googleClientId = null; appConfig.turnstileSiteKey = null; }
+    appConfig.siteAds = json.siteAds === true; // по умолчанию выкл., пока сервер явно не разрешил
+  }catch(e){ appConfig.googleClientId = null; appConfig.turnstileSiteKey = null; appConfig.siteAds = false; }
 }
 
 /* ====================== HELPERS ====================== */
@@ -1878,7 +1879,71 @@ function homeHeroHtml(){
     </div>`;
 }
 
+/* ---- Рекламный баннер на главной и в конструкторе ----
+   Один и тот же блок Adsterra 728x90 (iframe /x/n3.html), что и в блоге.
+   Осторожности ради:
+   - только гостям: iframe рекламы — того же происхождения (allow-same-origin,
+     иначе скрипт сети падает), и у залогиненного человека чужой рекламный код
+     теоретически мог бы дёргать наш API от его имени;
+   - рубильник SITE_ADS=off на сервере (см. GET /api/config); на SEO-лендингах
+     (/birthday-card и т.д.) реклама тоже есть — Google Ads на паузе, а именно
+     туда приходит органический трафик из поиска;
+   - конструктор перерисовывается целиком на каждый клик по поводу/вазе/
+     конверту/фону — если пересоздавать iframe, реклама перезагружалась бы на
+     каждый клик (мигание и накрутка показов). Поэтому узел один, а при
+     перерисовке его не пересоздают, а переносят через Element.moveBefore() —
+     он сохраняет состояние iframe. Там, где moveBefore нет, в конструкторе
+     рекламы нет вообще (на витрине есть: она почти не перерисовывается).
+   Подписи "Реклама" на экране нет (title у iframe — для скринридеров). */
+let siteAdWrap = null;
+let siteAdDock = null;
+const CAN_MOVE_NODES = typeof Element !== 'undefined' && typeof Element.prototype.moveBefore === 'function';
+function siteAdsAllowed(){
+  return appConfig.siteAds && !session.user;
+}
+function moveSiteAdNode(parent, node){
+  if(CAN_MOVE_NODES && node.isConnected){
+    try{ parent.moveBefore(node, null); return; }catch(e){ /* упадём на appendChild ниже */ }
+  }
+  parent.appendChild(node);
+}
+function ensureSiteAdWrap(){
+  if(siteAdWrap) return siteAdWrap;
+  siteAdWrap = document.createElement('div');
+  siteAdWrap.style.cssText = 'max-width:728px;margin:28px auto;text-align:center;';
+  const frame = document.createElement('iframe');
+  frame.src = '/x/n3.html';
+  frame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+  frame.setAttribute('loading', 'lazy');
+  frame.setAttribute('scrolling', 'no');
+  frame.title = uiLang === 'ru' ? 'Реклама' : 'Advertisement';
+  frame.style.cssText = 'display:block;width:100%;max-width:728px;margin:0 auto;aspect-ratio:728/90;border:0;';
+  siteAdWrap.appendChild(frame);
+  return siteAdWrap;
+}
+// Вызывать ПЕРЕД app.innerHTML=...: убирает живой узел из старой разметки в
+// постоянный контейнер вне #app, иначе innerHTML уничтожил бы его вместе с ней.
+function parkSiteAd(){
+  if(!siteAdWrap || !siteAdWrap.isConnected) return;
+  if(!siteAdDock){
+    siteAdDock = document.createElement('div');
+    siteAdDock.setAttribute('aria-hidden', 'true');
+    siteAdDock.style.cssText = 'position:absolute;left:-10000px;top:0;width:728px;height:90px;overflow:hidden;';
+    document.body.appendChild(siteAdDock);
+  }
+  moveSiteAdNode(siteAdDock, siteAdWrap);
+}
+// Вызывать ПОСЛЕ: ставит узел в слот новой разметки (#siteAdSlot). frequentRerender
+// — true для конструктора (см. выше про moveBefore).
+function mountSiteAd(frequentRerender){
+  const slot = document.getElementById('siteAdSlot');
+  if(!slot || !siteAdsAllowed()) return;
+  if(frequentRerender && !CAN_MOVE_NODES) return;
+  moveSiteAdNode(slot, ensureSiteAdWrap());
+}
+
 function renderHome(){
+  parkSiteAd();
   setPageTitle(t('Открытка с виртуальным букетом'));
   setMeta(`${BRAND} — ${t('соберите открытку с букетом')}`, siteDescription());
   document.getElementById('app').innerHTML = `
@@ -1918,6 +1983,8 @@ function renderHome(){
       </div>
     </div>
 
+    <div id="siteAdSlot"></div>
+
     <div class="dates-promo reveal">
       <div class="dates-promo-badge">${t('новое')}</div>
       <div class="dates-promo-icon">${badgeIconSvg('bell','currentColor',34)}</div>
@@ -1937,6 +2004,7 @@ function renderHome(){
   `;
   fetchHeroCardCount();
   initScrollReveal();
+  mountSiteAd(false);
 }
 
 // Свой акцентный цвет на каждую из 4 панелей формы (кружок номера, тонкая
@@ -2107,6 +2175,7 @@ function stepBarHtml(){
   return `<div class="step-bar" id="stepBar">${steps.map((s,i)=>`${i>0?'<span class="step-bar-line"></span>':''}<a href="#${s.panel}" class="step-bar-item ${openPanelId===s.panel?'active':''}" style="--panel-accent:${PANEL_ACCENTS[i]};--panel-accent-badge-bg:${PANEL_ACCENT_BADGE[i].bg};--panel-accent-badge-text:${PANEL_ACCENT_BADGE[i].color};" data-panel="${s.panel}" onclick="event.preventDefault(); togglePanel('${s.panel}');"><span class="step-bar-num">${s.n}</span><span class="step-bar-label">${s.label}</span></a>`).join('')}</div>`;
 }
 function renderCreator(){
+  parkSiteAd();
   const landing = seoLanding();
   // На SEO-лендинге заголовок/описание должны остаться теми же после
   // рендера JS, что сервер уже отдал в исходном HTML (server/index.js,
@@ -2266,10 +2335,13 @@ function renderCreator(){
       </div>
     </div>
 
+    <div id="siteAdSlot"></div>
+
     ${aboutSectionHtml()}
   </div>
   <footer class="site-footer">${footerHtml()}</footer>
   `;
+  mountSiteAd(true);
 
   document.getElementById('occasionChips').innerHTML = OCCASIONS.map(o =>
     `<div class="chip ${state.occasion===o.id?'active':''}" tabindex="0" role="button" aria-pressed="${state.occasion===o.id}" onclick="setOccasion('${o.id}')" onkeydown="activateOnKey(event)">

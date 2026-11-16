@@ -194,7 +194,12 @@ app.use((req, res, next) => {
 app.get('/api/config', (req, res) => {
   res.set('Cache-Control', 'no-store').json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || null,
-    turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || null
+    turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || null,
+    // Рубильник рекламы на главной и в конструкторе (см. siteAdsAllowed() в
+    // main.js): SITE_ADS=off в переменных Railway выключает баннеры там без
+    // правки кода — на случай, если Google Ads снова начнёт отклонять объявления
+    // из-за скрипта рекламной сети. На рекламу в блоге не влияет.
+    siteAds: process.env.SITE_ADS !== 'off'
   });
 });
 
