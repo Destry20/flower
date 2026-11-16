@@ -168,6 +168,11 @@
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
+/* Мягкое цветное пятно за формой конструктора (.builder::before) намеренно
+   шире самой формы и на окнах ~900–1300px вылезало за край — страница
+   прокручивалась вбок на 10–30px. clip, а не hidden: не создаёт контейнер
+   прокрутки, поэтому sticky-шапка и якоря не страдают. */
+html{overflow-x:clip;}
 body{
   background:var(--paper);
   background-image:
@@ -383,8 +388,12 @@ a{color:var(--accent);}
 }
 .hero p{font-size:15.5px; color:var(--ink-soft); max-width:46ch; margin-top:12px; line-height:1.6;}
 
+/* minmax(0,1fr), а не голый 1fr: 1fr = minmax(auto,1fr), то есть колонка не
+   сжимается уже минимальной ширины своего содержимого — на экранах уже ~380px
+   форма (ряды чипов, полоса шагов) раздувала колонку, и вся страница
+   конструктора вылезала за экран по горизонтали. */
 .builder{
-  display:grid; grid-template-columns:1fr 1fr; gap:36px;
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:36px;
   align-items:start;
   position:relative; z-index:0; /* см. .builder::before ниже — тот же приём против "утечки" отрицательного z-index на предка, что и у .home-card-stage */
 }
@@ -420,7 +429,7 @@ a{color:var(--accent);}
     radial-gradient(ellipse 420px 320px at 88% 55%, color-mix(in srgb, var(--sage) 5%, transparent), transparent 70%);
 }
 @media (max-width:880px){
-  .builder{grid-template-columns:1fr;}
+  .builder{grid-template-columns:minmax(0,1fr);}
   /* Живой предпросмотр — самая мотивирующая часть (видно, как букет
      складывается) — раньше на мобильном оказывался в самом низу, после всей
      формы (просто следующий элемент в разметке). order переставляет его
