@@ -34,6 +34,23 @@
     return Promise.resolve();
   }
 
+  // Аналитика: на страницах блога стоит тот же счётчик GA4, что и на сайте
+  // (gtag-init.js в <head>); gtag может отсутствовать (блокировщик) — тогда
+  // события просто не уходят.
+  function track(name, params){
+    try{ if(typeof window.gtag === 'function') window.gtag('event', name, params || {}); }catch(e){}
+  }
+
+  // slug статьи (последний сегмент пути) и повод конструктора под неё (id из
+  // OCCASIONS в main.js) — для кнопки "В открытку →" у каждой фразы.
+  var slug = location.pathname.replace(/\/+$/, '').split('/').pop();
+  var OCCASION_BY_SLUG = {
+    'birthday-wishes': 'birthday', 'love-messages': 'love', 'thank-you-messages': 'thanks',
+    'congrats-wishes': 'congrats', 'support-words': 'sorry', 'just-because-messages': 'justbecause',
+    'sympathy-messages': 'sympathy', 'anniversary-wishes': 'love', 'get-well-wishes': 'sorry'
+  };
+  var occasion = OCCASION_BY_SLUG[slug] || null;
+
   var items = document.querySelectorAll('.wish-list li');
   items.forEach(function(li){
     var quote = li.textContent.trim();
@@ -46,6 +63,25 @@
     icon.className = 'wish-copy-icon';
     icon.innerHTML = COPY_ICON;
     li.appendChild(icon);
+
+    // "В открытку →": открывает конструктор с этой фразой уже в поле послания
+    // (см. ?msg= в bootstrap() main.js) — раньше фраза только копировалась, и
+    // человек уходил с сайта с текстом в буфере. nofollow — это сотни
+    // параметризованных URL, которые не должны попадать в индекс/краулинг.
+    // Клик и Enter на ссылке не должны срабатывать как копирование фразы.
+    if(occasion){
+      var actions = document.createElement('div');
+      actions.className = 'wish-actions';
+      var toCard = document.createElement('a');
+      toCard.className = 'wish-to-card';
+      toCard.rel = 'nofollow';
+      toCard.href = '/?occasion=' + occasion + '&msg=' + encodeURIComponent(quote.slice(0, 400)) + '#create';
+      toCard.textContent = isEn ? 'Put in a card →' : 'В открытку →';
+      toCard.addEventListener('click', function(e){ e.stopPropagation(); track('phrase_to_card', { article: slug }); });
+      toCard.addEventListener('keydown', function(e){ e.stopPropagation(); });
+      actions.appendChild(toCard);
+      li.appendChild(actions);
+    }
 
     var resetTimer;
     function markCopied(){
@@ -61,6 +97,7 @@
     }
 
     function trigger(){
+      track('phrase_copy', { article: slug });
       copyText(quote).then(markCopied);
     }
 
@@ -97,10 +134,40 @@
     parent.insertBefore(wrap, beforeNode); // beforeNode == null -> в конец parent
   }
 
+  // Призыв собрать открытку сразу после вступления: раньше единственная кнопка
+  // стояла в самом конце длинного списка фраз и до неё мало кто доскролливал.
+  // Ссылку и подпись кнопки берём у нижнего блока .article-cta (там уже
+  // стоит лендинг под повод этой статьи), текст — свой, одинаковый для всех.
+  // Вставляется ДО рекламного блока, чтобы реклама не стояла между вступлением
+  // и призывом.
+  var endCtaLink = document.querySelector('.article-cta a.btn');
+  function insertTopCta(parent, beforeNode){
+    if(!endCtaLink) return;
+    var box = document.createElement('div');
+    box.className = 'blog-cta';
+    var text = document.createElement('div');
+    text.className = 'blog-cta-text';
+    text.textContent = isEn
+      ? 'Want to send it in style? Build a free card with a blooming bouquet — no sign-up needed.'
+      : 'Хотите отправить красиво? Соберите открытку с живым букетом — бесплатно, без регистрации.';
+    var btn = document.createElement('a');
+    btn.className = 'btn btn-primary';
+    btn.href = endCtaLink.getAttribute('href');
+    btn.textContent = isEn ? 'Build a card' : 'Собрать открытку';
+    btn.addEventListener('click', function(){ track('blog_cta_click', { article: slug, position: 'top' }); });
+    box.appendChild(text);
+    box.appendChild(btn);
+    parent.insertBefore(box, beforeNode);
+  }
+  if(endCtaLink){
+    endCtaLink.addEventListener('click', function(){ track('blog_cta_click', { article: slug, position: 'bottom' }); });
+  }
+
   // Первый блок — после вступительного абзаца, перед первым <h2> статьи.
   var headings = document.querySelectorAll('.legal-wrap h2');
   var firstHeading = headings[0];
   if(firstHeading){
+    insertTopCta(firstHeading.parentNode, firstHeading);
     insertPromo(firstHeading.parentNode, firstHeading);
     // Блок в середине статьи — перед <h2> посередине (между подборками фраз),
     // чтобы не лепить рекламу подряд у начала и у конца длинного списка.

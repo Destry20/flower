@@ -8,6 +8,10 @@
      тёмная тема на них не применялась вовсе (пользователь в тёмной теме
      открывал статью и получал светлую страницу). -->
 <script src="/script/theme-boot.js"></script>
+<!-- GA4 тот же, что и на самом сайте (index.html): без него блог не виден в Аналитике.
+     Вызов gtag('config') вынесен во внешний файл — в CSP нет 'unsafe-inline' для скриптов. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-1HTLVYWDJF"></script>
+<script src="/script/gtag-init.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Готовые слова для открытки — блог VivoRose</title>
 <meta name="description" content="Готовые пожелания и слова для открытки на день рождения, признание в любви, благодарность, поздравление, поддержку, соболезнования или просто так.">

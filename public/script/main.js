@@ -4963,6 +4963,12 @@ async function bootstrap(){
   if(prefillOccasion && OCCASIONS.some(o => o.id === prefillOccasion)) state.occasion = prefillOccasion;
   const prefillTo = prefill.get('to');
   if(prefillTo) state.to = prefillTo.slice(0, 30);
+  // "?msg=" — готовая фраза из статьи блога (кнопка "В открытку →" у каждой
+  // фразы, см. public/blog/blog.js): кладём её в поле послания один раз до
+  // первого рендера. Лимит — тот же, что у самого поля (maxlength="400").
+  // Рендерится через esc() как и любой другой текст пользователя.
+  const prefillMsg = prefill.get('msg');
+  if(prefillMsg) state.message = prefillMsg.slice(0, 400);
   await Promise.all([loadMe(), loadConfig()]);
   window.addEventListener('hashchange', renderRoute);
   window.addEventListener('popstate', renderRoute); // кнопки назад/вперёд для ?data=-ссылок

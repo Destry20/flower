@@ -1686,6 +1686,31 @@ footer.site-footer a:hover{color:var(--accent);}
 .wish-list li.wish-copyable:hover .wish-copy-icon{opacity:.8;}
 .wish-list li.wish-copied{background:color-mix(in srgb, var(--sage-dark) 12%, var(--paper-deep)); border-color:var(--sage-dark);}
 .wish-list li.wish-copied .wish-copy-icon{opacity:1; color:var(--sage-dark);}
+/* "В открытку →" под текстом фразы (blog.js) — ведёт в конструктор с этой
+   фразой в поле послания. Контурная "таблетка", не залитая кнопка: заливка
+   у каждой из 26 фраз превратила бы список в частокол кнопок. */
+/* Обычный маркированный список внутри статьи (советы "как пожелать..."). */
+.tips-list{margin:10px 0 0; padding-left:20px; font-size:14px; line-height:1.7; color:var(--ink-soft);}
+.tips-list li{margin-bottom:8px;}
+.tips-list strong{color:var(--ink); font-weight:600;}
+.wish-actions{margin-top:8px;}
+.wish-to-card{
+  display:inline-flex; align-items:center; min-height:30px; padding:4px 12px;
+  font-size:12.5px; font-weight:600; text-decoration:none; color:var(--accent);
+  border:1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius:999px;
+  transition:background-color .15s ease, border-color .15s ease;
+}
+.wish-to-card:hover{background:color-mix(in srgb, var(--accent) 10%, transparent); border-color:var(--accent);}
+/* Призыв сразу после вступления статьи (blog.js, insertTopCta). */
+.blog-cta{
+  display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+  margin:22px 0 4px; padding:14px 18px; border-radius:14px;
+  background:color-mix(in srgb, var(--rose) 12%, var(--paper-deep)); border:1px solid var(--line);
+}
+.blog-cta-text{flex:1 1 240px; font-size:14.5px; line-height:1.5; color:var(--ink);}
+/* Тот же случай, что у .article-cta .btn ниже: .legal-wrap a красит ссылки в
+   --accent, а он в светлой теме равен фону самой кнопки — подпись пропадает. */
+.blog-cta .btn{display:inline-block; flex:none; text-decoration:none; color:var(--pale);}
 .article-cta{
   margin:40px 0 10px; padding:26px; text-align:center; border-radius:16px;
   background:var(--paper-deep); border:1px solid var(--line);
